@@ -28,6 +28,7 @@ Não devem estar nesse módulo:
 
 
 class Robot:
+
     # Classe que representa um robô genérico
 
     def _init_(self, wheel_diameter, wheel_distance, r_wheel, l_wheel):
@@ -43,17 +44,44 @@ class Robot:
         self.l_wheel = Motor(l_wheel)
 
     def real_degrees_to_motor_angle(self, degrees):
+
         # Converte graus reais para graus correspondentes na roda
         return degrees * (self.wheel_distance / self.wheel_diameter)
 
     def reset_wheels_angle(self):
+
         # Zera o ângulo das rodas
         self.r_wheel.reset_angle(0)
         self.l_wheel.reset_angle(0)
+    
+    def hold_wheels(self):
+
+        # Interrompe e trava as rodas
+        r_wheel = self.r_wheel.hold()
+        l_wheel = self.l_wheel.hold()
+
+    def wheels_angle():
+
+        # Retorna a média do angulo das duas rodas
+        return (self.l_wheel.angle() + self.l_wheel.angle())/2
+
+    def walk(self, dc=100, angle=None, pid=False):
+
+        # Movimenta o robô
+        if pid:
+            pass
+
+        else: if angle == None:
+                self.reset_wheels_angle()
+                while angle >= wheels_angle():
+                    self.r_wheel.dc(dc)
+                    self.l_wheel.dc(dc)
+                self.hold_wheels()
+
 
     def turn(self, angle, pid=False, dc=100):
-        # Gira o robô em graus
 
+        # Gira o robô em graus
         self.reset_wheels_angle()
 
         motor_degrees = self.real_degrees_to_motor_angle(angle)
@@ -62,6 +90,7 @@ class Robot:
         if pid:
             # Curva usando PID
             side = angle / abs(angle)
+            pass
 
         else:
             # Curva normal
