@@ -1,13 +1,19 @@
 #!/usr/bin/env pybricks-micropython
-from pybricks.hubs import EV3Brick # type: ignore
-from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor, # type: ignore
-                                 InfraredSensor, UltrasonicSensor, GyroSensor)
-from pybricks.parameters import Port, Stop, Direction, Button, Color # type: ignore
-from pybricks.tools import wait, StopWatch, DataLog # type: ignore
-from pybricks.robotics import DriveBase # type: ignore
-from pybricks.media.ev3dev import SoundFile, ImageFile # type: ignore
+from pybricks.hubs import EV3Brick  # type: ignore
+from pybricks.ev3devices import (
+    Motor,
+    TouchSensor,
+    ColorSensor,  # type: ignore
+    InfraredSensor,
+    UltrasonicSensor,
+    GyroSensor,
+)
+from pybricks.parameters import Port, Stop, Direction, Button, Color  # type: ignore
+from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
+from pybricks.robotics import DriveBase  # type: ignore
+from pybricks.media.ev3dev import SoundFile, ImageFile  # type: ignore
 
-'''
+"""
 Módulo central pra controle do Robô.
 
 Devem estar nesse módulo:
@@ -16,8 +22,12 @@ Devem estar nesse módulo:
 
 Não devem estar nesse módulo:
     - Código específico de algum problema/desafio
-'''
-class Robot: 
+"""
+
+# TODO: colocar pid no walk e turn
+
+
+class Robot:
     # Classe que representa um robô genérico
 
     def _init_(self, wheel_diameter, wheel_distance, r_wheel, l_wheel):
@@ -34,8 +44,8 @@ class Robot:
 
     def real_degrees_to_motor_angle(self, degrees):
         # Converte graus reais para graus correspondentes na roda
-        return degrees * (self.wheel_distance/self.wheel_diameter)
-    
+        return degrees * (self.wheel_distance / self.wheel_diameter)
+
     def reset_wheels_angle(self):
         # Zera o ângulo das rodas
         self.r_wheel.reset_angle(0)
@@ -47,15 +57,15 @@ class Robot:
         self.reset_wheels_angle()
 
         motor_degrees = self.real_degrees_to_motor_angle(angle)
-        error = (abs(self.r_wheel) + abs(self.l_wheel))/2
+        error = (abs(self.r_wheel) + abs(self.l_wheel)) / 2
 
         if pid:
             # Curva usando PID
-            side = angle/abs(angle)
+            side = angle / abs(angle)
 
         else:
             # Curva normal
             while error < motor_degrees:
-                error = (abs(self.r_wheel) + abs(self.l_wheel))/2
+                error = (abs(self.r_wheel) + abs(self.l_wheel)) / 2
                 self.r_wheel.run(dc)
                 self.l_wheel.run(-dc)
