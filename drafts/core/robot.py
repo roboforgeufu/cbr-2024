@@ -31,7 +31,7 @@ class Robot:
 
     # Classe que representa um robô genérico
 
-    def _init_(self, wheel_diameter, wheel_distance, r_wheel, l_wheel):
+    def __init__(self, wheel_diameter, wheel_distance, r_wheel, l_wheel):
 
         # Ev3
         self.ev3 = EV3Brick()
@@ -40,30 +40,35 @@ class Robot:
         # Rodas
         self.wheel_diameter = wheel_diameter
         self.wheel_distance = wheel_distance
-        self.r_wheel = Motor(r_wheel)
-        self.l_wheel = Motor(l_wheel)
+        self.r_wheel = r_wheel
+        self.l_wheel = l_wheel
 
-    def real_degrees_to_motor_angle(self, degrees):
+    def real_angle_to_motor_degrees(self, angle):
 
         # Converte graus reais para graus correspondentes na roda
-        return degrees * (self.wheel_distance / self.wheel_diameter)
+        return angle * (self.wheel_diameter / self.wheel_distance)
 
-    def reset_wheels_angle(self):
+    def set_wheels_angle(self, angle):
 
         # Zera o ângulo das rodas
-        self.r_wheel.reset_angle(0)
-        self.l_wheel.reset_angle(0)
+        self.r_wheel.reset_angle(angle)
+        self.l_wheel.reset_angle(angle)
     
     def hold_wheels(self):
 
         # Interrompe e trava as rodas
-        r_wheel = self.r_wheel.hold()
-        l_wheel = self.l_wheel.hold()
+        self.r_wheel.hold()
+        self.l_wheel.hold()
 
-    def wheels_angle():
+    def wheels_angle(self):
 
-        # Retorna a média do angulo das duas rodas
+        # Retorna a média do ângulo das duas rodas
         return (self.l_wheel.angle() + self.l_wheel.angle())/2
+
+    def abs_wheels_angle(self):
+        
+        # Retorna a média do módulo do ângulo das duas rodas
+        return (abs(self.r_wheel.angle()) + abs(self.l_wheel.angle()))/2
 
     def walk(self, dc=100, angle=None, pid=False):
 
@@ -72,21 +77,24 @@ class Robot:
             pass
 
         else:
-            if angle == None:
-                self.reset_wheels_angle()
+            if angle != None:
+                self.set_wheels_angle(0)
                 while angle >= wheels_angle():
                     self.r_wheel.dc(dc)
                     self.l_wheel.dc(dc)
                 self.hold_wheels()
+            else:
+                self.r_wheel.dc(dc)
+                self.l_wheel.dc(dc)
 
 
     def turn(self, angle, pid=False, dc=100):
 
         # Gira o robô em graus
-        self.reset_wheels_angle()
+        self.set_wheels_angle(0)
 
-        motor_degrees = self.real_degrees_to_motor_angle(angle)
-        error = (abs(self.r_wheel) + abs(self.l_wheel)) / 2
+        motor_degrees = self.real_angle_to_motor_degrees(angle)
+        error = self.abs_wheels_angle()
 
         if pid:
             # Curva usando PID
@@ -96,6 +104,6 @@ class Robot:
         else:
             # Curva normal
             while error < motor_degrees:
-                error = (abs(self.r_wheel) + abs(self.l_wheel)) / 2
+                error = self.abs_wheels_angle()
                 self.r_wheel.run(dc)
                 self.l_wheel.run(-dc)
