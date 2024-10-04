@@ -71,7 +71,8 @@ class Robot:
         if pid:
             pass
 
-        else: if angle == None:
+        else:
+            if angle == None:
                 self.reset_wheels_angle()
                 while angle >= wheels_angle():
                     self.r_wheel.dc(dc)
