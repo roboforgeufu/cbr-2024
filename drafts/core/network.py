@@ -2,8 +2,7 @@
 from pybricks.hubs import EV3Brick # type: ignore
 from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor, # type: ignore
                                  InfraredSensor, UltrasonicSensor, GyroSensor)
-from pybricks.messaging import (BluetoothMailboxClient, BluetoothMailboxServer, # type: ignore
-                                NumericMailbox, TextMailbox, LogicMailbox)
+from pybricks.messaging import (BluetoothMailboxClient, BluetoothMailboxServer, TextMailbox) # type: ignore
 from pybricks.parameters import Port, Stop, Direction, Button, Color # type: ignore
 from pybricks.tools import wait, StopWatch, DataLog # type: ignore
 from pybricks.robotics import DriveBase # type: ignore
@@ -11,9 +10,21 @@ from pybricks.media.ev3dev import SoundFile, ImageFile # type: ignore
 
 import socket
 
-class Server:
+from encoding import encoder, decoder
+"""
+Módulo central de comunicação.
+
+Devem estar nesse módulo:
+    - Classe 'Network', com métodos e atributos para a comunicação entre dois dispositivos (bricks ou computadores)
+
+Não devem estar nesse módulo:
+    - Código específico de algum problema/desafio
+    - Métodos de codificação
+"""
+
+class Network:
     
-    def _init_(self, ev3):
+    def __init__(self, ev3):
 
         self.ev3 = ev3
         self.server = BluetoothMailboxServer()
@@ -45,7 +56,7 @@ class Server:
     def wifi_message(self, client, message):
 
         # Envia e recebe um pacote para o cliente
-        message = ",".join(map(str, message))
+        message = enconding.encoder(message)
         client.send(message.encode())
         recv_message = str(client.recv(1024).decode())
 
@@ -73,33 +84,29 @@ class Server:
         # Inicia a conexão bluetooth (Servidor ou cliente)
         if is_server:
             # Inicia o servidor
-            self.server.wait_for_connection(5)
+            self.server.wait_for_connection(5)            
 
         else:
             # Inicia o cliente
             self.client.connect()
 
-    def bluetooth_message(self,connection,message=None,channel="Main"): # Envia ou recebe uma mensagem (No canal principal por padrão)
+    def bluetooth_message(self, connection, message=None, channel="Main"): # Envia ou recebe uma mensagem
+                                                                           # (No canal principal por padrão)
+        # Função do Ev3 que envia ou recebe apenas strings
+        mbox = TextMailbox(connection, channel)
 
-        # Checa o tipo da mensagem
-        if isinstance(message,(float,int)): mbox = NumericMailbox(channel,connection) 
-        elif isinstance(message,str): mbox = TextMailbox(channel,connection)
-        elif isinstance(message,bool): mbox = LogicMailbox(channel,connection)
-        elif isinstance(message,(list,tuple)):
-            # Converte a lista em uma string
-            message = ",".join(map(str, message))
-            mbox = TextMailbox("Mailbox", connection)
-            
         if message==None:
 
         # Se não tiver mensagem como argumento, retorna uma mensagem recebida e o assunto (canal)
             mbox.wait()
-            return mbox.read(), channel
+            message_tuple = decoder(mbox.read())
+            return recv_message
         
         else:
-
-            # Se tiver mensagem como argumento, envia uma mensagem
-            mbox.send(message)
+            
+            # Se tiver mensagem como argumento, envia a mensagem
+            encoded_message = encoder(message)
+            mbox.send(encoded_message)
 
 
     def bluetooth_end(self, is_server=False):
