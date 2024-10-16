@@ -24,11 +24,14 @@ Não devem estar nesse módulo:
 
 class Network:
     
-    def __init__(self, ev3):
+    def __init__(self, ev3, is_server=False):
 
         self.ev3 = ev3
-        self.server = BluetoothMailboxServer()
-        self.client = BluetoothMailboxClient()
+        self.is_server = is_server
+        if self.is_server:
+            self.bluetooth = BluetoothMailboxServer()
+        else:
+            self.bluetooth = BluetoothMailboxClient()
 
     #
     #   Conexão WIFI Ev3 com computador (Debug)
@@ -79,27 +82,29 @@ class Network:
     # Conexão bluetooth EV3 com EV3
     #
 
-    def bluetooth_start(self, is_server=False):
+    def bluetooth_start(self):
         
         # Inicia a conexão bluetooth (Servidor ou cliente)
-        if is_server:
+        if self.is_server:
             # Inicia o servidor
-            self.server.wait_for_connection(5)            
+            self.bluetooth.wait_for_connection(5)
+            return "SERVIDOR INICIADO!"            
 
         else:
             # Inicia o cliente
-            self.client.connect()
+            self.bluetooth.connect()
+            return "CLIENTE INICIADO!"
 
-    def bluetooth_message(self, connection, message=None, channel="Main"): # Envia ou recebe uma mensagem
-                                                                           # (No canal principal por padrão)
-        # Função do Ev3 que envia ou recebe apenas strings
-        mbox = TextMailbox(connection, channel)
+    def bluetooth_message(self, message=None, channel="Main"):  # Envia ou recebe uma mensagem (no canal principal por padrão)
+
+        # Método de comunicação do Ev3 que envia ou recebe apenas strings
+        mbox = TextMailbox(self.bluetooth, channel)
 
         if message==None:
 
-        # Se não tiver mensagem como argumento, retorna uma mensagem recebida e o assunto (canal)
+            # Se não tiver mensagem como argumento, retorna uma mensagem recebida e o assunto (canal)
             mbox.wait()
-            message_tuple = decoder(mbox.read())
+            recv_message = decoder(mbox.read())
             return recv_message
         
         else:
@@ -108,12 +113,6 @@ class Network:
             encoded_message = encoder(message)
             mbox.send(encoded_message)
 
-
-    def bluetooth_end(self, is_server=False):
-
-        # Encerra a conexão
-        if is_server:
-            self.server.close()
-        
-        else:
-            self.client.close()
+    def bluetooth_end(self):
+    
+        self.bluetooth.close()

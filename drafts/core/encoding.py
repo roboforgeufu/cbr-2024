@@ -99,6 +99,6 @@ def decoder(encoded_message):
             # Decodifica cada elemento da lista recursivamente
             decoded_list.append(decoder(parsed_message))  
 
-        decoded_message = tuple(decoded_list) # Retornando tupla para preservar compatibilidade
+        decoded_message = tuple(decoded_list) # Retornando em tupla para preservar compatibilidade
 
     return decoded_message
