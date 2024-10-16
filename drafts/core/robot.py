@@ -79,7 +79,7 @@ class Robot:
         else:
             if angle != None:
                 self.set_wheels_angle(0)
-                while angle >= wheels_angle():
+                while abs(angle) >= abs_wheels_angle():
                     self.r_wheel.dc(dc)
                     self.l_wheel.dc(dc)
                 self.hold_wheels()
