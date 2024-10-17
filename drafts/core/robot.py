@@ -13,6 +13,8 @@ from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
 from pybricks.robotics import DriveBase  # type: ignore
 from pybricks.media.ev3dev import SoundFile, ImageFile  # type: ignore
 
+import os
+
 """
 Módulo central pra controle do Robô.
 
@@ -31,7 +33,9 @@ class Robot:
 
     # Classe que representa um robô genérico
 
-    def __init__(self, wheel_diameter, wheel_distance, r_wheel, l_wheel):
+    def __init__(
+        self, wheel_diameter=5.5, wheel_distance=11.25, r_wheel=None, l_wheel=None
+    ):
 
         # Ev3
         self.ev3 = EV3Brick()
@@ -53,7 +57,7 @@ class Robot:
         # Zera o ângulo das rodas
         self.r_wheel.reset_angle(angle)
         self.l_wheel.reset_angle(angle)
-    
+
     def hold_wheels(self):
 
         # Interrompe e trava as rodas
@@ -63,12 +67,12 @@ class Robot:
     def wheels_angle(self):
 
         # Retorna a média do ângulo das duas rodas
-        return (self.l_wheel.angle() + self.l_wheel.angle())/2
+        return (self.l_wheel.angle() + self.l_wheel.angle()) / 2
 
     def abs_wheels_angle(self):
-        
+
         # Retorna a média do módulo do ângulo das duas rodas
-        return (abs(self.r_wheel.angle()) + abs(self.l_wheel.angle()))/2
+        return (abs(self.r_wheel.angle()) + abs(self.l_wheel.angle())) / 2
 
     def walk(self, dc=100, angle=None, pid=False):
 
@@ -86,7 +90,6 @@ class Robot:
             else:
                 self.r_wheel.dc(dc)
                 self.l_wheel.dc(dc)
-
 
     def turn(self, angle, pid=False, dc=100):
 
@@ -107,3 +110,24 @@ class Robot:
                 error = self.abs_wheels_angle()
                 self.r_wheel.run(dc)
                 self.l_wheel.run(-dc)
+
+    def wait_button(self, button=[]):
+        if not isinstance(button, list):
+            button = [button]
+        while True:
+            if self.ev3.buttons.pressed() == button:
+                continue
+            else:
+                break
+
+    def get_hostname(self) -> str:
+        """
+        Retorna o hostname do dispositivo. Feito pensando em verificar o nome do BRICK.
+        """
+        stream = os.popen("hostname")  # nosec
+        return stream.read().split()[0]
+
+    def ev3_print(self, *args, clear=False, **kwargs):
+        """Imprime na tela do robô e no terminal do PC ao mesmo tempo. A opção `clear` controla se a tela do EV3 é limpada a cada novo print."""
+        self.ev3.screen.print(*args, **kwargs)
+        print(*args, **kwargs)
