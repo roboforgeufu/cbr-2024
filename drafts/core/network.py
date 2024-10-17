@@ -10,7 +10,7 @@ from pybricks.media.ev3dev import SoundFile, ImageFile # type: ignore
 
 import socket
 
-from encoding import encoder, decoder
+from core.encoding import encoder, decoder
 """
 Módulo central de comunicação.
 
@@ -24,10 +24,12 @@ Não devem estar nesse módulo:
 
 class Network:
     
-    def __init__(self, ev3, is_server=False):
+    def __init__(self, ev3 = EV3Brick(), is_server=False):
 
         self.ev3 = ev3
         self.is_server = is_server
+        self.wifi = socket.socket()
+
         if self.is_server:
             self.bluetooth = BluetoothMailboxServer()
         else:
@@ -40,30 +42,25 @@ class Network:
     def wifi_start(self):
 
         # Inicia a conexão wifi (Servidor)
-        client_connection = socket.socket()
         port = 12345
-        client_connection.bind(("", port))
-        client_connection.listen(5)
-        print("Waiting for connection...")
-        self.ev3.speaker.beep()
-        self.ev3.screen.print("Waiting for connection")
-        self.ev3.screen.print("    with computer...")
-        client, addr = client_connection.accept()
-        self.ev3.screen.clear()
-        self.ev3.screen.print("Connection successful!")
+        self.wifi.bind(("", port))
+        self.wifi.listen(5)
+        client, addr = self.wifi.accept()
         self.ev3.speaker.beep()
         wait(500)
 
         return client, addr
-    
-    def wifi_message(self, client, message):
+                            
+    def wifi_message(self, client, message=None):
+        
+        # Envia ou recebe um pacote do cliente
 
-        # Envia e recebe um pacote para o cliente
-        message = enconding.encoder(message)
-        client.send(message.encode())
-        recv_message = str(client.recv(1024).decode())
+        if message != None:
+            client.send(message.encode()) # Codifica mensagem em bytes
 
-        return recv_message
+        else:
+            recv_message = client.recv(1024).decode() # Decodifica bytes em mensagem
+            return recv_message
     
     def wifi_end(self, client):
 
@@ -87,31 +84,32 @@ class Network:
         # Inicia a conexão bluetooth (Servidor ou cliente)
         if self.is_server:
             # Inicia o servidor
-            self.bluetooth.wait_for_connection(5)
-            return "SERVIDOR INICIADO!"            
+            self.bluetooth.wait_for_connection()
+            return "SERVER START!"       
 
         else:
             # Inicia o cliente
-            self.bluetooth.connect()
-            return "CLIENTE INICIADO!"
+            self.bluetooth.connect("ev3server")
+            return "CLIENT START!"
 
     def bluetooth_message(self, message=None, channel="Main"):  # Envia ou recebe uma mensagem (no canal principal por padrão)
 
         # Método de comunicação do Ev3 que envia ou recebe apenas strings
-        mbox = TextMailbox(self.bluetooth, channel)
+        mbox = TextMailbox(channel, self.bluetooth)
 
-        if message==None:
+        if message!=None:
 
-            # Se não tiver mensagem como argumento, retorna uma mensagem recebida e o assunto (canal)
-            mbox.wait()
-            recv_message = decoder(mbox.read())
-            return recv_message
-        
+            # Se tiver alguma mensagem como argumento, envia a mensagem
+            encoded_message = encoder(message) # Codifica mensagem em formato personalizado (string)
+            mbox.send(encoded_message)
+            return "Mensagem enviada!"
+
         else:
             
-            # Se tiver mensagem como argumento, envia a mensagem
-            encoded_message = encoder(message)
-            mbox.send(encoded_message)
+            # Se não tiver mensagem como argumento, retorna uma mensagem recebida e o assunto (canal)
+            mbox.wait()
+            recv_message = decoder(mbox.read()) # Decodifica string personalizado em mensagem
+            return recv_message
 
     def bluetooth_end(self):
     
