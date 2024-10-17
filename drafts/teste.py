@@ -1,35 +1,71 @@
 #!/usr/bin/env pybricks-micropython
-from pybricks.hubs import EV3Brick # type: ignore
-from pybricks.ev3devices import (Motor, TouchSensor, ColorSensor, # type: ignore
-                                 InfraredSensor, UltrasonicSensor, GyroSensor)
-from pybricks.messaging import (BluetoothMailboxClient, BluetoothMailboxServer, TextMailbox) # type: ignore
-from pybricks.parameters import Port, Stop, Direction, Button, Color # type: ignore
-from pybricks.tools import wait, StopWatch, DataLog # type: ignore
-from pybricks.robotics import DriveBase # type: ignore
-from pybricks.media.ev3dev import SoundFile, ImageFile # type: ignore
+from pybricks.hubs import EV3Brick  # type: ignore
+from pybricks.ev3devices import (
+    Motor,
+    TouchSensor,
+    ColorSensor,  # type: ignore
+    InfraredSensor,
+    UltrasonicSensor,
+    GyroSensor,
+)
+from pybricks.messaging import BluetoothMailboxClient, BluetoothMailboxServer, TextMailbox  # type: ignore
+from pybricks.parameters import Port, Stop, Direction, Button, Color  # type: ignore
+from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
+from pybricks.robotics import DriveBase  # type: ignore
+from pybricks.media.ev3dev import SoundFile, ImageFile  # type: ignore
 
 from core.network import Network
+from core.robot import Robot
+from core.encoding import encoder, decoder
 
-ev3 = EV3Brick
+# OBJETOS
+ev3 = EV3Brick()
+robot = Robot()
 
-def check_server():
-    while True:
-        if ev3.buttons.pressed() != None:
-            if ev3.buttons.pressed() != ev3.buttons.pressed([Button.CENTER]):
-                return True
-                break
-            else:
-                return False
-                break
-        else:
-            ev3.screen.clear()
-            ev3.screen.print('FOR SERVER PRESS CENTER')
+# DEFINE SERVIDOR
+is_server = robot.get_hostname() == "ev3server"
 
-is_server = check_server()
+# INICIA
+ev3.speaker.beep()
 
-network = Network(EV3Brick, is_server)
+print(robot.get_hostname())
 
-status = network.bluetooth_start()
+net = Network(ev3, is_server)
 
-ev3.screen.print(status)
+# ESPERANDO CONEXÃO WIFI
+if is_server:
     
+    robot.ev3_print("ESPERANDO WIFI")
+
+    client, addr = net.wifi_start()
+
+    ev3.screen.clear()
+    robot.ev3_print('WIFI\nINICIADO!')
+
+robot.ev3_print("ESPERANDO BLUETOOTH")
+bluetooth_status = net.bluetooth_start()
+
+ev3.screen.clear()
+robot.ev3_print(bluetooth_status)
+wait(2000)
+ev3.screen.clear()
+if is_server:
+    char = ''
+    message = ''
+    while char != "enter":
+        char = net.wifi_message(client)
+        if char == "backspace":
+            ev3.screen.clear()
+            robot.ev3_print(message)
+        else:
+            robot.ev3_print(char, end='')
+            message = message + net.wifi_message(client)
+    net.bluetooth_message(message)
+else:
+    message = net.bluetooth_message()
+    robot.ev3_print(message)
+
+print('Normal:' + str(message))
+print('Codificado:' + str(encoder(message)))
+
+while True: wait(10000)
