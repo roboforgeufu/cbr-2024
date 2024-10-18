@@ -17,6 +17,7 @@ from pybricks.media.ev3dev import SoundFile, ImageFile  # type: ignore
 import socket
 
 from core.encoding import encoder, decoder
+from core.utils import get_hostname
 
 """
 Módulo central de comunicação do EV3.
@@ -28,6 +29,7 @@ Não devem estar nesse módulo:
     - Código específico de algum problema/desafio
     - Métodos de codificação
 """
+
 
 class Wifi:
 
@@ -77,7 +79,7 @@ class Bluetooth:
     # Conexão bluetooth EV3 com EV3
     #
 
-    def __init__(self, ev3=EV3Brick(), is_server=False):
+    def __init__(self, is_server=False, ev3=EV3Brick):
 
         self.ev3 = ev3
         self.is_server = is_server
@@ -128,4 +130,3 @@ class Bluetooth:
     def end(self):
 
         self.bluetooth.close()
-

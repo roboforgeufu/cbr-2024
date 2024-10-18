@@ -13,8 +13,6 @@ from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
 from pybricks.robotics import DriveBase  # type: ignore
 from pybricks.media.ev3dev import SoundFile, ImageFile, Font  # type: ignore
 
-import os
-
 """
 Módulo central pra controle do Robô.
 
@@ -39,13 +37,11 @@ class Robot:
         wheel_distance=11.25,
         r_wheel=None,
         l_wheel=None,
-        font=None,
     ):
 
         # Ev3
         self.ev3 = EV3Brick()
         self.watch = StopWatch()
-        self.ev3.screen.set_font(Font(str(font)))
 
         # Rodas
         self.wheel_diameter = wheel_diameter
@@ -126,14 +122,9 @@ class Robot:
             else:
                 break
 
-    def get_hostname(self) -> str:
-        """
-        Retorna o hostname do dispositivo. Feito pensando em verificar o nome do BRICK.
-        """
-        stream = os.popen("hostname")  # nosec
-        return stream.read().split()[0]
-
-    def ev3_print(self, *args, clear=False, **kwargs):
+    def ev3_print(self, *args, clear=False, font='Lucida', size=16, bold=False, **kwargs):
         """Imprime na tela do robô e no terminal do PC ao mesmo tempo. A opção `clear` controla se a tela do EV3 é limpada a cada novo print."""
+        if clear: self.ev3.screen.clear()
+        self.ev3.screen.set_font(Font(font, size, bold))
         self.ev3.screen.print(*args, **kwargs)
         print(*args, **kwargs)
