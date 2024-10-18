@@ -11,7 +11,7 @@ from pybricks.ev3devices import (
 from pybricks.parameters import Port, Stop, Direction, Button, Color  # type: ignore
 from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
 from pybricks.robotics import DriveBase  # type: ignore
-from pybricks.media.ev3dev import SoundFile, ImageFile  # type: ignore
+from pybricks.media.ev3dev import SoundFile, ImageFile, Font  # type: ignore
 
 import os
 
@@ -34,12 +34,18 @@ class Robot:
     # Classe que representa um robô genérico
 
     def __init__(
-        self, wheel_diameter=5.5, wheel_distance=11.25, r_wheel=None, l_wheel=None
+        self,
+        wheel_diameter=5.5,
+        wheel_distance=11.25,
+        r_wheel=None,
+        l_wheel=None,
+        font=None,
     ):
 
         # Ev3
         self.ev3 = EV3Brick()
         self.watch = StopWatch()
+        self.ev3.screen.set_font(Font(str(font)))
 
         # Rodas
         self.wheel_diameter = wheel_diameter
