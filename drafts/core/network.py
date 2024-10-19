@@ -103,8 +103,7 @@ class Bluetooth:
             return "CLIENT START!"
 
     def message(
-        self, message=None, channel="Main"
-    ):  # Envia ou recebe uma mensagem (no canal principal por padrão)
+        self, message=None, channel="Main",delay=0):  # Envia ou recebe uma mensagem (no canal principal por padrão)
 
         # Método de comunicação do Ev3 que envia ou recebe apenas strings
         mbox = TextMailbox(channel, self.bluetooth)
@@ -112,9 +111,8 @@ class Bluetooth:
         if message != None:
 
             # Se tiver alguma mensagem como argumento, envia a mensagem
-            encoded_message = encoder(
-                message
-            )  # Codifica mensagem em formato personalizado (string)
+            encoded_message = encoder(message)
+            wait(delay)  # Codifica mensagem em formato personalizado (string)
             mbox.send(encoded_message)
             return "Mensagem enviada!"
 
@@ -122,9 +120,7 @@ class Bluetooth:
 
             # Se não tiver mensagem como argumento, retorna uma mensagem recebida e o assunto (canal)
             mbox.wait()
-            recv_message = decoder(
-                mbox.read()
-            )  # Decodifica string personalizado em mensagem
+            recv_message = decoder(mbox.read()) # Decodifica string personalizado em mensagem
             return recv_message
 
     def end(self):

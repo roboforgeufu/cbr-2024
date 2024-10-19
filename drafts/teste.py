@@ -28,7 +28,8 @@ robot.ev3.speaker.beep()
 while True:
     if is_server:
         color = hitech.read("NORM")
-        bt.message(color)
+        retorno = bt.message(color, delay=1000)
+        robot.ev3_print(str(retorno), clear=True)
     else:
         color = bt.message()
-        robot.ev3_print(color, clear=True, font='Lucida', size=18, bold=True)
+        robot.ev3_print( color, clear=True, font="Helvetica", size=18, bold=True)

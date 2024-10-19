@@ -122,9 +122,24 @@ class Robot:
             else:
                 break
 
-    def ev3_print(self, *args, clear=False, font='Lucida', size=16, bold=False, **kwargs):
+    def ev3_print(
+        self,
+        *args,
+        clear=False,
+        font="Lucida",
+        size=16,
+        bold=False,
+        x=0,
+        y=0,
+        background=None,
+        end="\n"
+    ):
         """Imprime na tela do robô e no terminal do PC ao mesmo tempo. A opção `clear` controla se a tela do EV3 é limpada a cada novo print."""
-        if clear: self.ev3.screen.clear()
+        if clear:
+            self.ev3.screen.clear()
         self.ev3.screen.set_font(Font(font, size, bold))
-        self.ev3.screen.print(*args, **kwargs)
-        print(*args, **kwargs)
+        if x != 0 or y != 0 or background != None:
+            self.ev3.screen.draw_text(x, y, str(*args), background_color=background)
+        else:
+            self.ev3.screen.print(*args, end=end)
+        print(*args)
