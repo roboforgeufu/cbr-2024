@@ -1,17 +1,17 @@
 #!/usr/bin/env pybricks-micropython
-from pybricks.hubs import EV3Brick  # type: ignore
+from pybricks.ev3devices import ColorSensor  # type: ignore
 from pybricks.ev3devices import (
+    GyroSensor,
+    InfraredSensor,
     Motor,
     TouchSensor,
-    ColorSensor,  # type: ignore
-    InfraredSensor,
     UltrasonicSensor,
-    GyroSensor,
 )
-from pybricks.parameters import Port, Stop, Direction, Button, Color  # type: ignore
-from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
+from pybricks.hubs import EV3Brick  # type: ignore
+from pybricks.media.ev3dev import ImageFile, SoundFile  # type: ignore
+from pybricks.parameters import Button, Color, Direction, Port, Stop  # type: ignore
 from pybricks.robotics import DriveBase  # type: ignore
-from pybricks.media.ev3dev import SoundFile, ImageFile  # type: ignore
+from pybricks.tools import DataLog, StopWatch, wait  # type: ignore
 
 """
 Módulo central pra controle do Robô.
@@ -31,7 +31,7 @@ class Robot:
 
     # Classe que representa um robô genérico
 
-    def __init__(self, wheel_diameter, wheel_distance, r_wheel, l_wheel):
+    def __init__(self, wheel_diameter, wheel_distance, r_wheel, l_wheel, debug=True):
 
         # Ev3
         self.ev3 = EV3Brick()
@@ -43,6 +43,19 @@ class Robot:
         self.r_wheel = r_wheel
         self.l_wheel = l_wheel
 
+        self.debug = debug
+
+    def ev3_print(self, *args, clear=False, always: bool = False, **kwargs):
+        """
+        Métodos para logs.
+        """
+        if self.debug or always:
+            if clear:
+                wait(10)
+                self.ev3.screen.clear()
+            self.ev3.screen.print(*args, **kwargs)
+            print(*args, **kwargs)
+
     def real_angle_to_motor_degrees(self, angle):
 
         # Converte graus reais para graus correspondentes na roda
@@ -53,7 +66,7 @@ class Robot:
         # Zera o ângulo das rodas
         self.r_wheel.reset_angle(angle)
         self.l_wheel.reset_angle(angle)
-    
+
     def hold_wheels(self):
 
         # Interrompe e trava as rodas
@@ -63,14 +76,14 @@ class Robot:
     def wheels_angle(self):
 
         # Retorna a média do ângulo das duas rodas
-        return (self.l_wheel.angle() + self.l_wheel.angle())/2
+        return (self.l_wheel.angle() + self.l_wheel.angle()) / 2
 
     def abs_wheels_angle(self):
-        
-        # Retorna a média do módulo do ângulo das duas rodas
-        return (abs(self.r_wheel.angle()) + abs(self.l_wheel.angle()))/2
 
-    def walk(self, dc=100, angle=None, pid=False):
+        # Retorna a média do módulo do ângulo das duas rodas
+        return (abs(self.r_wheel.angle()) + abs(self.l_wheel.angle())) / 2
+
+    def walk(self, speed=100, angle=None, pid=False):
 
         # Movimenta o robô
         if pid:
@@ -79,14 +92,13 @@ class Robot:
         else:
             if angle != None:
                 self.set_wheels_angle(0)
-                while angle >= wheels_angle():
-                    self.r_wheel.dc(dc)
-                    self.l_wheel.dc(dc)
+                while angle >= self.wheels_angle():
+                    self.r_wheel.run(speed)
+                    self.l_wheel.run(speed)
                 self.hold_wheels()
             else:
-                self.r_wheel.dc(dc)
-                self.l_wheel.dc(dc)
-
+                self.r_wheel.run(speed)
+                self.l_wheel.run(speed)
 
     def turn(self, angle, pid=False, dc=100):
 
