@@ -156,7 +156,7 @@ class OmniRobot:
 
     # Classe que representa um robô genérico
 
-    def __init__(self, wheel_diameter=5.5, wheel_length=10, wheel_width=10 wheel_1=None, wheel_2=None, wheel_3=None, wheel_4=None):
+    def __init__(self, wheel_diameter=5.5, wheel_length=10, wheel_width=10, wheel_1=None, wheel_2=None, wheel_3=None, wheel_4=None):
         
         # Ev3
         self.ev3 = EV3Brick()
@@ -177,7 +177,7 @@ class OmniRobot:
         radius = (self.wheel_length ** 2 + self.wheel_length ** 2) ** (1/2)
         return angle * radius / self.wheel_distance
 
-    def wheels_angle()
+    def wheels_angle():
 
         return (self.wheel_1.angle() + self.wheel_2.angle() + self.wheel_3.angle() + self.wheel_4.angle())/4
 
@@ -214,7 +214,7 @@ class OmniRobot:
             self.wheel_4.dc(-duty)
 
 
-    def walk(self, duty, angle=0, direction="vertical", pid=False)
+    def walk(self, duty, angle=0, direction="vertical", pid=False):
 
         side = abs(duty)/duty
         
@@ -245,7 +245,7 @@ class OmniRobot:
 
         if angle > 0:
             angle = real_angle_to_motor_degrees(angle)
-            while abs angle > self.abs_wheels_angle():
+            while abs(angle) > self.abs_wheels_angle():
                 self.wheel_1.dc(duty)
                 self.wheel_2.dc(-duty)
                 self.wheel_3.dc(duty)
