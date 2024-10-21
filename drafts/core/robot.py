@@ -1,17 +1,17 @@
 #!/usr/bin/env pybricks-micropython
-from pybricks.hubs import EV3Brick  # type: ignore
+from pybricks.ev3devices import ColorSensor  # type: ignore
 from pybricks.ev3devices import (
+    GyroSensor,
+    InfraredSensor,
     Motor,
     TouchSensor,
-    ColorSensor,  # type: ignore
-    InfraredSensor,
     UltrasonicSensor,
-    GyroSensor,
 )
-from pybricks.parameters import Port, Stop, Direction, Button, Color  # type: ignore
-from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
+from pybricks.hubs import EV3Brick  # type: ignore
+from pybricks.media.ev3dev import Font, ImageFile, SoundFile  # type: ignore
+from pybricks.parameters import Button, Color, Direction, Port, Stop  # type: ignore
 from pybricks.robotics import DriveBase  # type: ignore
-from pybricks.media.ev3dev import SoundFile, ImageFile, Font  # type: ignore
+from pybricks.tools import DataLog, StopWatch, wait  # type: ignore
 
 """
 Módulo central pra controle do Robô.
@@ -30,6 +30,7 @@ Não devem estar nesse módulo:
 # Robô com duas rodas
 #
 
+
 class Robot:
 
     # Classe que representa um robô genérico
@@ -40,6 +41,7 @@ class Robot:
         wheel_distance=11.25,
         r_wheel=None,
         l_wheel=None,
+        debug=True,
     ):
 
         # Ev3
@@ -51,6 +53,19 @@ class Robot:
         self.wheel_distance = wheel_distance
         self.r_wheel = r_wheel
         self.l_wheel = l_wheel
+
+        self.debug = debug
+
+    def ev3_print(self, *args, clear=False, always: bool = False, **kwargs):
+        """
+        Métodos para logs.
+        """
+        if self.debug or always:
+            if clear:
+                wait(10)
+                self.ev3.screen.clear()
+            self.ev3.screen.print(*args, **kwargs)
+            print(*args, **kwargs)
 
     def real_angle_to_motor_degrees(self, angle):
 
@@ -79,7 +94,7 @@ class Robot:
         # Retorna a média do módulo do ângulo das duas rodas
         return (abs(self.r_wheel.angle()) + abs(self.l_wheel.angle())) / 2
 
-    def walk(self, dc=100, angle=None, pid=False):
+    def walk(self, speed=100, angle=None, pid=False):
 
         # Movimenta o robô
         if pid:
@@ -88,13 +103,13 @@ class Robot:
         else:
             if angle != None:
                 self.set_wheels_angle(0)
-                while abs(angle) >= abs_wheels_angle():
-                    self.r_wheel.dc(dc)
-                    self.l_wheel.dc(dc)
+                while angle >= self.wheels_angle():
+                    self.r_wheel.run(speed)
+                    self.l_wheel.run(speed)
                 self.hold_wheels()
             else:
-                self.r_wheel.dc(dc)
-                self.l_wheel.dc(dc)
+                self.r_wheel.run(speed)
+                self.l_wheel.run(speed)
 
     def turn(self, angle, pid=False, dc=100):
 
@@ -148,16 +163,27 @@ class Robot:
             self.ev3.screen.print(*args, end=end)
         print(*args)
 
+
 #
 # Robô de quatro rodas omnidirecionais
 #
+
 
 class OmniRobot:
 
     # Classe que representa um robô genérico
 
-    def __init__(self, wheel_diameter=5.5, wheel_length=10, wheel_width=10, wheel_1=None, wheel_2=None, wheel_3=None, wheel_4=None):
-        
+    def __init__(
+        self,
+        wheel_diameter=5.5,
+        wheel_length=10,
+        wheel_width=10,
+        wheel_1=None,
+        wheel_2=None,
+        wheel_3=None,
+        wheel_4=None,
+    ):
+
         # Ev3
         self.ev3 = EV3Brick()
         self.watch = StopWatch()
@@ -174,16 +200,26 @@ class OmniRobot:
     def real_angle_to_motor_degrees(self, angle):
 
         # Converte graus reais para graus correspondentes na roda
-        radius = (self.wheel_length ** 2 + self.wheel_length ** 2) ** (1/2)
+        radius = (self.wheel_length**2 + self.wheel_length**2) ** (1 / 2)
         return angle * radius / self.wheel_distance
 
     def wheels_angle():
 
-        return (self.wheel_1.angle() + self.wheel_2.angle() + self.wheel_3.angle() + self.wheel_4.angle())/4
+        return (
+            self.wheel_1.angle()
+            + self.wheel_2.angle()
+            + self.wheel_3.angle()
+            + self.wheel_4.angle()
+        ) / 4
 
     def abs_wheels_angle():
 
-        return (abs(self.wheel_1.angle()) + abs(self.wheel_2.angle()) + abs(self.wheel_3.angle()) + abs(self.wheel_4.angle()))/4
+        return (
+            abs(self.wheel_1.angle())
+            + abs(self.wheel_2.angle())
+            + abs(self.wheel_3.angle())
+            + abs(self.wheel_4.angle())
+        ) / 4
 
     def set_wheels_angle(self, angle):
 
@@ -213,14 +249,13 @@ class OmniRobot:
             self.wheel_3.dc(duty)
             self.wheel_4.dc(-duty)
 
-
     def walk(self, duty, angle=0, direction="vertical", pid=False):
 
-        side = abs(duty)/duty
-        
+        side = abs(duty) / duty
+
         if angle != 0:
 
-            side *= abs(angle)/angle
+            side *= abs(angle) / angle
 
             self.set_wheels_angle(0)
 
@@ -239,7 +274,6 @@ class OmniRobot:
 
             elif direction == "horizontal":
                 horizontal_run(duty, side)
-
 
     def turn(self, duty=100, angle=0, pid=False):
 
@@ -264,7 +298,7 @@ class OmniRobot:
                 continue
             else:
                 break
-        
+
     def ev3_print(
         self,
         *args,
