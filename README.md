@@ -3,7 +3,8 @@
 Códigos e materiais da programação para o desafio da categoria Challenge da CBR (Competição Brasileira de Robótica) 2024, da equipe RoboForge.
 
 - **Rascunhos**: A pasta `/drafts` contém arquivos, materiais e códigos referentes a testes, rascunhos e algoritmos implementados em fase de validação.
-- **Código Fonte**: o projeto a ser transferido e executado no robô está na pasta `/src`.
+- **Código Fonte**: o projeto a ser transferido e executado no robô está na pasta `/src`
+- **Regras**: as regras da competição estão descritas no documento `/regras.pdf`
 
 ## Configurações do Projeto
 
