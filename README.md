@@ -19,3 +19,19 @@ No exemplo, enviando todos os arquivos da pasta `src` e da pasta `drafts`.
   "ev3devBrowser.download.include": "{src/**,drafts/**}"
 }
 ```
+
+Para baixar as pastas direto na pasta root do EV3:
+
+```json
+{
+  "ev3devBrowser.download.directory": "/"
+}
+```
+
+## Comandos SSH
+
+Pra baixar todos os logs do EV3 e deletar eles do robô:
+
+```
+scp robot@ev3dev:/home/robot/**/*.csv ./logs/ && ssh robot@ev3dev rm /home/robot/**/*.csv
+```

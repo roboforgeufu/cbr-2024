@@ -12,6 +12,7 @@ from pybricks.parameters import Port, Stop, Direction, Button, Color  # type: ig
 from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
 from pybricks.robotics import DriveBase  # type: ignore
 from pybricks.media.ev3dev import SoundFile, ImageFile, Font  # type: ignore
+from core.utils import ev3_print
 
 """
 Módulo central pra controle do Robô.
@@ -135,19 +136,22 @@ class Robot:
         x=0,
         y=0,
         background=None,
-        end="\n"
+        end="\n",
+        **kwargs,
     ):
-        # Imprime na tela do robô e no terminal do PC ao mesmo tempo
-        # A opção 'clear' controla se a tela do EV3 é limpada a cada novo print
-        if clear:
-            self.ev3.screen.clear()
-        self.ev3.screen.set_font(Font(font, size, bold))
-        if x != 0 or y != 0 or background != None:
-            self.ev3.screen.draw_text(x, y, str(*args), background_color=background)
-        else:
-            self.ev3.screen.print(*args, end=end)
-        print(*args)
-
+        ev3_print(
+            *args,
+            ev3=self.ev3,
+            clear=clear,
+            font=font,
+            size=size,
+            bold=bold,
+            x=x,
+            y=y,
+            background=background,
+            end=end,
+            **kwargs
+        )
 #
 # Robô de quatro rodas omnidirecionais
 #
@@ -277,12 +281,16 @@ class OmniRobot:
         background=None,
         end="\n"
     ):
-        """Imprime na tela do robô e no terminal do PC ao mesmo tempo. A opção `clear` controla se a tela do EV3 é limpada a cada novo print."""
-        if clear:
-            self.ev3.screen.clear()
-        self.ev3.screen.set_font(Font(font, size, bold))
-        if x != 0 or y != 0 or background != None:
-            self.ev3.screen.draw_text(x, y, str(*args), background_color=background)
-        else:
-            self.ev3.screen.print(*args, end=end)
-        print(*args)
+        ev3_print(
+            *args,
+            ev3=self.ev3,
+            clear=clear,
+            font=font,
+            size=size,
+            bold=bold,
+            x=x,
+            y=y,
+            background=background,
+            end=end,
+            **kwargs
+        )
