@@ -1,6 +1,6 @@
 from pybricks.parameters import Color
 
-def hitechnic_decision_tree(R, G, B, W):
+def ht_nxt_color_v2_p2_decision_tree(R, G, B, W):
     if R <= 206.0:
         if G <= 219.0:
             if R <= 39.5:

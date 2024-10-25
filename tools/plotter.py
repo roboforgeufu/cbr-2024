@@ -32,12 +32,12 @@ def main():
     ax.set_zlim([0, 255])
 
     file_names = [
-        "calib_ht-nxt-color-v2_2BLUE_2024_10_21_17_11_11_605026.csv",
-        "calib_ht-nxt-color-v2_2BROWN_2024_10_21_17_12_08_638375.csv",
-        "calib_ht-nxt-color-v2_2GREEN_2024_10_21_17_11_50_821863.csv",
-        "calib_ht-nxt-color-v2_2None_2024_10_21_17_15_04_128259.csv",
-        "calib_ht-nxt-color-v2_2RED_2024_10_21_17_11_32_133530.csv",
-        "calib_ht-nxt-color-v2_2WHITE_2024_10_21_17_12_33_465830.csv",
+        "calib_ht-nxt-color-v2_2_BLUE_2024_10_21_17_11_11_605026.csv",
+        "calib_ht-nxt-color-v2_2_BROWN_2024_10_21_17_12_08_638375.csv",
+        "calib_ht-nxt-color-v2_2_GREEN_2024_10_21_17_11_50_821863.csv",
+        "calib_ht-nxt-color-v2_2_None_2024_10_21_17_15_04_128259.csv",
+        "calib_ht-nxt-color-v2_2_RED_2024_10_21_17_11_32_133530.csv",
+        "calib_ht-nxt-color-v2_2_WHITE_2024_10_21_17_12_33_465830.csv",
     ]
     color_names = ["blue", "brown", "green", "gray", "red", "white"]
 

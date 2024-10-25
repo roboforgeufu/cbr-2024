@@ -87,7 +87,7 @@ def main():
                 continue
 
             logger = DataLog(
-                name="calib_" + s_name + "_" + str(s_port) + str(color),
+                name="calib_" + s_name + "_" + str(s_port) + "_" + str(color),
                 timestamp=True,
                 extension="csv",
             )
