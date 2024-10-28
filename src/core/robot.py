@@ -13,6 +13,7 @@ from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
 from pybricks.robotics import DriveBase  # type: ignore
 from pybricks.media.ev3dev import SoundFile, ImageFile, Font  # type: ignore
 from core.utils import ev3_print
+from core.decision_color_sensor import DecisionColorSensor
 
 """
 Módulo central pra controle do Robô.
@@ -31,12 +32,15 @@ Não devem estar nesse módulo:
 # Robô com duas rodas
 #
 
+
 class Robot:
 
     # Classe que representa um robô genérico
 
     def __init__(
         self,
+        wheel_diameter,
+        wheel_distance,
         motor_r: Port = None,
         motor_l: Port = None,
         motor_elevate_claw: Port = None,
@@ -44,9 +48,9 @@ class Robot:
         infra_side: Port = None,
         ultra_feet: Port = None,
         ultra_head: Port = None,
-        color_left: Port = None,
-        color_right: Port = None,
-        color_claw: Port = None,
+        color_left: DecisionColorSensor = None,
+        color_right: DecisionColorSensor = None,
+        color_claw: DecisionColorSensor = None,
         debug=True,
     ):
 
@@ -57,7 +61,7 @@ class Robot:
         # Rodas
         self.wheel_diameter = wheel_diameter
         self.wheel_distance = wheel_distance
-        
+
         # Motores
         if motor_r is not None:
             self.motor_r = Motor(motor_r)
@@ -70,22 +74,21 @@ class Robot:
 
         # Sensores
         if color_claw is not None:
-            self.color_claw = ColorSensor(color_claw)
+            self.color_claw = color_claw
         if ultra_head is not None:
             self.ultra_head = UltrasonicSensor(ultra_head)
         if ultra_feet is not None:
             self.ultra_feet = UltrasonicSensor(ultra_feet)
         if color_left is not None:
-            self.color_left = ColorSensor(color_left)
+            self.color_left = color_left
         if color_right is not None:
-            self.color_right = ColorSensor(color_right)
+            self.color_right = color_right
         if infra_side is not None:
             self.infra_side = InfraredSensor(infra_side)
 
         # Comunicação bluetooth
 
         self.debug = debug
-
 
     def real_angle_to_motor_degrees(self, angle):
 
@@ -185,27 +188,38 @@ class Robot:
             y=y,
             background=background,
             end=end,
-            **kwargs
+            **kwargs,
         )
-        
+
     def walk_while_same_reflection(self, speed=200):
         """Retorna o tempo passado andando até chegar na cor diferente"""
         ...
-    
+
     def align(self):
         """Alinha o robô usando dois sensores de cor da frente"""
         ...
+
 
 #
 # Robô de quatro rodas omnidirecionais
 #
 
+
 class OmniRobot:
 
     # Classe que representa um robô genérico
 
-    def __init__(self, wheel_diameter=5.5, wheel_length=10, wheel_width=10, wheel_1=None, wheel_2=None, wheel_3=None, wheel_4=None):
-        
+    def __init__(
+        self,
+        wheel_diameter=5.5,
+        wheel_length=10,
+        wheel_width=10,
+        wheel_1=None,
+        wheel_2=None,
+        wheel_3=None,
+        wheel_4=None,
+    ):
+
         # Ev3
         self.ev3 = EV3Brick()
         self.watch = StopWatch()
@@ -222,16 +236,26 @@ class OmniRobot:
     def real_angle_to_motor_degrees(self, angle):
 
         # Converte graus reais para graus correspondentes na roda
-        radius = (self.wheel_length ** 2 + self.wheel_length ** 2) ** (1/2)
+        radius = (self.wheel_length**2 + self.wheel_length**2) ** (1 / 2)
         return angle * radius / self.wheel_distance
 
-    def wheels_angle()
+    def wheels_angle(self):
 
-        return (self.wheel_1.angle() + self.wheel_2.angle() + self.wheel_3.angle() + self.wheel_4.angle())/4
+        return (
+            self.wheel_1.angle()
+            + self.wheel_2.angle()
+            + self.wheel_3.angle()
+            + self.wheel_4.angle()
+        ) / 4
 
-    def abs_wheels_angle():
+    def abs_wheels_angle(self):
 
-        return (abs(self.wheel_1.angle()) + abs(self.wheel_2.angle()) + abs(self.wheel_3.angle()) + abs(self.wheel_4.angle()))/4
+        return (
+            abs(self.wheel_1.angle())
+            + abs(self.wheel_2.angle())
+            + abs(self.wheel_3.angle())
+            + abs(self.wheel_4.angle())
+        ) / 4
 
     def set_wheels_angle(self, angle):
 
@@ -261,39 +285,37 @@ class OmniRobot:
             self.wheel_3.dc(duty)
             self.wheel_4.dc(-duty)
 
-
     def walk(self, duty, angle=0, direction="vertical", pid=False):
 
-        side = abs(duty)/duty
-        
+        side = abs(duty) / duty
+
         if angle != 0:
 
-            side *= abs(angle)/angle
+            side *= abs(angle) / angle
 
             self.set_wheels_angle(0)
 
             if direction == "vertical":
-                while abs(angle) >= abs_wheels_angle():
-                    vertical_run(duty)
+                while abs(angle) >= self.abs_wheels_angle():
+                    self.vertical_run(duty)
 
             elif direction == "horizontal":
-                while abs(angle) >= abs_wheels_angle():
-                    horizontal_run(duty, side)
+                while abs(angle) >= self.abs_wheels_angle():
+                    self.horizontal_run(duty, side)
 
         else:
 
             if direction == "vertical":
-                vertical_run(duty)
+                self.vertical_run(duty)
 
             elif direction == "horizontal":
-                horizontal_run(duty, side)
-
+                self.horizontal_run(duty, side)
 
     def turn(self, duty=100, angle=0, pid=False):
 
         if angle > 0:
-            angle = real_angle_to_motor_degrees(angle)
-            while (abs) angle > self.abs_wheels_angle():
+            angle = self.real_angle_to_motor_degrees(angle)
+            while abs(angle) > self.abs_wheels_angle():
                 self.wheel_1.dc(duty)
                 self.wheel_2.dc(-duty)
                 self.wheel_3.dc(duty)
@@ -312,7 +334,7 @@ class OmniRobot:
                 continue
             else:
                 break
-        
+
     def ev3_print(
         self,
         *args,
@@ -323,7 +345,8 @@ class OmniRobot:
         x=0,
         y=0,
         background=None,
-        end="\n"
+        end="\n",
+        **kwargs,
     ):
         ev3_print(
             *args,
@@ -336,5 +359,5 @@ class OmniRobot:
             y=y,
             background=background,
             end=end,
-            **kwargs
+            **kwargs,
         )

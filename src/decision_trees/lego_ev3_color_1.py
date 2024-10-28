@@ -1,6 +1,7 @@
 from pybricks.parameters import Color
 
-def _decision_tree(R, G, B):
+
+def levo_ev3_color_1_decision_tree(R, G, B):
     if R <= 10.5:
         if G <= 0.5:
             if R <= 0.5:

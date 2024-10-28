@@ -1,9 +1,11 @@
+from pybricks.parameters import Color
+
 import heapq
 
 ROBOT_SIZE_HALF = 7.7
 
 
-class Graph:                                
+class Graph:
     def __init__(self, adj_matrix):
         self.adj_matrix = adj_matrix
         self.num_vertices = len(adj_matrix)
@@ -15,7 +17,7 @@ class Graph:
     def remove_edge(self, origin, destiny):
         vertice = "V" + str(destiny)
         for idx, items in enumerate(self.adj_matrix[origin]):
-            if items[0] == vertice:                 
+            if items[0] == vertice:
                 self.matriz_lista_adjacencia[origin].pop(idx)
 
     def show_matrix(self):
@@ -157,6 +159,28 @@ map_matrix = [
 ]
 
 
+def get_target_for_passenger(child_adult: str, color):
+    """
+    Retorna o nro. do vértice alvo do passageiro no grafo do mapa, baseando-se no tamanho ("CHILD" ou "ADULT") e cor.
+    No caso da criança verde, retorna os três vértices do parque.
+    """
+    passenger_lookup_table = {
+        "CHILD": {
+            Color.GREEN: (0, 13, 26),
+            Color.BLUE: 4,
+            Color.BROWN: 30,
+        },
+        "ADULT": {
+            Color.GREEN: 17,
+            Color.BLUE: 28,
+            Color.BROWN: 2,
+            Color.RED: 15,
+        },
+    }
+
+    return passenger_lookup_table[child_adult][color]
+
+
 def main():
     inicio = int(input("Vértice inicial:"))
     fim = int(input("Vértice destino:"))
@@ -166,9 +190,9 @@ def main():
     try:
         obstaculo = int(input("Obstaculo:"))
         grafo.mark_obstacle(f"V{obstaculo}")
-    except:
+    except:  # nosec
         pass
-    
+
     grafo.show_matrix()
 
     caminho, distancia, direcoes_pesos = grafo.dijkstra(inicio, fim)
