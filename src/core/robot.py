@@ -37,10 +37,17 @@ class Robot:
 
     def __init__(
         self,
-        wheel_diameter=5.5,
-        wheel_distance=11.25,
-        r_wheel=None,
-        l_wheel=None,
+        motor_r: Port = None,
+        motor_l: Port = None,
+        motor_elevate_claw: Port = None,
+        motor_open_claw: Port = None,
+        infra_side: Port = None,
+        ultra_feet: Port = None,
+        ultra_head: Port = None,
+        color_left: Port = None,
+        color_right: Port = None,
+        color_claw: Port = None,
+        debug=True,
     ):
 
         # Ev3
@@ -50,8 +57,35 @@ class Robot:
         # Rodas
         self.wheel_diameter = wheel_diameter
         self.wheel_distance = wheel_distance
-        self.r_wheel = r_wheel
-        self.l_wheel = l_wheel
+        
+        # Motores
+        if motor_r is not None:
+            self.motor_r = Motor(motor_r)
+        if motor_l is not None:
+            self.motor_l = Motor(motor_l)
+        if motor_open_claw is not None:
+            self.motor_open_claw = Motor(motor_open_claw)
+        if motor_elevate_claw is not None:
+            self.motor_elevate_claw = Motor(motor_elevate_claw)
+
+        # Sensores
+        if color_claw is not None:
+            self.color_claw = ColorSensor(color_claw)
+        if ultra_head is not None:
+            self.ultra_head = UltrasonicSensor(ultra_head)
+        if ultra_feet is not None:
+            self.ultra_feet = UltrasonicSensor(ultra_feet)
+        if color_left is not None:
+            self.color_left = ColorSensor(color_left)
+        if color_right is not None:
+            self.color_right = ColorSensor(color_right)
+        if infra_side is not None:
+            self.infra_side = InfraredSensor(infra_side)
+
+        # Comunicação bluetooth
+
+        self.debug = debug
+
 
     def real_angle_to_motor_degrees(self, angle):
 
@@ -81,6 +115,7 @@ class Robot:
         return (abs(self.r_wheel.angle()) + abs(self.l_wheel.angle())) / 2
 
     def walk(self, dc=100, angle=None, pid=False):
+        # TODO: passar valor em centímetros
 
         # Movimenta o robô
         if pid:
@@ -89,7 +124,7 @@ class Robot:
         else:
             if angle != None:
                 self.set_wheels_angle(0)
-                while abs(angle) >= abs_wheels_angle():
+                while abs(angle) >= self.abs_wheels_angle():
                     self.r_wheel.dc(dc)
                     self.l_wheel.dc(dc)
                 self.hold_wheels()
@@ -152,6 +187,15 @@ class Robot:
             end=end,
             **kwargs
         )
+        
+    def walk_while_same_reflection(self, speed=200):
+        """Retorna o tempo passado andando até chegar na cor diferente"""
+        ...
+    
+    def align(self):
+        """Alinha o robô usando dois sensores de cor da frente"""
+        ...
+
 #
 # Robô de quatro rodas omnidirecionais
 #
