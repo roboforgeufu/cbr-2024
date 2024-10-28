@@ -37,10 +37,16 @@ class Robot:
 
     def __init__(
         self,
-        wheel_diameter=5.5,
-        wheel_distance=11.25,
-        r_wheel=None,
-        l_wheel=None,
+        motor_r: Port = None,
+        motor_l: Port = None,
+        motor_elevate_claw: Port = None,
+        motor_open_claw: Port = None,
+        infra_side: Port = None,
+        ultra_feet: Port = None,
+        ultra_head: Port = None,
+        color_left: Port = None,
+        color_right: Port = None,
+        color_claw: Port = None,
         debug=True,
     ):
 
@@ -51,10 +57,35 @@ class Robot:
         # Rodas
         self.wheel_diameter = wheel_diameter
         self.wheel_distance = wheel_distance
-        self.r_wheel = r_wheel
-        self.l_wheel = l_wheel
+        
+        # Motores
+        if motor_r is not None:
+            self.motor_r = Motor(motor_r)
+        if motor_l is not None:
+            self.motor_l = Motor(motor_l)
+        if motor_open_claw is not None:
+            self.motor_open_claw = Motor(motor_open_claw)
+        if motor_elevate_claw is not None:
+            self.motor_elevate_claw = Motor(motor_elevate_claw)
+
+        # Sensores
+        if color_claw is not None:
+            self.color_claw = ColorSensor(color_claw)
+        if ultra_head is not None:
+            self.ultra_head = UltrasonicSensor(ultra_head)
+        if ultra_feet is not None:
+            self.ultra_feet = UltrasonicSensor(ultra_feet)
+        if color_left is not None:
+            self.color_left = ColorSensor(color_left)
+        if color_right is not None:
+            self.color_right = ColorSensor(color_right)
+        if infra_side is not None:
+            self.infra_side = InfraredSensor(infra_side)
+
+        # Comunicação bluetooth
 
         self.debug = debug
+        
 
     def ev3_print(self, *args, clear=False, always: bool = False, **kwargs):
         """
@@ -162,6 +193,7 @@ class Robot:
         else:
             self.ev3.screen.print(*args, end=end)
         print(*args)
+    
 
 
 #
@@ -203,7 +235,7 @@ class OmniRobot:
         radius = (self.wheel_length**2 + self.wheel_length**2) ** (1 / 2)
         return angle * radius / self.wheel_distance
 
-    def wheels_angle():
+    def wheels_angle(self):
 
         return (
             self.wheel_1.angle()
@@ -212,7 +244,7 @@ class OmniRobot:
             + self.wheel_4.angle()
         ) / 4
 
-    def abs_wheels_angle():
+    def abs_wheels_angle(self):
 
         return (
             abs(self.wheel_1.angle())
