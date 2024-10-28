@@ -37,10 +37,14 @@ robot.ev3.screen.clear()
 if is_server:
     char = ""
     message = ""
-    while char != "enter":
+    while True:
         char = wifi.message()
-        if char == "backspace":
+        if char == "enter":
+            break
+        elif char == "backspace":
             robot.ev3_print(message, clear=True)
+        elif char == "space":
+            robot.ev3_print(" ", end="")
         else:
             robot.ev3_print(char, end="")
             message = message + char

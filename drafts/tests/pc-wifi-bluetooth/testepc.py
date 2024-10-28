@@ -11,9 +11,14 @@ wifi.connect((IPaddress, 12345))
 while True:
     key = msvcrt.getch().decode('utf-8')  # Captura a tecla pressionada
     if ord(key) == 13:
-        wifi.send("enter")
+        enter = ("enter").encode()
+        wifi.send(enter)
+    elif ord(key) == 32:
+        space = ("space").encode()
+        wifi.send(aaaspace)
     elif ord(key) == 8:
-        wifi.send("backspace")
+        backspace = ("backspace").encode()
+        wifi.send(backspace)
     else:
         wifi.send(key.encode())
     print(key)

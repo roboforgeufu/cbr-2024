@@ -1,0 +1,7 @@
+pybricks
+scikit-learn
+pandas
+matplotlib
+PyQt6
+msvc-runtime
+graphviz
