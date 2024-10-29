@@ -35,8 +35,8 @@ def get_colors_and_features(sensor_type, sensor_position):
         ]
     elif sensor_position == "floor":
         color_names = [
-            "Color.BLUE",
             "Color.BLACK",
+            "Color.BLUE",
             "Color.BROWN",
             "Color.GREEN",
             "None",
@@ -78,7 +78,10 @@ def tree_to_code(tree, feature_names, classes, function_name="predict", file=Non
     ]
 
     with open(file, "w") as f:
-        print("from pybricks.parameters import Color\n", file=f)
+        print(
+            "from pybricks.parameters import Color\n # Arquivo gerado automaticamente",
+            file=f,
+        )
         print("def {}({}):".format(function_name, ", ".join(feature_names)), file=f)
 
         def recurse(node, depth):
@@ -147,7 +150,7 @@ def main():
         elem for sublist in ([color] * 100 for color in color_names) for elem in sublist
     )
 
-    classifier = tree.DecisionTreeClassifier(max_depth=4)
+    classifier = tree.DecisionTreeClassifier(max_leaf_nodes=len(color_names))
     tree_model = classifier.fit(dataframe, full_color_names)
 
     export_tree_to_pdf(
