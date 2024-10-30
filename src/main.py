@@ -31,7 +31,6 @@ from core.decision_color_sensor import DecisionColorSensor
 import constants as const
 from domain.localization import localization_routine
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
-from domain.boarding import passenger_boarding, passenger_unboarding
 from domain.path_control import path_control
 from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
 from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
