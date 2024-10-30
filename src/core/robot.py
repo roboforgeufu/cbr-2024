@@ -174,6 +174,7 @@ class Robot:
         cm,
         speed=60,
         obstacle_function=None,
+        off_motors=True,
     ):
         """Anda em linha reta com controle PID entre os motores."""
         degrees = self.cm_to_motor_degrees(cm)
@@ -206,7 +207,8 @@ class Robot:
                 initial_right_angle=initial_right_angle,
             )
 
-        self.off_motors()
+        if off_motors:
+            self.off_motors()
         return has_seen_obstacle
 
     def loopless_pid_walk(

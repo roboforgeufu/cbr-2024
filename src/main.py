@@ -121,10 +121,14 @@ def test_navigation_main(sandy: Robot):
     }
     sandy.orientation = button_to_direction[pressed]
 
-    map_graph.mark_obstacle("V23")
-    map_graph.mark_obstacle("V14")
-    path, distance, directions = map_graph.dijkstra(5, 26)
+    # map_graph.mark_obstacle("V10")
+    # map_graph.mark_obstacle("V21")
+    path, _, directions = map_graph.dijkstra(5, 26)
 
+    path_control(sandy, path, directions)
+
+    sandy.wait_button()
+    path, _, directions = map_graph.dijkstra(27, 6)
     path_control(sandy, path, directions)
 
 
@@ -136,7 +140,7 @@ def test_calibrate_align_pid(robot: Robot):
 
 def main():
     if get_hostname() == "sandy":
-        test_calibrate_align_pid(
+        test_navigation_main(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,

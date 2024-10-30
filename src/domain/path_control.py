@@ -70,13 +70,20 @@ def path_control(robot: Robot, path: list, directions: list):
 
     for idx, (direction, distance) in enumerate(directions):
         robot.ev3_print("Current position:", path[position_index])
-        robot.ev3_print("NEXT:", direction, distance)
+        robot.ev3_print("STEP:", direction, distance)
         turn_to_direction(robot, direction)
 
         if idx == len(directions) - 1:
             # nao anda a ultima distancia, pra nao entrar no estabelecimento
             break
-        has_seen_obstacle = robot.pid_walk(distance)
+
+        # Confere se a próxima movimentação é na mesma direção que a atual.
+        should_stop = True
+        if idx + 1 < len(directions) and directions[idx + 1][0] == direction:
+            # Caso seja, o robô não desliga os motores entre as movimentações.
+            should_stop = False
+
+        has_seen_obstacle = robot.pid_walk(distance, off_motors=should_stop)
         # TODO tratar obstáculo visto nesse momento
 
         position_index += 1
@@ -84,5 +91,6 @@ def path_control(robot: Robot, path: list, directions: list):
         new_position = path[position_index]
         if robot.orientation in walls_of_vertices[new_position]:
             # O robô está de frente pra uma parede, aproveita pra alinhar a frente
+            robot.off_motors()
             robot.align()
             robot.pid_walk(const.ROBOT_SIZE_HALF, speed=-60)
