@@ -40,6 +40,8 @@ from decision_trees.lego_ev3_color_4 import lego_ev3_color_p4_decision_tree
 
 
 def sandy_main(sandy: Robot):
+    sandy.bluetooth.start()
+
     # Inicialização mapa
     map_graph = Graph(map_matrix)
 
@@ -84,6 +86,12 @@ def sandy_main(sandy: Robot):
 
 
 def junior_main(junior: Robot):
+    junior.bluetooth.start()
+
+    # Levanta garra inicialmente
+    junior.motor_elevate_claw.run_target(75, 40)
+    junior.motor_elevate_claw.hold()
+
     #
     # Localização inicial
     #
@@ -108,6 +116,7 @@ def junior_main(junior: Robot):
 
 
 def test_navigation_main(sandy: Robot):
+    sandy.bluetooth.start()
 
     map_graph = Graph(map_matrix)
 
@@ -154,17 +163,21 @@ def main():
                 color_left=DecisionColorSensor(
                     ColorSensor(Port.S4), lego_ev3_color_p4_decision_tree
                 ),
+                server_name="sandy",
             )
         )
     else:
         junior_main(
             Robot(
+                wheel_diameter=const.WHEEL_DIAMETER,
+                wheel_distance=const.WHEEL_DIST,
                 motor_elevate_claw=Port.C,
                 motor_open_claw=Port.B,
                 color_claw=DecisionColorSensor(
                     ColorSensor(Port.S1), levo_ev3_color_1_decision_tree
                 ),
                 ultra_head=Port.S2,
+                server_name="sandy",
             )
         )
 

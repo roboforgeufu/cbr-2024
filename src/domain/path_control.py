@@ -87,24 +87,35 @@ def path_control(robot: Robot, path: list, directions: list):
             # Caso seja, o robô não desliga os motores entre as movimentações.
             should_stop = False
 
-        has_seen_obstacle = robot.pid_walk(
+        obstacle_function = (
+            lambda: robot.color_left.color() in wall_colors
+            or robot.color_right.color() in wall_colors
+        )
+        has_seen_obstacle, walked_perc = robot.pid_walk(
             distance,
             off_motors=should_stop,
-            obstacle_function=(
-                lambda: robot.color_left.color() in wall_colors
-                or robot.color_right.color() in wall_colors
-            ),
+            obstacle_function=obstacle_function,
         )
-        if has_seen_obstacle:
+        while has_seen_obstacle:
             robot.off_motors()
             if robot.color_left.color() in wall_colors:
                 # Alinhamento à esquerda
                 robot.ev3_print("à esquerda")
                 robot.pid_turn(20)
+                has_seen_obstacle, walked_perc = robot.pid_walk(
+                    cm=distance * (1 - walked_perc),
+                    off_motors=should_stop,
+                    obstacle_function=obstacle_function,
+                )
             elif robot.color_right.color() in wall_colors:
                 # Alinhamento à direita
                 robot.ev3_print("à direita")
                 robot.pid_turn(-20)
+                has_seen_obstacle, walked_perc = robot.pid_walk(
+                    cm=distance * (1 - walked_perc),
+                    off_motors=should_stop,
+                    obstacle_function=obstacle_function,
+                )
 
         position_index += 1
 
