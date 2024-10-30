@@ -213,10 +213,12 @@ def blue_routine(robot: Robot):  # chega de frente no azul
 def fill_list(
     robot: Robot
 ):
-    ini = robot.watch()
     lista = []
-    while robot.color_sensor.color() == "Color.WHITE":
-        robot.walk()
+    for i in range(4):
+        robot.turn(90)
+        ini = robot.watch()
+        while robot.color_sensor.color() == "Color.WHITE":
+            robot.walk()
         if robot.color_sensor.color() == "Color.BLUE":
             blue_routine(robot)
         else:
@@ -224,7 +226,6 @@ def fill_list(
             fim = robot.watch()
             lista.append(fim-ini)
             robot.hold_wheels()
-            robot.turn(90)
         return lista 
 
 
