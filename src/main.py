@@ -20,8 +20,9 @@ Não devem estar nesse módulo:
 
 OBS:. As direções são determinadas a partir do POV do robô
 """
-from pybricks.parameters import Port
+from pybricks.parameters import Port, Button
 from pybricks.ev3devices import ColorSensor
+from pybricks.tools import wait
 
 from core.robot import Robot
 from core.utils import get_hostname
@@ -34,6 +35,8 @@ from domain.boarding import passenger_boarding, passenger_unboarding
 from domain.path_control import path_control
 from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
 from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
+from decision_trees.lego_ev3_color_3 import lego_ev3_color_p3_decision_tree
+from decision_trees.lego_ev3_color_4 import lego_ev3_color_p4_decision_tree
 
 
 def sandy_main(sandy: Robot):
@@ -101,12 +104,39 @@ def junior_main(junior: Robot):
         #
         # Retorno a zona de embarque
         #
-        ...
+        pass
+
+
+def test_navigation_main(sandy: Robot):
+
+    map_graph = Graph(map_matrix)
+
+    sandy.ev3_print("Press initial robot orientation:")
+    pressed = sandy.wait_button([Button.UP, Button.LEFT, Button.RIGHT, Button.DOWN])
+    button_to_direction = {
+        Button.UP: "N",
+        Button.LEFT: "O",
+        Button.RIGHT: "L",
+        Button.DOWN: "S",
+    }
+    sandy.orientation = button_to_direction[pressed]
+
+    map_graph.mark_obstacle("V23")
+    map_graph.mark_obstacle("V14")
+    path, distance, directions = map_graph.dijkstra(5, 26)
+
+    path_control(sandy, path, directions)
+
+
+def test_calibrate_align_pid(robot: Robot):
+    while True:
+        robot.wait_button()
+        robot.align()
 
 
 def main():
     if get_hostname() == "sandy":
-        sandy_main(
+        test_calibrate_align_pid(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
@@ -115,10 +145,10 @@ def main():
                 infra_side=Port.S1,
                 ultra_feet=Port.S2,
                 color_right=DecisionColorSensor(
-                    ColorSensor(Port.S3), levo_ev3_color_1_decision_tree
+                    ColorSensor(Port.S3), lego_ev3_color_p3_decision_tree
                 ),
                 color_left=DecisionColorSensor(
-                    ColorSensor(Port.S4), levo_ev3_color_1_decision_tree
+                    ColorSensor(Port.S4), lego_ev3_color_p4_decision_tree
                 ),
             )
         )
@@ -133,3 +163,7 @@ def main():
                 ultra_head=Port.S2,
             )
         )
+
+
+if __name__ == "__main__":
+    main()

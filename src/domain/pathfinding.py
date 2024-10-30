@@ -12,7 +12,7 @@ class Graph:
         self.obstacles = []
 
     def add_edge(self, origin, destiny, direction, weight=1):
-        self.adj_matrix[origin].append([f"V{destiny}", f"{direction}", weight])
+        self.adj_matrix[origin].append(["V{}".format(destiny), direction, weight])
 
     def remove_edge(self, origin, destiny):
         vertice = "V" + str(destiny)
@@ -189,7 +189,7 @@ def main():
 
     try:
         obstaculo = int(input("Obstaculo:"))
-        grafo.mark_obstacle(f"V{obstaculo}")
+        grafo.mark_obstacle("V{}".format(obstaculo))
     except:  # nosec
         pass
 
@@ -198,15 +198,15 @@ def main():
     caminho, distancia, direcoes_pesos = grafo.dijkstra(inicio, fim)
 
     if distancia != float("inf"):
-        print(f"Os vértices visitados são: {caminho}")
-        print(f"A distância mínima calculada vale: {distancia}")
-        print(f"A saída pra path control: {direcoes_pesos}")
+        print("Os vértices visitados são:", caminho)
+        print("A distância mínima calculada vale:", distancia)
+        print("A saída pra path control:", direcoes_pesos)
     else:
         print("Caminho bloqueado, tentando remover obstáculos.")
         caminho, distancia = grafo.recalcular_caminho_sem_obstaculos(inicio, fim)
         if distancia != float("inf"):
-            print(f"Caminho após remover obstáculos: {caminho}")
-            print(f"A distância mínima recalculada vale: {distancia}")
+            print("Caminho após remover obstáculos:", caminho)
+            print("A distância mínima recalculada vale:", distancia)
         else:
             print("Não foi possível encontrar um caminho, mesmo sem os obstáculos.")
 

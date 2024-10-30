@@ -4,6 +4,22 @@ from pybricks.media.ev3dev import Font
 from pybricks.parameters import Button
 
 
+class PIDValues:
+    """Variáveis de controle PID."""
+
+    def __init__(
+        self,
+        kp: float = 0,
+        ki: float = 0,
+        kd: float = 0,
+        target=None,
+    ) -> None:
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.target = target
+
+
 def get_hostname() -> str:
     """
     Retorna o hostname do dispositivo. Feito pensando em verificar o nome do BRICK.
