@@ -121,8 +121,8 @@ def test_navigation_main(sandy: Robot):
     }
     sandy.orientation = button_to_direction[pressed]
 
-    # map_graph.mark_obstacle("V10")
-    # map_graph.mark_obstacle("V21")
+    map_graph.mark_obstacle("V10")
+    map_graph.mark_obstacle("V21")
     path, _, directions = map_graph.dijkstra(5, 26)
 
     path_control(sandy, path, directions)

@@ -1,5 +1,6 @@
 from core.robot import Robot
 import constants as const
+from pybricks.parameters import Color
 
 
 walls_of_vertices = {
@@ -26,6 +27,9 @@ walls_of_vertices = {
 
 possible_obstacles_vertices = [1, 3, 8, 10, 14, 16, 21, 23, 27, 29]
 possible_directions = ["N", "L", "S", "O"]  # sentido horário
+
+
+wall_colors = [Color.BLACK, Color.BLUE, Color.RED, Color.YELLOW, Color.BROWN]
 
 
 def get_side_directions(robot_orientation: str):
@@ -83,8 +87,24 @@ def path_control(robot: Robot, path: list, directions: list):
             # Caso seja, o robô não desliga os motores entre as movimentações.
             should_stop = False
 
-        has_seen_obstacle = robot.pid_walk(distance, off_motors=should_stop)
-        # TODO tratar obstáculo visto nesse momento
+        has_seen_obstacle = robot.pid_walk(
+            distance,
+            off_motors=should_stop,
+            obstacle_function=(
+                lambda: robot.color_left.color() in wall_colors
+                or robot.color_right.color() in wall_colors
+            ),
+        )
+        if has_seen_obstacle:
+            robot.off_motors()
+            if robot.color_left.color() in wall_colors:
+                # Alinhamento à esquerda
+                robot.ev3_print("à esquerda")
+                robot.pid_turn(20)
+            elif robot.color_right.color() in wall_colors:
+                # Alinhamento à direita
+                robot.ev3_print("à direita")
+                robot.pid_turn(-20)
 
         position_index += 1
 
