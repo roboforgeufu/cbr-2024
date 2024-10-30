@@ -1,5 +1,11 @@
 from core.robot import Robot
+from pybricks.parameters import Port
+from pybricks.ev3devices import ColorSensor
+
+import constants as const
 from pybricks.parameters import Color
+from core.decision_color_sensor import DecisionColorSensor
+
 
 # TODO substituir as condições pelo tratamento de cores
 # TODO testar o robô para criar logs que permitam diferenciar os vértices
@@ -10,219 +16,219 @@ from pybricks.parameters import Color
 """ 
 Abaixo estão as combinações e os vértices em que elas aparecem.
 
-    ['AM', 'VM', 'AM', 'VM']: [1, 14],
-    ['VM', 'AM', 'VM', 'AM']: [1, 14],
-    ['PR', 'VM', 'AM', 'VM']: [3, 16, 27, 29]
-    ['VM', 'AM', 'VM', 'PR']: [3, 16, 27, 29]
-    ['AM', 'VM', 'PR', 'VM']: [3, 16, 27, 29]
-    ['VM', 'PR', 'VM', 'AM']: [3, 16, 27, 29]
-    ['PR', 'VM', 'AZ', 'VM']: [5, 9, 11, 18, 20, 22, 24]
-    ['VM', 'AZ', 'VM', 'PR']: [5, 9, 11, 18, 20, 22, 24]
-    ['AZ', 'VM', 'PR', 'VM']: [5, 9, 11, 18, 20, 22, 24]
-    ['VM', 'PR', 'VM', 'AZ']: [5, 9, 11, 18, 20, 22, 24]
-    ['PR', 'VM', 'AZ', 'AM']: [7]
-    ['VM', 'AZ', 'AM', 'PR']: [7]
-    ['AZ', 'AM', 'PR', 'VM']: [7]
-    ['AM', 'PR', 'VM', 'AZ']: [7]
-    ['PR', 'PR', 'AZ', 'AM']: [8]
-    ['PR', 'AZ', 'AM', 'PR']: [8]
-    ['AZ', 'AM', 'PR', 'PR']: [8]
-    ['AM', 'PR', 'PR', 'AZ']: [8]
-    ['PR', 'AM', 'AZ', 'AM']: [10, 23]
-    ['AM', 'AZ', 'AM', 'PR']: [10, 23]
-    ['AZ', 'AM', 'PR', 'AM']: [10, 23]
-    ['AM', 'PR', 'AM', 'AZ']: [10, 23]
-    ['PR', 'AM', 'AZ', 'PR']: [21]
-    ['AM', 'AZ', 'PR', 'PR']: [21]
-    ['AZ', 'PR', 'PR', 'AM']: [21]
-    ['PR', 'PR', 'AM', 'AZ']: [21]
-    ['AM', 'VM', 'AZ', 'VM']: [31]
-    ['VM', 'AZ', 'VM', 'AM']: [31]
-    ['AZ', 'VM', 'AM', 'VM']: [31]
-    ['VM', 'AM', 'VM', 'AZ']: [31]
+    ['YELLOW', 'RED', 'YELLOW', 'RED']: [1, 14],
+    ['RED', 'YELLOW', 'RED', 'YELLOW']: [1, 14],
+    ['BLACK', 'RED', 'YELLOW', 'RED']: [3, 16, 27, 29]
+    ['RED', 'YELLOW', 'RED', 'BLACK']: [3, 16, 27, 29]
+    ['YELLOW', 'RED', 'BLACK', 'RED']: [3, 16, 27, 29]
+    ['RED', 'BLACK', 'RED', 'YELLOW']: [3, 16, 27, 29]
+    ['BLACK', 'RED', 'BLUE', 'RED']: [5, 9, 11, 18, 20, 22, 24]
+    ['RED', 'BLUE', 'RED', 'BLACK']: [5, 9, 11, 18, 20, 22, 24]
+    ['BLUE', 'RED', 'BLACK', 'RED']: [5, 9, 11, 18, 20, 22, 24]
+    ['RED', 'BLACK', 'RED', 'BLUE']: [5, 9, 11, 18, 20, 22, 24]
+    ['BLACK', 'RED', 'BLUE', 'YELLOW']: [7]
+    ['RED', 'BLUE', 'YELLOW', 'BLACK']: [7]
+    ['BLUE', 'YELLOW', 'BLACK', 'RED']: [7]
+    ['YELLOW', 'BLACK', 'RED', 'BLUE']: [7]
+    ['BLACK', 'BLACK', 'BLUE', 'YELLOW']: [8]
+    ['BLACK', 'BLUE', 'YELLOW', 'BLACK']: [8]
+    ['BLUE', 'YELLOW', 'BLACK', 'BLACK']: [8]
+    ['YELLOW', 'BLACK', 'BLACK', 'BLUE']: [8]
+    ['BLACK', 'YELLOW', 'BLUE', 'YELLOW']: [10, 23]
+    ['YELLOW', 'BLUE', 'YELLOW', 'BLACK']: [10, 23]
+    ['BLUE', 'YELLOW', 'BLACK', 'YELLOW']: [10, 23]
+    ['YELLOW', 'BLACK', 'YELLOW', 'BLUE']: [10, 23]
+    ['BLACK', 'YELLOW', 'BLUE', 'BLACK']: [21]
+    ['YELLOW', 'BLUE', 'BLACK', 'BLACK']: [21]
+    ['BLUE', 'BLACK', 'BLACK', 'YELLOW']: [21]
+    ['BLACK', 'BLACK', 'YELLOW', 'BLUE']: [21]
+    ['YELLOW', 'RED', 'BLUE', 'RED']: [31]
+    ['RED', 'BLUE', 'RED', 'YELLOW']: [31]
+    ['BLUE', 'RED', 'YELLOW', 'RED']: [31]
+    ['RED', 'YELLOW', 'RED', 'BLUE']: [31]
 """
 
 laterais_vertices = [
     [
         [1],
-        ["AM", "VM", "AM", "VM"],
-        ["VM", "AM", "VM", "AM"],
-        ["AM", "VM", "AM", "VM"],
-        ["VM", "AM", "VM", "AM"],
+        ["YELLOW", "RED", "YELLOW", "RED"],
+        ["RED", "YELLOW", "RED", "YELLOW"],
+        ["YELLOW", "RED", "YELLOW", "RED"],
+        ["RED", "YELLOW", "RED", "YELLOW"],
     ],
     [
         [3],
-        ["PR", "VM", "AM", "VM"],
-        ["VM", "AM", "VM", "PR"],
-        ["AM", "VM", "PR", "VM"],
-        ["VM", "PR", "VM", "AM"],
+        ["BLACK", "RED", "YELLOW", "RED"],
+        ["RED", "YELLOW", "RED", "BLACK"],
+        ["YELLOW", "RED", "BLACK", "RED"],
+        ["RED", "BLACK", "RED", "YELLOW"],
     ],
     [
         [5],
-        ["PR", "VM", "AZ", "VM"],
-        ["VM", "AZ", "VM", "PR"],
-        ["AZ", "VM", "PR", "VM"],
-        ["VM", "PR", "VM", "AZ"],
+        ["BLACK", "RED", "BLUE", "RED"],
+        ["RED", "BLUE", "RED", "BLACK"],
+        ["BLUE", "RED", "BLACK", "RED"],
+        ["RED", "BLACK", "RED", "BLUE"],
     ],
     [
         [7],
-        ["PR", "VM", "AZ", "AM"],
-        ["VM", "AZ", "AM", "PR"],
-        ["AZ", "AM", "PR", "VM"],
-        ["AM", "PR", "VM", "AZ"],
+        ["BLACK", "RED", "BLUE", "YELLOW"],
+        ["RED", "BLUE", "YELLOW", "BLACK"],
+        ["BLUE", "YELLOW", "BLACK", "RED"],
+        ["YELLOW", "BLACK", "RED", "BLUE"],
     ],
     [
         [8],
-        ["PR", "PR", "AZ", "AM"],
-        ["PR", "AZ", "AM", "PR"],
-        ["AZ", "AM", "PR", "PR"],
-        ["AM", "PR", "PR", "AZ"],
+        ["BLACK", "BLACK", "BLUE", "YELLOW"],
+        ["BLACK", "BLUE", "YELLOW", "BLACK"],
+        ["BLUE", "YELLOW", "BLACK", "BLACK"],
+        ["YELLOW", "BLACK", "BLACK", "BLUE"],
     ],
     [
         [9],
-        ["PR", "VM", "AZ", "VM"],
-        ["VM", "AZ", "VM", "PR"],
-        ["AZ", "VM", "PR", "VM"],
-        ["VM", "PR", "VM", "AZ"],
+        ["BLACK", "RED", "BLUE", "RED"],
+        ["RED", "BLUE", "RED", "BLACK"],
+        ["BLUE", "RED", "BLACK", "RED"],
+        ["RED", "BLACK", "RED", "BLUE"],
     ],
     [
         [10],
-        ["PR", "AM", "AZ", "AM"],
-        ["AM", "AZ", "AM", "PR"],
-        ["AZ", "AM", "PR", "AM"],
-        ["AM", "PR", "AM", "AZ"],
+        ["BLACK", "YELLOW", "BLUE", "YELLOW"],
+        ["YELLOW", "BLUE", "YELLOW", "BLACK"],
+        ["BLUE", "YELLOW", "BLACK", "YELLOW"],
+        ["YELLOW", "BLACK", "YELLOW", "BLUE"],
     ],
     [
         [11],
-        ["PR", "VM", "AZ", "VM"],
-        ["VM", "AZ", "VM", "PR"],
-        ["AZ", "VM", "PR", "VM"],
-        ["VM", "PR", "VM", "AZ"],
+        ["BLACK", "RED", "BLUE", "RED"],
+        ["RED", "BLUE", "RED", "BLACK"],
+        ["BLUE", "RED", "BLACK", "RED"],
+        ["RED", "BLACK", "RED", "BLUE"],
     ],
     [
         [14],
-        ["AM", "VM", "AM", "VM"],
-        ["VM", "AM", "VM", "AM"],
-        ["AM", "VM", "AM", "VM"],
-        ["VM", "AM", "VM", "AM"],
+        ["YELLOW", "RED", "YELLOW", "RED"],
+        ["RED", "YELLOW", "RED", "YELLOW"],
+        ["YELLOW", "RED", "YELLOW", "RED"],
+        ["RED", "YELLOW", "RED", "YELLOW"],
     ],
     [
         [16],
-        ["AM", "VM", "PR", "VM"],
-        ["VM", "PR", "VM", "AM"],
-        ["PR", "VM", "AM", "VM"],
-        ["VM", "AM", "VM", "PR"],
+        ["YELLOW", "RED", "BLACK", "RED"],
+        ["RED", "BLACK", "RED", "YELLOW"],
+        ["BLACK", "RED", "YELLOW", "RED"],
+        ["RED", "YELLOW", "RED", "BLACK"],
     ],
     [
         [18],
-        ["PR", "VM", "AZ", "VM"],
-        ["VM", "AZ", "VM", "PR"],
-        ["AZ", "VM", "PR", "VM"],
-        ["VM", "PR", "VM", "AZ"],
+        ["BLACK", "RED", "BLUE", "RED"],
+        ["RED", "BLUE", "RED", "BLACK"],
+        ["BLUE", "RED", "BLACK", "RED"],
+        ["RED", "BLACK", "RED", "BLUE"],
     ],
     [
         [20],
-        ["PR", "VM", "AZ", "VM"],
-        ["VM", "AZ", "VM", "PR"],
-        ["AZ", "VM", "PR", "VM"],
-        ["VM", "PR", "VM", "AZ"],
+        ["BLACK", "RED", "BLUE", "RED"],
+        ["RED", "BLUE", "RED", "BLACK"],
+        ["BLUE", "RED", "BLACK", "RED"],
+        ["RED", "BLACK", "RED", "BLUE"],
     ],
     [
         [21],
-        ["PR", "AM", "AZ", "PR"],
-        ["AM", "AZ", "PR", "PR"],
-        ["AZ", "PR", "PR", "AM"],
-        ["PR", "PR", "AM", "AZ"],
+        ["BLACK", "YELLOW", "BLUE", "BLACK"],
+        ["YELLOW", "BLUE", "BLACK", "BLACK"],
+        ["BLUE", "BLACK", "BLACK", "YELLOW"],
+        ["BLACK", "BLACK", "YELLOW", "BLUE"],
     ],
     [
         [22],
-        ["PR", "VM", "AZ", "VM"],
-        ["VM", "AZ", "VM", "PR"],
-        ["AZ", "VM", "PR", "VM"],
-        ["VM", "PR", "VM", "AZ"],
+        ["BLACK", "RED", "BLUE", "RED"],
+        ["RED", "BLUE", "RED", "BLACK"],
+        ["BLUE", "RED", "BLACK", "RED"],
+        ["RED", "BLACK", "RED", "BLUE"],
     ],
     [
         [23],
-        ["PR", "AM", "AZ", "AM"],
-        ["AM", "AZ", "AM", "PR"],
-        ["AZ", "AM", "PR", "AM"],
-        ["AM", "PR", "AM", "AZ"],
+        ["BLACK", "YELLOW", "BLUE", "YELLOW"],
+        ["YELLOW", "BLUE", "YELLOW", "BLACK"],
+        ["BLUE", "YELLOW", "BLACK", "YELLOW"],
+        ["YELLOW", "BLACK", "YELLOW", "BLUE"],
     ],
     [
         [24],
-        ["PR", "VM", "AZ", "VM"],
-        ["VM", "AZ", "VM", "PR"],
-        ["AZ", "VM", "PR", "VM"],
-        ["VM", "PR", "VM", "AZ"],
+        ["BLACK", "RED", "BLUE", "RED"],
+        ["RED", "BLUE", "RED", "BLACK"],
+        ["BLUE", "RED", "BLACK", "RED"],
+        ["RED", "BLACK", "RED", "BLUE"],
     ],
     [
         [27],
-        ["AM", "VM", "PR", "VM"],
-        ["VM", "PR", "VM", "AM"],
-        ["PR", "VM", "AM", "VM"],
-        ["VM", "AM", "VM", "PR"],
+        ["YELLOW", "RED", "BLACK", "RED"],
+        ["RED", "BLACK", "RED", "YELLOW"],
+        ["BLACK", "RED", "YELLOW", "RED"],
+        ["RED", "YELLOW", "RED", "BLACK"],
     ],
     [
         [29],
-        ["AM", "VM", "PR", "VM"],
-        ["VM", "PR", "VM", "AM"],
-        ["PR", "VM", "AM", "VM"],
-        ["VM", "AM", "VM", "PR"],
+        ["YELLOW", "RED", "BLACK", "RED"],
+        ["RED", "BLACK", "RED", "YELLOW"],
+        ["BLACK", "RED", "YELLOW", "RED"],
+        ["RED", "YELLOW", "RED", "BLACK"],
     ],
     [
         [31],
-        ["AM", "VM", "AZ", "VM"],
-        ["VM", "AZ", "VM", "AM"],
-        ["AZ", "VM", "AM", "VM"],
-        ["VM", "AM", "VM", "AZ"],
+        ["YELLOW", "RED", "BLUE", "RED"],
+        ["RED", "BLUE", "RED", "YELLOW"],
+        ["BLUE", "RED", "YELLOW", "RED"],
+        ["RED", "YELLOW", "RED", "BLUE"],
     ],
 ]
 
 
-def ler_cor(color):
+def read_color(color):
     if color == "Color.RED":
-        return "VM"
+        return "RED"
     elif color == "Color.YELLOW":
-        return "AM"
+        return "YELLOW"
     elif color == "Color.BLUE":
-        return "AZ"
+        return "BLUE"
     elif color == "Color.BLACK":
-        return "PR"
+        return "BLACK"
     else:
         return None
 
 
-def rotina_azul(robot: Robot):  # chega de frente no azul
+def blue_routine(robot: Robot):  # chega de frente no azul
     robot.turn(90)
-    while robot.color_sensor.color() != Color.RED:
+    while robot.color_right.color() != "Color.RED" and robot.color_left.color != "Color.RED":
         robot.walk()
     robot.turn(90)
-    while robot.color_sensor.color() == "Color.WHITE":
+    while robot.color_left.color() == "Color.WHITE" and robot.color_right == "Color.WHITE":
         robot.walk()
-    if robot.color_sensor.color() == "Color.YELLOW":
+    if robot.color_left.color() == "Color.YELLOW" and robot.color_right == "Color.YELLOW":
         return "V31"
     return "V5"
 
 
-def preenche_lista(
-    robot: Robot,
-):  # vai andar para as 4 orientações e guardar a cor e medir o tempo para diferenciar o vértice
-    inicio = robot.watch()
+def fill_list(
+    robot: Robot
+):
+    ini = robot.watch()
     lista = []
     while robot.color_sensor.color() == "Color.WHITE":
         robot.walk()
         if robot.color_sensor.color() == "Color.BLUE":
-            rotina_azul()
+            blue_routine(robot)
         else:
-            lista.append(ler_cor())
+            lista.append(read_color())
             fim = robot.watch()
-
+            lista.append(fim-ini)
             robot.hold_wheels()
             robot.turn(90)
-        return lista  # vai ficar no formato tipo ["VM",947,"AM",345,"VM",358,"PR",347] depois de chamar 4 vezes na main
+        return lista 
 
 
-def interpreta_lista(lista):
+def interprets_list(lista):
     for vertice_info in laterais_vertices:
         vertice_id = vertice_info[0][0]
         combinacoes = vertice_info[1:]
@@ -231,8 +237,8 @@ def interpreta_lista(lista):
     return None
 
 
-resultado = interpreta_lista(
-    ["AM", "VM", "AM", "VM"]
+resultado = interprets_list(
+    ["YELLOW", "RED", "YELLOW", "RED"]
 )  # retorna apenas o 1º id, fazer alteração para ter um tempo de cada movimentação
 print(resultado)
 
@@ -242,4 +248,5 @@ def localization_routine(robot: Robot):
     Rotina de localização inicial do robô.
     Termina na origem: posição fixa pra iniciar a rotina de coleta de passageiros.
     """
-    ...
+    fill_list(robot)
+    robot.hold_wheels()
