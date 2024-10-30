@@ -233,14 +233,13 @@ def interprets_list(lista):
         vertice_id = vertice_info[0][0]
         combinacoes = vertice_info[1:]
         if lista in combinacoes:
-            return f"V{vertice_id}"
+            return "V{}".format(vertice_id)
     return None
 
 
 resultado = interprets_list(
     ["YELLOW", "RED", "YELLOW", "RED"]
 )  # retorna apenas o 1º id, fazer alteração para ter um tempo de cada movimentação
-print(resultado)
 
 
 def localization_routine(robot: Robot):
