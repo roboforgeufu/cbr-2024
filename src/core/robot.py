@@ -16,6 +16,7 @@ from core.utils import ev3_print, ev3_draw, wait_button_pressed
 from core.decision_color_sensor import DecisionColorSensor
 from pybricks.parameters import Button # type: ignore
 from core.utils import PIDValues
+from core.network import Bluetooth
 import constants as const
 
 import math
@@ -55,6 +56,7 @@ class Robot:
         color_left: DecisionColorSensor = None,
         color_right: DecisionColorSensor = None,
         color_claw: DecisionColorSensor = None,
+        server_name: str = None,
         debug=True,
     ):
 
@@ -92,7 +94,8 @@ class Robot:
             self.infra_side = InfraredSensor(infra_side)
 
         # Comunicação bluetooth
-        # TODO
+        if server_name:
+            self.bluetooth = Bluetooth(ev3=self.ev3, server_name=server_name)
 
         self.debug = debug
 
@@ -179,8 +182,17 @@ class Robot:
             kd=8,
         ),
         obstacle_function=None,
+        off_motors=True,
     ):
-        """Anda em linha reta com controle PID entre os motores."""
+        """
+        Anda em linha reta com controle PID entre os motores.
+
+        Retorna se viu obstáculos e quantos porcento do movimento foi realizado até a saída da função.
+
+        Exemplos:
+            False, 0.7
+            True, 1
+        """
         degrees = self.cm_to_motor_degrees(cm)
 
         elapsed_time = 0
@@ -212,8 +224,9 @@ class Robot:
                 initial_right_angle=initial_right_angle,
             )
 
-        self.off_motors()
-        return has_seen_obstacle
+        if off_motors:
+            self.off_motors()
+        return has_seen_obstacle, abs(motor_angle_average) / abs(degrees)
 
     def loopless_pid_walk(
         self,

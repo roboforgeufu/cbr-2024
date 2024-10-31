@@ -71,7 +71,7 @@ class Bluetooth:
     def __init__(self, ev3: EV3Brick, server_name="sandy"):
 
         self.ev3 = ev3
-        self.is_server = get_hostname()
+        self.is_server = get_hostname() == server_name
         self.server_name = server_name
 
         if self.is_server:

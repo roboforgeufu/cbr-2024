@@ -1,5 +1,6 @@
 from core.robot import Robot
 import constants as const
+from pybricks.parameters import Color
 
 
 walls_of_vertices = {
@@ -26,6 +27,9 @@ walls_of_vertices = {
 
 possible_obstacles_vertices = [1, 3, 8, 10, 14, 16, 21, 23, 27, 29]
 possible_directions = ["N", "L", "S", "O"]  # sentido horário
+
+
+wall_colors = [Color.BLACK, Color.BLUE, Color.RED, Color.YELLOW, Color.BROWN]
 
 
 def get_side_directions(robot_orientation: str):
@@ -70,19 +74,54 @@ def path_control(robot: Robot, path: list, directions: list):
 
     for idx, (direction, distance) in enumerate(directions):
         robot.ev3_print("Current position:", path[position_index])
-        robot.ev3_print("NEXT:", direction, distance)
+        robot.ev3_print("STEP:", direction, distance)
         turn_to_direction(robot, direction)
 
         if idx == len(directions) - 1:
             # nao anda a ultima distancia, pra nao entrar no estabelecimento
             break
-        has_seen_obstacle = robot.pid_walk(distance)
-        # TODO tratar obstáculo visto nesse momento
+
+        # Confere se a próxima movimentação é na mesma direção que a atual.
+        should_stop = True
+        if idx + 1 < len(directions) and directions[idx + 1][0] == direction:
+            # Caso seja, o robô não desliga os motores entre as movimentações.
+            should_stop = False
+
+        obstacle_function = (
+            lambda: robot.color_left.color() in wall_colors
+            or robot.color_right.color() in wall_colors
+        )
+        has_seen_obstacle, walked_perc = robot.pid_walk(
+            distance,
+            off_motors=should_stop,
+            obstacle_function=obstacle_function,
+        )
+        while has_seen_obstacle:
+            robot.off_motors()
+            if robot.color_left.color() in wall_colors:
+                # Alinhamento à esquerda
+                robot.ev3_print("à esquerda")
+                robot.pid_turn(20)
+                has_seen_obstacle, walked_perc = robot.pid_walk(
+                    cm=distance * (1 - walked_perc),
+                    off_motors=should_stop,
+                    obstacle_function=obstacle_function,
+                )
+            elif robot.color_right.color() in wall_colors:
+                # Alinhamento à direita
+                robot.ev3_print("à direita")
+                robot.pid_turn(-20)
+                has_seen_obstacle, walked_perc = robot.pid_walk(
+                    cm=distance * (1 - walked_perc),
+                    off_motors=should_stop,
+                    obstacle_function=obstacle_function,
+                )
 
         position_index += 1
 
         new_position = path[position_index]
         if robot.orientation in walls_of_vertices[new_position]:
             # O robô está de frente pra uma parede, aproveita pra alinhar a frente
+            robot.off_motors()
             robot.align()
             robot.pid_walk(const.ROBOT_SIZE_HALF, speed=-60)
