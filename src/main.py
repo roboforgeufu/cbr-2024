@@ -20,9 +20,9 @@ Não devem estar nesse módulo:
 
 OBS:. As direções são determinadas a partir do POV do robô
 """
-from pybricks.parameters import Port, Button
-from pybricks.ev3devices import ColorSensor
-from pybricks.tools import wait
+from pybricks.parameters import Port, Button # type: ignore
+from pybricks.ev3devices import ColorSensor # type: ignore
+from pybricks.tools import wait # type: ignore
 
 from core.robot import Robot
 from core.utils import get_hostname

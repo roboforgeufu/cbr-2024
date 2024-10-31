@@ -32,4 +32,4 @@ while True:
         robot.ev3_print(str(retorno), clear=True)
     else:
         color = bt.message()
-        robot.ev3_print( color, clear=True, font="Helvetica", size=18, bold=True)
+        robot.ev3_print(color, clear=True, font="Helvetica", size=18, bold=True)

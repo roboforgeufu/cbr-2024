@@ -1,11 +1,11 @@
 #!/usr/bin/env pybricks-micropython
 
-from pybricks.ev3devices import ColorSensor, InfraredSensor, Motor, UltrasonicSensor
-from pybricks.hubs import EV3Brick
-from pybricks.iodevices import Ev3devSensor
-from pybricks.parameters import Button, Color, Port, Stop
-from pybricks.tools import DataLog, wait
-from pybricks.media.ev3dev import Font
+from pybricks.ev3devices import ColorSensor, InfraredSensor, Motor, UltrasonicSensor #type: ignore
+from pybricks.hubs import EV3Brick #type: ignore
+from pybricks.iodevices import Ev3devSensor #type: ignore
+from pybricks.parameters import Button, Color, Port, Stop #type: ignore
+from pybricks.tools import DataLog, wait #type: ignore
+from pybricks.media.ev3dev import Font #type: ignore
 
 
 from core.utils import ev3_print, wait_button_pressed
