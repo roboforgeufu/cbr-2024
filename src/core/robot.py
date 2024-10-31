@@ -1,9 +1,9 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.hubs import EV3Brick  # type: ignore
-from pybricks.ev3devices import (
+from pybricks.ev3devices import ( # type: ignore
     Motor,
     TouchSensor,
-    ColorSensor,  # type: ignore
+    ColorSensor,  
     InfraredSensor,
     UltrasonicSensor,
     GyroSensor,
@@ -12,9 +12,9 @@ from pybricks.parameters import Port, Stop, Direction, Button, Color  # type: ig
 from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
 from pybricks.robotics import DriveBase  # type: ignore
 from pybricks.media.ev3dev import SoundFile, ImageFile, Font  # type: ignore
-from core.utils import ev3_print, wait_button_pressed
+from core.utils import ev3_print, ev3_draw, wait_button_pressed
 from core.decision_color_sensor import DecisionColorSensor
-from pybricks.parameters import Button
+from pybricks.parameters import Button # type: ignore
 from core.utils import PIDValues
 import constants as const
 
@@ -43,8 +43,8 @@ class Robot:
 
     def __init__(
         self,
-        wheel_diameter,
-        wheel_distance,
+        wheel_diameter = None,
+        wheel_distance = None,
         motor_r: Port = None,
         motor_l: Port = None,
         motor_elevate_claw: Port = None,
@@ -164,7 +164,7 @@ class Robot:
                 while abs(angle) >= self.abs_wheels_angle():
                     self.r_wheel.dc(dc)
                     self.l_wheel.dc(dc)
-                self.hold_wheels()
+                self.off_motors()
             else:
                 self.r_wheel.dc(dc)
                 self.l_wheel.dc(dc)
@@ -173,6 +173,11 @@ class Robot:
         self,
         cm,
         speed=60,
+        pid: PIDValues = PIDValues(
+            kp=3,
+            ki=0.2,
+            kd=8,
+        ),
         obstacle_function=None,
     ):
         """Anda em linha reta com controle PID entre os motores."""
@@ -202,6 +207,7 @@ class Robot:
                 i_share,
                 error,
                 vel=speed,
+                pid=pid,
                 initial_left_angle=initial_left_angle,
                 initial_right_angle=initial_right_angle,
             )
@@ -369,35 +375,31 @@ class Robot:
         self.off_motors()
         # self.ev3_print(n, "| END:", self.motor_l.angle(), self.motor_r.angle())
 
-    def wait_button(self, button=Button.CENTER):
-        return wait_button_pressed(ev3=self.ev3, button=button)
+    def wait_button(self, button=Button.CENTER, beep=600):
+        return wait_button_pressed(ev3=self.ev3, button=button, beep=beep)
 
     def ev3_print(
         self,
         *args,
         clear=False,
+        end="\n",
         font="Lucida",
         size=16,
         bold=False,
-        x=0,
-        y=0,
-        background=None,
-        end="\n",
         **kwargs,
     ):
         ev3_print(
             *args,
             ev3=self.ev3,
             clear=clear,
+            end=end,
             font=font,
             size=size,
             bold=bold,
-            x=x,
-            y=y,
-            background=background,
-            end=end,
             **kwargs,
         )
+    def ev3_draw(self, *args, x=0, y=0, background=False, line=0, clear=False, font="Lucida", size=16, bold=False, **kwargs):
+        ev3_draw(*args, ev3=self.ev3, x=x, y=y, background=background, line=line, clear=clear, font=font, size=size, bold=bold, **kwargs)
 
     def walk_while_same_reflection(self, speed=200):
         """Retorna o tempo passado andando até chegar na cor diferente"""
@@ -611,8 +613,8 @@ class OmniRobot:
             self.wheel_3.dc(duty)
             self.wheel_4.dc(-duty)
 
-    def wait_button(self, button=[]):
-        wait_button_pressed(ev3=self.ev3, button=button)
+    def wait_button(self, button=[], beep = 0):
+        wait_button_pressed(ev3=self.ev3, button=button, beep=beep)
 
     def ev3_print(
         self,
