@@ -89,7 +89,7 @@ class Bluetooth:
 
         else:
             # Inicia o cliente
-            self.bluetooth.connect("ev3server")
+            self.bluetooth.connect(self.server_name)
             return "CLIENT START!"
 
     def message(
