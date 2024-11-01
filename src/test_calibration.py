@@ -7,20 +7,43 @@ from pybricks.iodevices import Ev3devSensor
 
 from pybricks.tools import DataLog, wait
 
-from decision_trees.lego_ev3_color_3 import lego_ev3_color_p3_decision_tree
-from decision_trees.lego_ev3_color_4 import lego_ev3_color_p4_decision_tree
+from decision_trees.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
+from decision_trees.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p4_decision_tree
+from decision_trees.lilo_lego_ev3_color_1 import lilo_lego_ev3_color_p1_decision_tree
+from decision_trees.lilo_lego_ev3_color_2 import lilo_lego_ev3_color_p2_decision_tree
+from decision_trees.lilo_lego_ev3_color_3 import lilo_lego_ev3_color_p3_decision_tree
+from decision_trees.lilo_lego_ev3_color_4 import lilo_lego_ev3_color_p4_decision_tree
 
-from core.utils import ev3_print
+from core.utils import ev3_print, get_hostname
+
+brick_name_to_sensors_and_functions = {
+    "lilo": [
+        ("S1", ColorSensor, Port.S1, lilo_lego_ev3_color_p1_decision_tree),
+        ("S2", ColorSensor, Port.S2, lilo_lego_ev3_color_p2_decision_tree),
+        ("S3", ColorSensor, Port.S3, lilo_lego_ev3_color_p3_decision_tree),
+        ("S4", ColorSensor, Port.S4, lilo_lego_ev3_color_p4_decision_tree),
+    ],
+    "stitch": [],
+    "sandy": [
+        ("S3", ColorSensor, Port.S3, sandy_lego_ev3_color_p3_decision_tree),
+        ("S4", ColorSensor, Port.S4, sandy_lego_ev3_color_p4_decision_tree),
+    ],
+    "junior": [],
+}
 
 
 def test_calibration():
+
     brick = EV3Brick()
-    sensor3 = ColorSensor(Port.S3)
-    sensor4 = ColorSensor(Port.S4)
+    sensor_info = brick_name_to_sensors_and_functions[get_hostname()]
+
+    sensors = []
+    for _, s_class, s_port, _ in sensor_info:
+        sensors.append(s_class(s_port))
 
     while True:
-        ev3_print("S3:", lego_ev3_color_p3_decision_tree(*sensor3.rgb()), ev3=brick)
-        ev3_print("S4:", lego_ev3_color_p4_decision_tree(*sensor4.rgb()), ev3=brick)
+        for (s_name, s_class, s_port, s_function), sensor in zip(sensor_info, sensors):
+            ev3_print(ev3=brick)
 
         wait(100)
         brick.screen.clear()

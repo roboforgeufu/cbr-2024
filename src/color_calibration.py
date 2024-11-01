@@ -8,7 +8,7 @@ from pybricks.tools import DataLog, wait
 from pybricks.media.ev3dev import Font
 
 
-from core.utils import ev3_print, wait_button_pressed
+from core.utils import ev3_print, wait_button_pressed, get_hostname
 
 ALL_COLORS = [
     "BLUE",
@@ -87,7 +87,14 @@ def main():
                 continue
 
             logger = DataLog(
-                name="calib_" + s_name + "_" + str(s_port) + "_" + str(color),
+                name="calib_"
+                + get_hostname()
+                + "_"
+                + s_name
+                + "_"
+                + str(s_port)
+                + "_"
+                + str(color),
                 timestamp=True,
                 extension="csv",
             )

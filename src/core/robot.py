@@ -26,7 +26,7 @@ import math
 Módulo central pra controle do Robô.
 
 Devem estar nesse módulo:
-    - Classe 'Robot' e 'OmniRobot', com métodos e atributos para controle geral no robô
+    - Classe 'Robot', com métodos e atributos para controle geral no robô
     - Estruturas de dados auxiliares aplicáveis a "qualquer" tipo de robô
 
 Não devem estar nesse módulo:
@@ -39,8 +39,7 @@ Não devem estar nesse módulo:
 
 
 class Robot:
-
-    # Classe que representa um robô genérico
+    """Classe que representa um robô de 2 rodas"""
 
     def __init__(
         self,
@@ -62,7 +61,6 @@ class Robot:
 
         # Ev3
         self.ev3 = EV3Brick()
-
         self.stopwatch = StopWatch()
 
         # Rodas
@@ -129,9 +127,8 @@ class Robot:
         """Grau nas rodas (motores) do robô -> Distância em centímetros"""
         return degrees * ((math.pi * self.wheel_diameter) / 360)
 
-    def set_wheels_angle(self, angle):
-
-        # Zera o ângulo das rodas
+    def reset_wheels_angle(self, angle=0):
+        """Reseta o ângulo das rodas"""
         self.r_wheel.reset_angle(angle)
         self.l_wheel.reset_angle(angle)
 
@@ -153,24 +150,6 @@ class Robot:
 
         # Retorna a média do módulo do ângulo das duas rodas
         return (abs(self.r_wheel.angle()) + abs(self.l_wheel.angle())) / 2
-
-    def walk(self, dc=100, angle=None, pid=False):
-        # TODO: passar valor em centímetros
-
-        # Movimenta o robô
-        if pid:
-            pass
-
-        else:
-            if angle != None:
-                self.set_wheels_angle(0)
-                while abs(angle) >= self.abs_wheels_angle():
-                    self.r_wheel.dc(dc)
-                    self.l_wheel.dc(dc)
-                self.hold_wheels()
-            else:
-                self.r_wheel.dc(dc)
-                self.l_wheel.dc(dc)
 
     def pid_walk(
         self,
@@ -260,26 +239,6 @@ class Robot:
         self.motor_l.dc(vel + pid_correction)
 
         return (elapsed_time, i_share, error)
-
-    def turn(self, angle, pid=False, dc=100):
-
-        # Gira o robô em graus
-        self.set_wheels_angle(0)
-
-        motor_degrees = self.real_angle_to_motor_degrees(angle)
-        error = self.abs_wheels_angle()
-
-        if pid:
-            # Curva usando PID
-            side = angle / abs(angle)
-            pass
-
-        else:
-            # Curva normal
-            while error < motor_degrees:
-                error = self.abs_wheels_angle()
-                self.r_wheel.run(dc)
-                self.l_wheel.run(-dc)
 
     def pid_turn(
         self,
@@ -496,160 +455,3 @@ class Robot:
             ):
                 break
         self.off_motors()
-
-
-#
-# Robô de quatro rodas omnidirecionais
-#
-
-
-class OmniRobot:
-
-    # Classe que representa um robô genérico
-
-    def __init__(
-        self,
-        wheel_diameter=5.5,
-        wheel_length=10,
-        wheel_width=10,
-        wheel_1=None,
-        wheel_2=None,
-        wheel_3=None,
-        wheel_4=None,
-    ):
-
-        # Ev3
-        self.ev3 = EV3Brick()
-        self.watch = StopWatch()
-
-        # Rodas
-        self.wheel_diameter = wheel_diameter
-        self.wheel_length = wheel_length
-        self.wheel_width = wheel_width
-        self.wheel_1 = wheel_1
-        self.wheel_2 = wheel_2
-        self.wheel_3 = wheel_3
-        self.wheel_4 = wheel_4
-
-    def real_angle_to_motor_degrees(self, angle):
-
-        # Converte graus reais para graus correspondentes na roda
-        radius = (self.wheel_length**2 + self.wheel_length**2) ** (1 / 2)
-        return angle * radius / self.wheel_distance
-
-    def wheels_angle(self):
-
-        return (
-            self.wheel_1.angle()
-            + self.wheel_2.angle()
-            + self.wheel_3.angle()
-            + self.wheel_4.angle()
-        ) / 4
-
-    def abs_wheels_angle(self):
-
-        return (
-            abs(self.wheel_1.angle())
-            + abs(self.wheel_2.angle())
-            + abs(self.wheel_3.angle())
-            + abs(self.wheel_4.angle())
-        ) / 4
-
-    def set_wheels_angle(self, angle):
-
-        # Zera o ângulo das rodas
-        self.wheel_1.reset_angle(angle)
-        self.wheel_2.reset_angle(angle)
-        self.wheel_3.reset_angle(angle)
-        self.wheel_4.reset_angle(angle)
-
-    def vertical_run(self, duty):
-
-        self.wheel_1.dc(duty)
-        self.wheel_2.dc(duty)
-        self.wheel_3.dc(duty)
-        self.wheel_4.dc(duty)
-
-    def horizontal_run(self, duty, side):
-
-        if side == 1:
-            self.wheel_1.dc(duty)
-            self.wheel_2.dc(-duty)
-            self.wheel_3.dc(-duty)
-            self.wheel_4.dc(duty)
-        else:
-            self.wheel_1.dc(-duty)
-            self.wheel_2.dc(duty)
-            self.wheel_3.dc(duty)
-            self.wheel_4.dc(-duty)
-
-    def walk(self, duty, angle=0, direction="vertical", pid=False):
-
-        side = abs(duty) / duty
-
-        if angle != 0:
-
-            side *= abs(angle) / angle
-
-            self.set_wheels_angle(0)
-
-            if direction == "vertical":
-                while abs(angle) >= self.abs_wheels_angle():
-                    self.vertical_run(duty)
-
-            elif direction == "horizontal":
-                while abs(angle) >= self.abs_wheels_angle():
-                    self.horizontal_run(duty, side)
-
-        else:
-
-            if direction == "vertical":
-                self.vertical_run(duty)
-
-            elif direction == "horizontal":
-                self.horizontal_run(duty, side)
-
-    def turn(self, duty=100, angle=0, pid=False):
-
-        if angle > 0:
-            angle = self.real_angle_to_motor_degrees(angle)
-            while abs(angle) > self.abs_wheels_angle():
-                self.wheel_1.dc(duty)
-                self.wheel_2.dc(-duty)
-                self.wheel_3.dc(duty)
-                self.wheel_4.dc(-duty)
-        else:
-            self.wheel_1.dc(duty)
-            self.wheel_2.dc(-duty)
-            self.wheel_3.dc(duty)
-            self.wheel_4.dc(-duty)
-
-    def wait_button(self, button=[]):
-        wait_button_pressed(ev3=self.ev3, button=button)
-
-    def ev3_print(
-        self,
-        *args,
-        clear=False,
-        font="Lucida",
-        size=16,
-        bold=False,
-        x=0,
-        y=0,
-        background=None,
-        end="\n",
-        **kwargs,
-    ):
-        ev3_print(
-            *args,
-            ev3=self.ev3,
-            clear=clear,
-            font=font,
-            size=size,
-            bold=bold,
-            x=x,
-            y=y,
-            background=background,
-            end=end,
-            **kwargs,
-        )
