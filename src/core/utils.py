@@ -1,7 +1,7 @@
 import os
 
-from pybricks.media.ev3dev import Font
-from pybricks.parameters import Button
+from pybricks.media.ev3dev import Font # type: ignore
+from pybricks.parameters import Button, Color # type: ignore
 
 
 class PIDValues:
@@ -53,11 +53,36 @@ def ev3_print(
 
         # ev3.screen.set_font(Font(font, size, bold))
 
-        if x != 0 or y != 0 or background != None:
-            ev3.screen.draw_text(x, y, str(*args), background_color=background)
-        else:
-            ev3.screen.print(*args, **kwargs, end=end)
+        ev3.screen.print(*args, **kwargs, end=end)
+
     print(*args, **kwargs)
+
+def ev3_draw(
+        *args,
+        ev3=None,
+        x=0,
+        y=0,
+        background=False,
+        line=0,
+        spacing=22,
+        clear=False,
+        font="Lucida",
+        size=16,
+        bold=False,
+):
+        if ev3 is not None:
+            if clear:
+                ev3.screen.clear()
+            if background:
+                background_color = Color.BLACK
+                text_color = Color.WHITE
+            else:
+                background_color = Color.WHITE
+                text_color = Color.BLACK
+
+
+            ev3.screen.draw_text(x, y + line * spacing, str(*args), text_color=text_color, background_color=background_color)
+        print(*args)
 
 
 def wait_button_pressed(ev3, button: Button = Button.CENTER, beep=True):
