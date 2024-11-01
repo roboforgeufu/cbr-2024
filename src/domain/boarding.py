@@ -1,6 +1,18 @@
-from core.robot import Robot
 import constants as const
-from pybricks.parameters import Color
+from core.robot import Robot
+from core.network import Bluetooth
+from pybricks.parameters import Color # type: ignore
+
+def passenger_boarding(robot: Robot):
+    """
+    Rotina de encontrar um passageiro, pega-lo e detectar faixa etária e cor.
+
+    Retorna uma tupla como ("CHILD", Color.BLUE) ou ("ADULT", Color.GREEN)
+    """
+    while robot.infra_side.distance <= 50:
+        robot.walk(100)
+    robot.motor_open_claw.run_until_stalled(-80)
+    robot.turn(-90)
 
 
 def smart_walk(robot: Robot):

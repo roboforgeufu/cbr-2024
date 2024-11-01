@@ -1,7 +1,7 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.hubs import EV3Brick  # type: ignore
 from pybricks.messaging import BluetoothMailboxClient, BluetoothMailboxServer, TextMailbox  # type: ignore
-from pybricks.tools import wait
+from pybricks.tools import wait # type: ignore
 
 import socket
 
@@ -68,7 +68,7 @@ class Bluetooth:
     # Conexão bluetooth EV3 com EV3
     #
 
-    def __init__(self, ev3: EV3Brick, server_name="ev3server"):
+    def __init__(self, ev3: EV3Brick, server_name="sandy"):
 
         self.ev3 = ev3
         self.is_server = get_hostname() == server_name

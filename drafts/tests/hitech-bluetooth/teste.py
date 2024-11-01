@@ -3,10 +3,10 @@
 from core.network import Bluetooth
 from core.robot import Robot
 from core.utils import get_hostname
-from pybricks.ev3devices import (
+from pybricks.ev3devices import ( # type: ignore
     Motor,
     TouchSensor,
-    ColorSensor,  # type: ignore
+    ColorSensor,  
     InfraredSensor,
     UltrasonicSensor,
     GyroSensor,
@@ -32,4 +32,4 @@ while True:
         robot.ev3_print(str(retorno), clear=True)
     else:
         color = bt.message()
-        robot.ev3_print( color, clear=True, font="Helvetica", size=18, bold=True)
+        robot.ev3_print(color, clear=True, font="Helvetica", size=18, bold=True)
