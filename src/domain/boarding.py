@@ -1,8 +1,9 @@
 import constants as const
 from core.robot import Robot
 from core.network import Bluetooth
-from pybricks.parameters import Color # type: ignore
+from pybricks.parameters import Color  # type: ignore
 from domain.star_platinum import star_platinum
+
 
 def passenger_boarding(robot: Robot):
     """
@@ -10,14 +11,14 @@ def passenger_boarding(robot: Robot):
 
     Retorna uma tupla como ("CHILD", Color.BLUE) ou ("ADULT", Color.GREEN)
     """
-    while robot.infra_side.distance <= 50:
-        robot.walk(100)
-    robot.motor_open_claw.run_until_stalled(-80)
-    robot.turn(-90)
-    star_platinum("DROP")
+    while robot.infra_side.distance() >= 50:
+        robot.pid_walk(100)
+    robot.pid_turn(-90)
+    star_platinum(robot, "HAMMER")
+    star_platinum(robot, "DROP")
     robot.pid_walk(8)
-    star_platinum("GRAB")
-    star_platinum("PASSENGER INFO")
+    star_platinum(robot, "GRAB")
+    star_platinum(robot, "PASSENGER INFO")
     passenger = robot.bluetooth.message()
     robot.ev3_print(passenger)
 

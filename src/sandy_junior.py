@@ -27,6 +27,7 @@ from pybricks.tools import wait # type: ignore
 from core.robot import Robot
 from core.utils import get_hostname
 from core.decision_color_sensor import DecisionColorSensor
+import domain.star_platinum as star_platinum
 
 import constants as const
 from domain.localization import localization_routine
@@ -35,7 +36,7 @@ from domain.path_control import path_control
 from domain.boarding import passenger_unboarding, passenger_boarding
 from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
 from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
-from decision_trees.sandy_lego_ev3_color_3 import lego_ev3_color_p3_decision_tree
+from decision_trees.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
 from decision_trees.lego_ev3_color_4 import lego_ev3_color_p4_decision_tree
 
 
@@ -92,27 +93,7 @@ def junior_main(junior: Robot):
     junior.motor_elevate_claw.run_target(75, 40)
     junior.motor_elevate_claw.hold()
 
-    #
-    # Localização inicial
-    #
-
-    while True:
-        #
-        # Coleta de passageiros
-        #
-
-        #
-        # Pathfinding e movimentação (obstáculos)
-        #
-
-        #
-        # Desembarque de passageiros
-        #
-
-        #
-        # Retorno a zona de embarque
-        #
-        pass
+    star_platinum.main()
 
 
 def test_navigation_main(sandy: Robot):
@@ -161,7 +142,7 @@ def main(hostname):
                 infra_side=Port.S1,
                 ultra_feet=Port.S2,
                 color_right=DecisionColorSensor(
-                    ColorSensor(Port.S3), lego_ev3_color_p3_decision_tree
+                    ColorSensor(Port.S3), sandy_lego_ev3_color_p3_decision_tree
                 ),
                 color_left=DecisionColorSensor(
                     ColorSensor(Port.S4), lego_ev3_color_p4_decision_tree
