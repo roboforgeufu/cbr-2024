@@ -27,6 +27,7 @@ from pybricks.tools import wait  # type: ignore
 from core.robot import Robot
 from core.utils import get_hostname
 from core.decision_color_sensor import DecisionColorSensor
+import domain.star_platinum as star_platinum
 
 import constants as const
 from domain.localization import localization_routine
@@ -92,27 +93,7 @@ def junior_main(junior: Robot):
     junior.motor_elevate_claw.run_target(75, 40)
     junior.motor_elevate_claw.hold()
 
-    #
-    # Localização inicial
-    #
-
-    while True:
-        #
-        # Coleta de passageiros
-        #
-
-        #
-        # Pathfinding e movimentação (obstáculos)
-        #
-
-        #
-        # Desembarque de passageiros
-        #
-
-        #
-        # Retorno a zona de embarque
-        #
-        pass
+    star_platinum.main()
 
 
 def test_navigation_main(sandy: Robot):
