@@ -35,3 +35,9 @@ Pra baixar todos os logs do EV3 e deletar eles do robô:
 ```
 scp robot@ev3dev:/home/robot/**/*.csv ./logs/ && ssh robot@ev3dev rm /home/robot/**/*.csv
 ```
+
+Pra mudar o nome do robô:
+
+```
+sudo hostnamectl set-hostname stitch
+```

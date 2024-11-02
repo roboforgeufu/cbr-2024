@@ -4,12 +4,13 @@ Robô de quatro rodas omnidirecionais
 
 from pybricks.hubs import EV3Brick
 from pybricks.tools import StopWatch
-from pybricks.parameters import Port
+from pybricks.parameters import Port, Button
 
 from core.utils import wait_button_pressed, ev3_print, PIDValues
 from core.network import Bluetooth
 from core.decision_color_sensor import DecisionColorSensor
-from pybricks.ev3devices import Motor
+from pybricks.ev3devices import Motor, UltrasonicSensor
+from pybricks.iodevices import Ev3devSensor
 
 import math
 
@@ -26,10 +27,16 @@ class OmniRobot:
         motor_front_right: Port = None,
         motor_back_left: Port = None,
         motor_back_right: Port = None,
+        motor_claw_lift: Port = None,
+        motor_claw_gripper: Port = None,
         color_front_left: DecisionColorSensor = None,
         color_front_right: DecisionColorSensor = None,
         color_back_left: DecisionColorSensor = None,
         color_back_right: DecisionColorSensor = None,
+        color_side: DecisionColorSensor = None,
+        ultra_front: Port = None,
+        ultra_back: Port = None,
+        ultra_side: Port = None,
         server_name: str = None,
         debug=True,
     ):
@@ -52,6 +59,10 @@ class OmniRobot:
             self.motor_back_left = Motor(motor_back_left)
         if motor_back_right is not None:
             self.motor_back_right = Motor(motor_back_right)
+        if motor_claw_gripper is not None:
+            self.motor_claw_gripper = Motor(motor_claw_gripper)
+        if motor_claw_lift is not None:
+            self.motor_claw_lift = Motor(motor_claw_lift)
 
         # Sensores
         if color_front_left is not None:
@@ -62,10 +73,18 @@ class OmniRobot:
             self.color_back_left = color_back_left
         if color_back_right is not None:
             self.color_back_right = color_back_right
+        if ultra_front is not None:
+            self.ultra_front = UltrasonicSensor(ultra_front)
+        if ultra_back is not None:
+            self.ultra_back = UltrasonicSensor(ultra_back)
+        if ultra_side is not None:
+            self.ultra_side = UltrasonicSensor(ultra_side)
+        if color_side is not None:
+            self.color_side = color_side
 
         # Comunicação bluetooth
         if server_name:
-            self.bluetooth = Bluetooth
+            self.bluetooth = Bluetooth(ev3=self.ev3, server_name=server_name)
 
         self.debug = debug
 
@@ -176,8 +195,8 @@ class OmniRobot:
             - 2: usa o valor dado como ângulo no eixo das rodas
         """
 
-    def wait_button(self, button=[]):
-        wait_button_pressed(ev3=self.ev3, button=button)
+    def wait_button(self, button=Button.CENTER):
+        return wait_button_pressed(ev3=self.ev3, button=button)
 
     def ev3_print(
         self,
@@ -211,3 +230,40 @@ class OmniRobot:
         pid: PIDValues = PIDValues(kp=1, ki=0.015, kd=1.5),
         direction_sign=1,
     ): ...
+
+    def start_claw(
+        self, open_angle=None, closed_angle=None, high_angle=None, low_angle=None
+    ):
+        if open_angle is None:
+            self.claw_open_angle = self.motor_claw_gripper.run_until_stalled(
+                speed=-300, duty_limit=40
+            )
+            self.ev3_print("Open angle:", self.claw_open_angle)
+        else:
+            self.claw_open_angle = open_angle
+
+        if closed_angle is None:
+            self.claw_closed_angle = self.motor_claw_gripper.run_until_stalled(
+                speed=300, duty_limit=40
+            )
+            self.ev3_print("Closed angle:", self.claw_closed_angle)
+        else:
+            self.claw_closed_angle = closed_angle
+
+        if high_angle is None:
+            self.claw_high_angle = self.motor_claw_lift.run_until_stalled(
+                speed=-300, duty_limit=15
+            )
+            self.ev3_print("High_angle:", self.claw_high_angle)
+        else:
+            self.claw_high_angle = high_angle
+
+        if low_angle is None:
+            self.claw_low_angle = self.motor_claw_lift.run_until_stalled(
+                speed=300, duty_limit=20
+            )
+            self.ev3_print("Low angle:", self.claw_low_angle)
+        else:
+            self.claw_low_angle = low_angle
+
+        self.claw_mid_angle = self.claw_low_angle - 100

@@ -20,9 +20,9 @@ Não devem estar nesse módulo:
 
 OBS:. As direções são determinadas a partir do POV do robô
 """
-from pybricks.parameters import Port, Button # type: ignore
-from pybricks.ev3devices import ColorSensor # type: ignore
-from pybricks.tools import wait # type: ignore
+from pybricks.parameters import Port, Button  # type: ignore
+from pybricks.ev3devices import ColorSensor  # type: ignore
+from pybricks.tools import wait  # type: ignore
 
 from core.robot import Robot
 from core.utils import get_hostname
@@ -35,8 +35,8 @@ from domain.path_control import path_control
 from domain.boarding import passenger_unboarding, passenger_boarding
 from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
 from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
-from decision_trees.sandy_lego_ev3_color_3 import lego_ev3_color_p3_decision_tree
-from decision_trees.lego_ev3_color_4 import lego_ev3_color_p4_decision_tree
+from decision_trees.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
+from decision_trees.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p4_decision_tree
 
 
 def sandy_main(sandy: Robot):
@@ -149,7 +149,6 @@ def test_calibrate_align_pid(robot: Robot):
         robot.align()
 
 
-
 def main(hostname):
     if hostname == "sandy":
         passenger_boarding(
@@ -161,10 +160,10 @@ def main(hostname):
                 infra_side=Port.S1,
                 ultra_feet=Port.S2,
                 color_right=DecisionColorSensor(
-                    ColorSensor(Port.S3), lego_ev3_color_p3_decision_tree
+                    ColorSensor(Port.S3), sandy_lego_ev3_color_p3_decision_tree
                 ),
                 color_left=DecisionColorSensor(
-                    ColorSensor(Port.S4), lego_ev3_color_p4_decision_tree
+                    ColorSensor(Port.S4), sandy_lego_ev3_color_p4_decision_tree
                 ),
                 server_name="sandy",
             )
