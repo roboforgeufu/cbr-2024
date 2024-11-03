@@ -91,6 +91,11 @@ class OmniRobot:
         # Orientação (N, S, L, O, ou None caso o robô ainda não tenha se encontrado)
         self.orientation = None
 
+        # Marca a direção para a qual é o movimento padrão do robô omidirecional
+        # Se 1, os movimentos serão considerando a frente do robô a parte que tem a garra.
+        # Se -1, os movimentos serão considerando a frente do robô a parte que não tem a garra.
+        self.moving_direction_sign = 1
+
         # Printa a voltagem e corrente atual da bateria:
         self.ev3_print("Bat. V:", self.ev3.battery.voltage(), "mV")
         self.ev3_print("Bat. C:", self.ev3.battery.current(), "mA")

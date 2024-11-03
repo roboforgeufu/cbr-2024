@@ -70,7 +70,7 @@ def sandy_main(sandy: Robot):
             path, distance, directions = paths[0]
         else:
             path, distance, directions = map_graph.dijkstra(5, target)
-        path_control(sandy, directions)
+        path_control(sandy, path, directions)
 
         #
         # Desembarque de passageiros
@@ -83,7 +83,7 @@ def sandy_main(sandy: Robot):
         path, _, directions = map_graph.dijkstra(
             path[-2]  # A penultima posição do caminho (antes do vértice de entrega)
         )
-        path_control(sandy, directions)
+        path_control(sandy, path, directions)
 
 
 def junior_main(junior: Robot):

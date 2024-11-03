@@ -14,6 +14,8 @@ from decision_trees.lilo_lego_ev3_color_3 import lilo_lego_ev3_color_p3_decision
 from decision_trees.lilo_lego_ev3_color_4 import lilo_lego_ev3_color_p4_decision_tree
 from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
 
+from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
+
 from domain.ohana import (
     open_claw,
     close_claw,
@@ -26,6 +28,9 @@ from domain.ohana import (
 
 def lilo_main(lilo: OmniRobot):
     lilo.bluetooth.start()
+
+    # Inicialização do mapa
+    map_graph = Graph(map_matrix)
 
     #
     # Localização inicial
@@ -48,6 +53,32 @@ def lilo_main(lilo: OmniRobot):
         # Retorno a zona de embarque
         #
         pass
+
+
+def test_navigation_lilo(lilo: OmniRobot):
+    # lilo.bluetooth.start()
+
+    map_graph = Graph(map_matrix)
+
+    lilo.ev3_print("Press initial robot orientation:")
+    pressed = lilo.wait_button([Button.UP, Button.LEFT, Button.RIGHT, Button.DOWN])
+    button_to_direction = {
+        Button.UP: "N",
+        Button.LEFT: "O",
+        Button.RIGHT: "L",
+        Button.DOWN: "S",
+    }
+    lilo.orientation = button_to_direction[pressed]
+
+    map_graph.mark_obstacle("V10")
+    map_graph.mark_obstacle("V21")
+    path, _, directions = map_graph.dijkstra(5, 26)
+
+    path_control(lilo, path, directions)
+
+    lilo.wait_button()
+    path, _, directions = map_graph.dijkstra(27, 6)
+    path_control(lilo, path, directions)
 
 
 def test_bt_lilo(lilo: OmniRobot):
