@@ -1,11 +1,11 @@
 #!/usr/bin/env pybricks-micropython
 
-from pybricks.ev3devices import ColorSensor, InfraredSensor, Motor, UltrasonicSensor
-from pybricks.hubs import EV3Brick
-from pybricks.parameters import Button, Color, Port, Stop
-from pybricks.iodevices import Ev3devSensor
+from pybricks.ev3devices import ColorSensor, InfraredSensor, Motor, UltrasonicSensor #type: ignore
+from pybricks.hubs import EV3Brick #type: ignore
+from pybricks.parameters import Button, Color, Port, Stop #type: ignore
+from pybricks.iodevices import Ev3devSensor #type: ignore
 
-from pybricks.tools import DataLog, wait
+from pybricks.tools import DataLog, wait #type: ignore
 
 from decision_trees.lego_ev3_color_3 import lego_ev3_color_p3_decision_tree
 from decision_trees.lego_ev3_color_4 import lego_ev3_color_p4_decision_tree

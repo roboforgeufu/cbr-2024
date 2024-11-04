@@ -1,9 +1,9 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.hubs import EV3Brick  # type: ignore
-from pybricks.ev3devices import (
+from pybricks.ev3devices import ( # type: ignore
     Motor,
     TouchSensor,
-    ColorSensor,  # type: ignore
+    ColorSensor,
     InfraredSensor,
     UltrasonicSensor,
     GyroSensor,
@@ -69,7 +69,7 @@ class Wifi:
         # Encerra conexão com o computador
         message = "end"
         self.client.send(message.encode())
-        client.close()
+        self.client.close()
         wait(500)
 
 

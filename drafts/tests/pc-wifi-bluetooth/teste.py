@@ -1,6 +1,6 @@
 #!/usr/bin/env pybricks-micropython
 
-from pybricks.tools import wait
+from pybricks.tools import wait # type: ignore
 from core.network import Wifi, Bluetooth
 from core.robot import Robot
 from core.encoding import encoder, decoder
