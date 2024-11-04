@@ -1,6 +1,6 @@
 #!/usr/bin/env pybricks-micropython
 
-from core.omni_robot import OmniRobot
+from core.omni_robot import OmniRobot, Direction
 from core.utils import get_hostname
 from core.decision_color_sensor import DecisionColorSensor
 
@@ -56,6 +56,13 @@ def lilo_main(lilo: OmniRobot):
 
 
 def test_navigation_lilo(lilo: OmniRobot):
+
+    while True:
+        lilo.pid_turn(90)
+        lilo.wait_button()
+        lilo.pid_turn(-90)
+        lilo.wait_button()
+
     # lilo.bluetooth.start()
 
     map_graph = Graph(map_matrix)
@@ -74,11 +81,11 @@ def test_navigation_lilo(lilo: OmniRobot):
     map_graph.mark_obstacle("V21")
     path, _, directions = map_graph.dijkstra(5, 26)
 
-    path_control(lilo, path, directions)
+    # path_control(lilo, path, directions)
 
     lilo.wait_button()
     path, _, directions = map_graph.dijkstra(27, 6)
-    path_control(lilo, path, directions)
+    # path_control(lilo, path, directions)
 
 
 def test_bt_lilo(lilo: OmniRobot):
@@ -134,7 +141,7 @@ def stitch_main(stitch: OmniRobot):
 
 def main(hostname):
     if hostname == "lilo":
-        test_bt_lilo(
+        test_navigation_lilo(
             OmniRobot(
                 motor_front_left=Port.B,
                 motor_front_right=Port.C,
