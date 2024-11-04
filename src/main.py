@@ -39,15 +39,15 @@ from decision_trees.lego_ev3_color_4 import lego_ev3_color_p4_decision_tree
 
 
 def sandy_main(sandy: Robot):
-    # Inicialização mapa
-    map_graph = Graph(map_matrix)
+    
 
     #
     # Localização inicial
     #
-    localization_routine(sandy)
+    for _ in range(4):
+        localization_routine(sandy)
 
-    while True:
+    """while True:
         #
         # Coleta de passageiros
         #
@@ -79,7 +79,7 @@ def sandy_main(sandy: Robot):
         path, _, directions = map_graph.dijkstra(
             path[-2]  # A penultima posição do caminho (antes do vértice de entrega)
         )
-        path_control(sandy, directions)
+        path_control(sandy, directions)"""
 
 
 def junior_main(junior: Robot):
@@ -139,7 +139,7 @@ def test_calibrate_align_pid(robot: Robot):
 
 def main():
     if get_hostname() == "sandy":
-        test_navigation_main(
+        sandy_main(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
