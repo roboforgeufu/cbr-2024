@@ -129,8 +129,8 @@ class Robot:
     def set_wheels_angle(self, angle):
 
         # Zera o ângulo das rodas
-        self.r_wheel.reset_angle(angle)
-        self.l_wheel.reset_angle(angle)
+        self.motor_r.reset_angle(angle)
+        self.motor_l.reset_angle(angle)
 
     def off_motors(self):
         """Desliga motores de locomoção."""
@@ -144,12 +144,12 @@ class Robot:
     def wheels_angle(self):
 
         # Retorna a média do ângulo das duas rodas
-        return (self.l_wheel.angle() + self.l_wheel.angle()) / 2
+        return (self.motor_l.angle() + self.motor_l.angle()) / 2
 
     def abs_wheels_angle(self):
 
         # Retorna a média do módulo do ângulo das duas rodas
-        return (abs(self.r_wheel.angle()) + abs(self.l_wheel.angle())) / 2
+        return (abs(self.motor_r.angle()) + abs(self.motor_l.angle())) / 2
 
     def walk(self, dc=100, angle=None, pid=False):
         # TODO: passar valor em centímetros
@@ -162,12 +162,12 @@ class Robot:
             if angle != None:
                 self.set_wheels_angle(0)
                 while abs(angle) >= self.abs_wheels_angle():
-                    self.r_wheel.dc(dc)
-                    self.l_wheel.dc(dc)
+                    self.motor_r.dc(dc)
+                    self.motor_l.dc(dc)
                 self.hold_wheels()
             else:
-                self.r_wheel.dc(dc)
-                self.l_wheel.dc(dc)
+                self.motor_r.dc(dc)
+                self.motor_l.dc(dc)
 
     def pid_walk(
         self,
@@ -267,8 +267,8 @@ class Robot:
             # Curva normal
             while error < motor_degrees:
                 error = self.abs_wheels_angle()
-                self.r_wheel.run(dc)
-                self.l_wheel.run(-dc)
+                self.motor_r.run(dc)
+                self.motor_l.run(-dc)
 
     def pid_turn(
         self,
