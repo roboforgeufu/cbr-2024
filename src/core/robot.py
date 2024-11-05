@@ -260,9 +260,6 @@ class Robot:
         - Angulo relativo ao eixo do robô.
         - Angulo negativo: curva p / esquerda
         - Angulo positivo: curva p / direita
-        - Modos(mode):
-            - 1: usa o valor dado como ângulo ao redor do eixo do robô
-            - 2: usa o valor dado como ângulo no eixo das rodas
         """
         # self.ev3_print(self.pid_turn.__name__)
 
