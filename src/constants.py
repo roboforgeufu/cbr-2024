@@ -30,3 +30,7 @@ MIN_DEGREES_CURVE_THRESHOLD = 30
 
 # Comunicação Bluetooth
 SERVER_NAME = "sandy"
+
+
+# Distâncias
+OMNI_WALK_DISTANCE_CORRECTION = 0.95

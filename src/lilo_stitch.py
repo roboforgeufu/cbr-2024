@@ -25,6 +25,8 @@ from domain.ohana import (
     transmit_signal,
 )
 
+from domain.omni_path_control import omni_path_control
+
 
 def lilo_main(lilo: OmniRobot):
     lilo.bluetooth.start()
@@ -56,22 +58,7 @@ def lilo_main(lilo: OmniRobot):
 
 
 def test_navigation_lilo(lilo: OmniRobot):
-
-    direction = Direction.RIGHT
-    while True:
-        lilo.align(direction)
-        pressed = lilo.wait_button([Button.UP, Button.LEFT, Button.RIGHT, Button.DOWN])
-        if pressed != Button.CENTER:
-            button_to_direction = {
-                Button.UP: Direction.FRONT,
-                Button.LEFT: Direction.LEFT,
-                Button.RIGHT: Direction.RIGHT,
-                Button.DOWN: Direction.BACK,
-            }
-            direction = button_to_direction[pressed]
-
     # lilo.bluetooth.start()
-
     map_graph = Graph(map_matrix)
 
     lilo.ev3_print("Press initial robot orientation:")
@@ -87,12 +74,11 @@ def test_navigation_lilo(lilo: OmniRobot):
     map_graph.mark_obstacle("V10")
     map_graph.mark_obstacle("V21")
     path, _, directions = map_graph.dijkstra(5, 26)
-
-    # path_control(lilo, path, directions)
+    omni_path_control(lilo, path, directions)
 
     lilo.wait_button()
     path, _, directions = map_graph.dijkstra(27, 6)
-    # path_control(lilo, path, directions)
+    omni_path_control(lilo, path, directions)
 
 
 def test_bt_lilo(lilo: OmniRobot):
@@ -143,7 +129,6 @@ def stitch_main(stitch: OmniRobot):
             open_claw(stitch)
         elif request == "CLAW_CLOSE":
             close_claw(stitch)
-        stitch.ev3_print(stitch.ultra_front.distance())
 
 
 def main(hostname):
