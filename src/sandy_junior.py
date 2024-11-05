@@ -20,7 +20,7 @@ Não devem estar nesse módulo:
 
 OBS:. As direções são determinadas a partir do POV do robô
 """
-from pybricks.parameters import Port, Button  # type: ignore
+from pybricks.parameters import Port, Button, Stop  # type: ignore
 from pybricks.ev3devices import ColorSensor  # type: ignore
 from pybricks.tools import wait  # type: ignore
 
@@ -38,7 +38,6 @@ from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
 from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
 from decision_trees.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
 from decision_trees.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p4_decision_tree
-
 
 def sandy_main(sandy: Robot):
     sandy.bluetooth.start()
@@ -90,10 +89,11 @@ def junior_main(junior: Robot):
     junior.bluetooth.start()
 
     # Levanta garra inicialmente
-    junior.motor_elevate_claw.run_target(75, 40)
+    junior.motor_elevate_claw.run_until_stalled(200, Stop.HOLD, 70)
     junior.motor_elevate_claw.hold()
+    star_platinum.main(junior)
+    
 
-    star_platinum.main()
 
 
 def test_navigation_main(sandy: Robot):
@@ -130,9 +130,14 @@ def test_calibrate_align_pid(robot: Robot):
         robot.align()
 
 
+def test_passenger_boarding(sandy: Robot):
+    sandy.bluetooth.start()
+    passenger_boarding(sandy)
+
+
 def main(hostname):
     if hostname == "sandy":
-        passenger_boarding(
+        test_passenger_boarding(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
@@ -157,9 +162,9 @@ def main(hostname):
                 motor_elevate_claw=Port.C,
                 motor_open_claw=Port.B,
                 color_claw=DecisionColorSensor(
-                    ColorSensor(Port.S1), levo_ev3_color_1_decision_tree
+                    ColorSensor(Port.S2), levo_ev3_color_1_decision_tree
                 ),
-                ultra_head=Port.S2,
+                ultra_head=Port.S1,
                 server_name="sandy",
             )
         )

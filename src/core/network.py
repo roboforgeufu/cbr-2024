@@ -91,7 +91,14 @@ class Bluetooth:
 
         else:
             # Inicia o cliente
-            self.bluetooth.connect(self.server_name)
+            while True:
+                print("Trying to connect to server...")
+                try:
+                    self.bluetooth.connect(self.server_name)
+                    break
+                except:
+                    print("Error")
+                    wait(1000)
             return "CLIENT START!"
 
     def message(

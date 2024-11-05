@@ -2,9 +2,9 @@ import os
 
 from pybricks.media.ev3dev import Font # type: ignore
 from pybricks.parameters import Button, Color # type: ignore
+from pybricks.tools import StopWatch, wait # type: ignore
 
-
-class PIDValues:
+class PID:
     """Variáveis de controle PID."""
 
     def __init__(
@@ -17,7 +17,34 @@ class PIDValues:
         self.kp = kp
         self.ki = ki
         self.kd = kd
-        self.target = target
+        self.target = target  
+    
+    def set_values(self, error_function):
+        self._elapsed_time = 0
+        self._i_share = 0
+        self._prev_error = 0 
+        self._error_function = error_function
+        self.stopwatch = StopWatch()
+
+    def loopless_pid(
+        self,
+    ):
+        error = self._error_function()
+        p_share = error * self.kp
+
+        self._i_share = self._i_share + (error * self.ki)
+
+        wait(1)
+        elapsed_time = self.stopwatch.time()
+
+        d_share = ((error - self._prev_error) * self.kd) / (elapsed_time - self._elapsed_time)
+
+        pid_correction = p_share + self._i_share + d_share
+
+        self._elapsed_time = elapsed_time
+        self._prev_error = error
+
+        return pid_correction 
 
 
 def get_hostname() -> str:
