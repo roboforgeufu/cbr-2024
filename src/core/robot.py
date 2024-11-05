@@ -12,7 +12,7 @@ from pybricks.parameters import Port, Stop, Direction, Button, Color  # type: ig
 from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
 from pybricks.robotics import DriveBase  # type: ignore
 from pybricks.media.ev3dev import SoundFile, ImageFile, Font  # type: ignore
-from core.utils import ev3_print, ev3_draw, wait_button_pressed
+from core.utils import ev3_print, wait_button_pressed
 from core.decision_color_sensor import DecisionColorSensor
 from pybricks.parameters import Button # type: ignore
 from core.utils import PIDValues
