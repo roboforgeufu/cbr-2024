@@ -57,11 +57,18 @@ def lilo_main(lilo: OmniRobot):
 
 def test_navigation_lilo(lilo: OmniRobot):
 
+    direction = Direction.RIGHT
     while True:
-        lilo.pid_turn(90)
-        lilo.wait_button()
-        lilo.pid_turn(-90)
-        lilo.wait_button()
+        lilo.align(direction)
+        pressed = lilo.wait_button([Button.UP, Button.LEFT, Button.RIGHT, Button.DOWN])
+        if pressed != Button.CENTER:
+            button_to_direction = {
+                Button.UP: Direction.FRONT,
+                Button.LEFT: Direction.LEFT,
+                Button.RIGHT: Direction.RIGHT,
+                Button.DOWN: Direction.BACK,
+            }
+            direction = button_to_direction[pressed]
 
     # lilo.bluetooth.start()
 

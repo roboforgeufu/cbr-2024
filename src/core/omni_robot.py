@@ -6,7 +6,11 @@ from pybricks.hubs import EV3Brick
 from pybricks.tools import StopWatch
 from pybricks.parameters import Port, Button
 
-from core.utils import wait_button_pressed, ev3_print, PIDValues
+from core.utils import (
+    wait_button_pressed,
+    ev3_print,
+    PIDValues,
+)
 from core.network import Bluetooth
 from core.decision_color_sensor import DecisionColorSensor
 from pybricks.ev3devices import Motor, UltrasonicSensor
@@ -198,6 +202,24 @@ class OmniRobot:
             Direction.FRONT_LEFT: (0, -1, 1, 0),
         }
         return map_robot_direction_to_motor_signs[robot_direction]
+
+    def get_sensors_towards_direction(self, direction: Direction):
+        """Retorna os 2 sensores de cor que estão mais ao extremo do robô, na direção passada"""
+        if direction in (
+            Direction.FRONT_LEFT,
+            Direction.FRONT_RIGHT,
+            Direction.BACK_LEFT,
+            Direction.BACK_RIGHT,
+        ):
+            raise ValueError("Direction must be a straight direction")
+
+        map_robot_direction_to_sensors = {
+            Direction.FRONT: (self.color_front_left, self.color_front_right),
+            Direction.RIGHT: (self.color_front_right, self.color_back_right),
+            Direction.BACK: (self.color_back_right, self.color_back_left),
+            Direction.LEFT: (self.color_back_left, self.color_front_left),
+        }
+        return map_robot_direction_to_sensors[direction]
 
     def pid_walk(
         self,
@@ -445,9 +467,57 @@ class OmniRobot:
 
     def align(
         self,
-        pid: PIDValues = PIDValues(kp=1, ki=0.015, kd=1.5),
-        direction_sign=1,
-    ): ...
+        direction: Direction = Direction.FRONT,
+        pid: PIDValues = PIDValues(
+            kp=1,
+            ki=0,
+            kd=0.5,
+        ),
+    ):
+        sensors = self.get_sensors_towards_direction(direction)
+        all_signs = self.get_motors_direction_signs(direction)
+        all_motors = self.get_all_motors()
+
+        initial_colors = [sensor.color() for sensor in sensors]
+        initial_reflections = [sensor.rgb()[2] for sensor in sensors]
+        has_seen = [False, False]
+
+        error = [0, 0]
+        error_i = [0, 0]
+        prev_error = [0, 0]
+
+        targets = [0, 0]
+
+        speeds = [0, 0]
+        while True:
+            for i, sensor in enumerate(sensors):
+                if not has_seen[i] and sensor.color() != initial_colors[i]:
+                    has_seen[i] = True
+                    targets[i] = (sensor.rgb()[2] + initial_reflections[i]) / 2
+
+                if has_seen[i]:
+                    error[i] = sensor.rgb()[2] - targets[i]
+                    error_i[i] += error[i]
+                    d_error = error[i] - prev_error[i]
+                    prev_error[i] = error[i]
+
+                    pid_correction = (
+                        pid.kp * error[i] + pid.ki * error_i[i] + pid.kd * d_error
+                    )
+                    speeds[i] = min(75, max(-75, pid_correction))
+                else:
+                    speeds[i] = 75
+
+            all_speeds = two_axis_into_four_motors_speeds(
+                speeds[0], speeds[1], direction
+            )
+            # self.ev3_print(zip(all_motors, all_signs, all_speeds))
+            for motor, sign, speed in zip(all_motors, all_signs, all_speeds):
+                motor.dc(sign * speed)
+
+            if all(has_seen) and all([abs(e) <= 7 for e in error]):
+                break
+        self.off_motors()
 
     def start_claw(
         self, open_angle=None, closed_angle=None, high_angle=None, low_angle=None
@@ -485,3 +555,19 @@ class OmniRobot:
             self.claw_low_angle = low_angle
 
         self.claw_mid_angle = self.claw_low_angle - 100
+
+
+def two_axis_into_four_motors_speeds(speed_left, speed_right, direction: Direction):
+    """
+    Converte a velocidade de dois "motores" (baseada em dois eixos) em quatro motores, de acordo com a direção. Desconsidera possíveis sinais.
+    """
+    if direction == Direction.FRONT:
+        return speed_left, speed_right, speed_left, speed_right
+    elif direction == Direction.BACK:
+        return speed_right, speed_left, speed_right, speed_left
+    elif direction == Direction.LEFT:
+        return speed_right, speed_right, speed_left, speed_left
+    elif direction == Direction.RIGHT:
+        return speed_left, speed_left, speed_right, speed_right
+    else:
+        ValueError("Direção inválida")
