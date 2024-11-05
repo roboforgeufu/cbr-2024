@@ -37,19 +37,18 @@ from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
 from decision_trees.lego_ev3_color_3 import lego_ev3_color_p3_decision_tree
 from decision_trees.lego_ev3_color_4 import lego_ev3_color_p4_decision_tree
 
+from domain.localization import read_color
+from core.robot import Robot
+
+
 
 def sandy_main(sandy: Robot):
-    sandy.bluetooth.start()
-
+    #sandy.bluetooth.start()
+    sandy.pid_walk()
     # Inicialização mapa
-    map_graph = Graph(map_matrix)
+    #map_graph = Graph(map_matrix)
 
-    #
-    # Localização inicial
-    #
-    for _ in range(4):
-        localization_routine(sandy)
-
+   
     """while True:
         #
         # Coleta de passageiros
