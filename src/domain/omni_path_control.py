@@ -44,7 +44,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
         distance *= const.OMNI_WALK_DISTANCE_CORRECTION
 
         robot.ev3_print("Current position:", path[position_index])
-        robot.ev3_print("STEP:", direction, distance)
+        robot.ev3_print("STEP:", direction)
         omni_turn_to_direction(robot, direction)
 
         if idx == len(directions) - 1:
@@ -75,11 +75,29 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
         )
         while has_seen_obstacle:
             robot.off_motors()
-            robot.ev3_print("SEEN OBSTACLE")
+            robot.ev3_print("SEEN OBSTACLE:", sensor_left.color(), sensor_right.color())
+            right_direction, left_direction = get_side_directions(robot.orientation)
+            relative_right = Direction.get_relative_direction(omni_direction, 2)
+            relative_left = Direction.get_relative_direction(omni_direction, -2)
             if sensor_left.color() in wall_colors:
-                robot.ev3_print("à esquerda")
-                robot.pid_turn(20)
                 # Desvio à esquerda
+                robot.ev3_print("à esquerda:", walked_perc)
+
+                if (
+                    left_direction in walls_of_vertices[path[position_index]]
+                    and walked_perc < const.OMNI_SIDE_ALING_PERCENTAGE
+                ) or (
+                    position_index + 1 < len(path)
+                    and left_direction in walls_of_vertices[path[position_index + 1]]
+                    and walked_perc > const.OMNI_SIDE_ALING_PERCENTAGE
+                ):
+                    # Se tiver parede à esquerda, e se tiver concluído mais de 50% da distancia, alinha na parede
+                    robot.pid_walk(cm=2, direction=relative_right)
+                    robot.align(relative_left)
+                    robot.pid_walk(cm=const.ROBOT_SIZE_HALF, direction=relative_right)
+                else:
+                    robot.pid_turn(20)
+
                 has_seen_obstacle, walked_perc = robot.pid_walk(
                     cm=distance * (1 - walked_perc),
                     off_motors=should_stop,
@@ -88,8 +106,23 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
                 )
             elif sensor_right.color() in wall_colors:
                 # Desvio à direita
-                robot.ev3_print("à direita")
-                robot.pid_turn(-20)
+                robot.ev3_print("à direita:", walked_perc)
+
+                if (
+                    right_direction in walls_of_vertices[path[position_index]]
+                    and walked_perc < const.OMNI_SIDE_ALING_PERCENTAGE
+                ) or (
+                    position_index + 1 < len(path)
+                    and right_direction in walls_of_vertices[path[position_index + 1]]
+                    and walked_perc > const.OMNI_SIDE_ALING_PERCENTAGE
+                ):
+                    # Se tiver parede à esquerda, e se tiver concluído mais de 50% da distancia, alinha na parede
+                    robot.pid_walk(cm=2, direction=relative_left)
+                    robot.align(relative_right)
+                    robot.pid_walk(cm=const.ROBOT_SIZE_HALF, direction=relative_right)
+                else:
+                    robot.pid_turn(-20)
+
                 has_seen_obstacle, walked_perc = robot.pid_walk(
                     cm=distance * (1 - walked_perc),
                     off_motors=should_stop,
@@ -100,26 +133,8 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
         position_index += 1
 
         new_position = path[position_index]
-        side_orientations = get_side_directions(robot.orientation)
         if robot.orientation in walls_of_vertices[new_position]:
             # O robô está de frente pra uma parede, aproveita pra alinhar a frente
             robot.off_motors()
             robot.align(omni_direction)
             robot.pid_walk(const.ROBOT_SIZE_HALF, speed=-60, direction=omni_direction)
-        else:
-            pass
-            # for i, side_orientation in enumerate(side_orientations):
-            #     if side_orientation in walls_of_vertices[new_position]:
-            #         robot.off_motors()
-            #         align_direction = Direction.get_relative_direction(
-            #             omni_direction,
-            #             # pra direita (i = 0), deve ser 2
-            #             # pra esquerda (i = 1), deve ser 6
-            #             2 + i * 4,
-            #         )
-            #         oposite_direction = Direction.get_relative_direction(
-            #             omni_direction, 4
-            #         )
-            #         robot.align(direction=align_direction)
-            #         robot.pid_walk(const.ROBOT_SIZE_HALF, direction=oposite_direction)
-            #         break

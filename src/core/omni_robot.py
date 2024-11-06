@@ -489,7 +489,7 @@ class OmniRobot:
         direction: Direction = Direction.FRONT,
         pid: PIDValues = PIDValues(
             kp=1,
-            ki=0,
+            ki=0.001,
             kd=0.5,
         ),
     ):
@@ -504,6 +504,7 @@ class OmniRobot:
         error = [0, 0]
         error_i = [0, 0]
         prev_error = [0, 0]
+        d_error = [0, 0]
 
         targets = [0, 0]
 
@@ -517,11 +518,11 @@ class OmniRobot:
                 if has_seen[i]:
                     error[i] = sensor.rgb()[2] - targets[i]
                     error_i[i] += error[i]
-                    d_error = error[i] - prev_error[i]
+                    d_error[i] = error[i] - prev_error[i]
                     prev_error[i] = error[i]
 
                     pid_correction = (
-                        pid.kp * error[i] + pid.ki * error_i[i] + pid.kd * d_error
+                        pid.kp * error[i] + pid.ki * error_i[i] + pid.kd * d_error[i]
                     )
                     speeds[i] = min(75, max(-75, pid_correction))
                 else:
@@ -530,11 +531,10 @@ class OmniRobot:
             all_speeds = two_axis_into_four_motors_speeds(
                 speeds[0], speeds[1], direction
             )
-            # self.ev3_print(zip(all_motors, all_signs, all_speeds))
             for motor, sign, speed in zip(all_motors, all_signs, all_speeds):
                 motor.dc(sign * speed)
 
-            if all(has_seen) and all([abs(e) <= 7 for e in error]):
+            if all(has_seen) and all([abs(e) <= 15 for e in error]):
                 break
         self.off_motors()
 
