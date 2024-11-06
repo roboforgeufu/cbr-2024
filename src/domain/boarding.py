@@ -3,7 +3,7 @@ from core.robot import Robot
 from core.network import Bluetooth
 from pybricks.parameters import Color  # type: ignore
 from domain.star_platinum import star_platinum
-from core.utils import PID
+from core.utils import PIDValues
 
 
 def passenger_boarding(robot: Robot):
@@ -18,7 +18,9 @@ def passenger_boarding(robot: Robot):
     while robot.infra_side.distance() >= 45:
         elapsed_time, i_share, previous_error = robot.loopless_pid_walk()
     while robot.infra_side.distance() < 45:
-        elapsed_time, i_share, previous_error = robot.loopless_pid_walk(prev_elapsed_time=elapsed_time, i_share = i_share, prev_error=previous_error)
+        elapsed_time, i_share, previous_error = robot.loopless_pid_walk(
+            prev_elapsed_time=elapsed_time, i_share=i_share, prev_error=previous_error
+        )
     robot.pid_turn(-90)
     star_platinum(robot, "DOWN")
     star_platinum(robot, "OPEN")
