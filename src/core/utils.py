@@ -6,7 +6,6 @@ from pybricks.tools import StopWatch, wait  # type: ignore
 
 
 class PIDValues:
-class PIDValues:
     """Variáveis de controle PID."""
 
     def __init__(
