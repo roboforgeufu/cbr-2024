@@ -244,7 +244,7 @@ class Robot:
         self.motor_r.dc(vel - pid_correction)
         self.motor_l.dc(vel + pid_correction)
 
-        return (elapsed_time, i_share, error)
+        return (elapsed_time, i_share, error) 
 
     def pid_turn(
         self,
@@ -401,6 +401,7 @@ class Robot:
 
     def align(
         self,
+        speed=75,
         pid: PIDValues = PIDValues(kp=1, ki=0.015, kd=1.5),
         direction_sign=1,
     ):
@@ -446,7 +447,7 @@ class Robot:
 
                 left_speed = left_pid_speed * direction_sign
             else:
-                left_speed = 75
+                left_speed = speed
 
             if has_seen_right:
                 # PID motor direito

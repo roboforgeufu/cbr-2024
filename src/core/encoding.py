@@ -9,7 +9,7 @@ Devem estar nesse módulo:
 Não devem estar nesse módulo:
     - Código específico de algum problema/desafio
 """
-from pybricks.parameters import Color
+from pybricks.parameters import Color # type: ignore
 
 
 def encoder(decoded_message):

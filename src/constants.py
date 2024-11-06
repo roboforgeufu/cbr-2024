@@ -16,7 +16,7 @@ Não devem estar nesse módulo:
 import math
 
 # Dimensões do robô
-WHEEL_DIAMETER = 5.5
+WHEEL_DIAMETER = 6.8
 WHEEL_DIST = 16.2
 WHEEL_LENGTH = WHEEL_DIAMETER * math.pi
 
