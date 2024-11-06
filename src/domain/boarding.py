@@ -3,7 +3,7 @@ from core.robot import Robot
 from core.network import Bluetooth
 from pybricks.parameters import Color  # type: ignore
 from domain.star_platinum import star_platinum
-from core.utils import PID
+from core.utils import PIDValues
 
 
 def passenger_boarding(robot: Robot):

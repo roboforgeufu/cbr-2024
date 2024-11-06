@@ -4,7 +4,7 @@ from pybricks.media.ev3dev import Font # type: ignore
 from pybricks.parameters import Button, Color # type: ignore
 from pybricks.tools import StopWatch, wait # type: ignore
 
-class PID:
+class PIDValues:
     """Variáveis de controle PID."""
 
     def __init__(
