@@ -16,6 +16,7 @@ from core.decision_color_sensor import DecisionColorSensor
 from pybricks.ev3devices import Motor, UltrasonicSensor
 from pybricks.tools import wait
 
+import constants as const
 import math
 
 
@@ -42,13 +43,18 @@ class Direction:
             Direction.FRONT_LEFT,
         ]
 
+    @classmethod
+    def get_relative_direction(cls, initial, offset: int):
+        _all = cls.get_all()
+        return _all[(_all.index(initial) + offset) % len(_all)]
+
 
 class OmniRobot:
     """Classe que representa um robô de 4 rodas omnidirecionais"""
 
     def __init__(
         self,
-        wheel_diameter=5.8,
+        wheel_diameter=6.5,
         wheel_length=10,
         wheel_width=18,
         motor_front_left: Port = None,
@@ -66,7 +72,7 @@ class OmniRobot:
         ultra_back: Port = None,
         ultra_side: Port = None,
         server_name: str = None,
-        turn_correction=1.1,
+        turn_correction=1.2,
         debug=True,
     ):
 
@@ -253,8 +259,8 @@ class OmniRobot:
 
         has_seen_obstacle = False
         while abs(motor_angle_average) < abs(degrees):
-            if obstacle_function:
-                has_seen_obstacle = obstacle_function()
+            if obstacle_function is not None and obstacle_function():
+                has_seen_obstacle = True
                 break
 
             motor_angle_average = (
@@ -350,10 +356,6 @@ class OmniRobot:
         self.motor_back_left.dc(speeds[2])
         self.motor_back_right.dc(speeds[3])
 
-        self.ev3_print(
-            target, list(zip(currents, errors, pid_corrections, speeds[1:]))[1]
-        )
-
         return (elapsed_time, i_share, errors)
 
     def pid_turn(
@@ -426,12 +428,29 @@ class OmniRobot:
             speeds = [
                 min(75, max(-75, pid_correction)) for pid_correction in pid_corrections
             ]
-            self.ev3_print(pid_corrections)
 
             for motor, speed in zip(self.get_all_motors(), speeds):
                 motor.dc(-speed)
 
-            if sum([abs(c) < 10 for c in pid_corrections]) >= 3:
+            distances = [
+                motor.angle() - initial
+                for motor, initial in zip(self.get_all_motors(), initial_angle)
+            ]
+
+            # self.ev3_print(
+            #     distances, [motor.speed() for motor in self.get_all_motors()]
+            # )
+            if all(
+                [abs(e) <= const.PID_TURN_ACCEPTABLE_DEGREE_DIFF for e in errors]
+            ) or (
+                all(
+                    [
+                        abs(m.speed()) <= const.PID_TURN_MIN_SPEED
+                        for m in self.get_all_motors()
+                    ]
+                )
+                and all([abs(d) > const.MIN_DEGREES_CURVE_THRESHOLD for d in distances])
+            ):
                 break
         self.off_motors()
 
@@ -470,7 +489,7 @@ class OmniRobot:
         direction: Direction = Direction.FRONT,
         pid: PIDValues = PIDValues(
             kp=1,
-            ki=0,
+            ki=0.001,
             kd=0.5,
         ),
     ):
@@ -485,6 +504,7 @@ class OmniRobot:
         error = [0, 0]
         error_i = [0, 0]
         prev_error = [0, 0]
+        d_error = [0, 0]
 
         targets = [0, 0]
 
@@ -498,11 +518,11 @@ class OmniRobot:
                 if has_seen[i]:
                     error[i] = sensor.rgb()[2] - targets[i]
                     error_i[i] += error[i]
-                    d_error = error[i] - prev_error[i]
+                    d_error[i] = error[i] - prev_error[i]
                     prev_error[i] = error[i]
 
                     pid_correction = (
-                        pid.kp * error[i] + pid.ki * error_i[i] + pid.kd * d_error
+                        pid.kp * error[i] + pid.ki * error_i[i] + pid.kd * d_error[i]
                     )
                     speeds[i] = min(75, max(-75, pid_correction))
                 else:
@@ -511,11 +531,10 @@ class OmniRobot:
             all_speeds = two_axis_into_four_motors_speeds(
                 speeds[0], speeds[1], direction
             )
-            # self.ev3_print(zip(all_motors, all_signs, all_speeds))
             for motor, sign, speed in zip(all_motors, all_signs, all_speeds):
                 motor.dc(sign * speed)
 
-            if all(has_seen) and all([abs(e) <= 7 for e in error]):
+            if all(has_seen) and all([abs(e) <= 15 for e in error]):
                 break
         self.off_motors()
 
