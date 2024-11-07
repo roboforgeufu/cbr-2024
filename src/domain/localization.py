@@ -241,13 +241,13 @@ def all_white_routine(robot:Robot):
     
 def catch_color_routine(lista,robot:Robot):
     distance, angle = 0,0
-    robot.off_motors()
-    robot.off_motors()
-    while read_color(robot.color_left.color()) == "WHITE" or read_color(robot.color_right.color()) == "WHITE" and distance < 30.5:
+    robot.motor_l.reset_angle()
+    robot.motor_l.reset_angle()
+    while read_color(robot.color_left.color()) == "WHITE" or read_color(robot.color_rigth.color()) == "WHITE" and distance < 30.5:
         angle += (robot.motor_l.angle()+robot.motor_r.angle()/2)
         distance = robot.motor_degrees_to_cm(angle)
         robot.pid_walk()
-    if read_color(robot.color_left.color()) != "WHITE":
+    if read_color.color_left.color() != "WHITE":
         color = read_color(robot.color_left.color())
         lista.append(color)
     robot.pid_walk(-distance)

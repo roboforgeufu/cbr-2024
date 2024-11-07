@@ -6,7 +6,8 @@ from pybricks.tools import StopWatch, wait  # type: ignore
 
 
 class PIDValues:
-    """Variáveis de controle PID."""
+
+    """Classe de valores para controle PID."""
 
     def __init__(
         self,
@@ -20,25 +21,37 @@ class PIDValues:
         self.kd = kd
         self.target = target
 
+class PIDControl:
+    """Classe para controle PID"""
+
+    def __init__(self, values: PIDValues):
+        self.values = values
+        self.reset()
+
     def set_values(self, error_function):
         self._elapsed_time = 0
         self._i_share = 0
         self._prev_error = 0
         self._error_function = error_function
+
         self.stopwatch = StopWatch()
 
-    def loopless_pid(
-        self,
-    ):
-        error = self._error_function()
-        p_share = error * self.kp
+    def reset(self):
+        self._elapsed_time = 0
+        self._i_share = 0
+        self._prev_error = 0
 
-        self._i_share = self._i_share + (error * self.ki)
+    def compute(self, error_function):
+        error = error_function()
+        p_share = error * self.values.kp
+
+        self._i_share = self._i_share + (error * self.values.ki)
 
         wait(1)
         elapsed_time = self.stopwatch.time()
 
-        d_share = ((error - self._prev_error) * self.kd) / (
+        d_share = ((error - self._prev_error) * self.values.kd) / (
+
             elapsed_time - self._elapsed_time
         )
 
@@ -46,6 +59,8 @@ class PIDValues:
 
         self._elapsed_time = elapsed_time
         self._prev_error = error
+
+        print(p_share, d_share, self._i_share)
 
         return pid_correction
 
