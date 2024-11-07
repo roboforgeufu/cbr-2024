@@ -26,6 +26,7 @@ from domain.ohana import (
 )
 
 from domain.omni_path_control import omni_path_control
+import constants as const
 
 
 def lilo_main(lilo: OmniRobot):
@@ -57,28 +58,50 @@ def lilo_main(lilo: OmniRobot):
         pass
 
 
+def move_from_position_to_target(
+    lilo: OmniRobot, map_graph, initial_position: int, target_position: int
+):
+    """Integra pathfinding e path control para mover o robô de uma posição inicial para uma posição alvo, recalculando rotas quando necessário.
+    Retorna a posição final do robô.
+    """
+    completed = False
+    current_position_idx = -1
+    while not completed:
+        if current_position_idx == -1:
+            current_position = initial_position
+
+        path, _, directions = map_graph.dijkstra(current_position, target_position)
+        lilo.ev3_print("Path:", path)
+        lilo.ev3_print("Directions:", directions)
+        completed, current_position_idx = omni_path_control(lilo, path, directions)
+        if not completed:
+            # Marca obstáculo e tenta denovo
+            map_graph.mark_obstacle("V{}".format(path[current_position_idx + 1]))
+            current_position = path[current_position_idx]
+            lilo.ev3_print(
+                "Obstacle detected at V{}".format(path[current_position_idx + 1])
+            )
+            lilo.ev3_print("Recalculating path...")
+            for _ in range(2):
+                lilo.ev3.speaker.beep(700)
+                lilo.ev3.speaker.beep(900)
+    lilo.ev3_print("Finished in path[{}]".format(current_position_idx))
+    return path[current_position_idx]
+
+
 def test_navigation_lilo(lilo: OmniRobot):
-    # lilo.bluetooth.start()
+    lilo.bluetooth.start()
     map_graph = Graph(map_matrix)
 
-    lilo.ev3_print("Press initial robot orientation:")
-    pressed = lilo.wait_button([Button.UP, Button.LEFT, Button.RIGHT, Button.DOWN])
-    button_to_direction = {
-        Button.UP: "N",
-        Button.LEFT: "O",
-        Button.RIGHT: "L",
-        Button.DOWN: "S",
-    }
-    lilo.orientation = button_to_direction[pressed]
+    lilo.orientation = "N"
+    initial_position = 5
+    target_position = 26
 
-    map_graph.mark_obstacle("V10")
-    map_graph.mark_obstacle("V21")
-    path, _, directions = map_graph.dijkstra(5, 26)
-    omni_path_control(lilo, path, directions)
-
+    current_position = move_from_position_to_target(
+        lilo, map_graph, initial_position, target_position
+    )
     lilo.wait_button()
-    path, _, directions = map_graph.dijkstra(27, 6)
-    omni_path_control(lilo, path, directions)
+    move_from_position_to_target(lilo, map_graph, current_position, initial_position)
 
 
 def test_bt_lilo(lilo: OmniRobot):

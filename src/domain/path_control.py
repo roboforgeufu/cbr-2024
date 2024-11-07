@@ -46,6 +46,15 @@ def get_side_directions(robot_orientation: str):
     ]
 
 
+def get_relative_orientation(orientation: str, offset: int):
+    """Retorna a orientação relativa à orientação passada, considerando um offset.
+    Exemplos:
+        get_relative_orientation("N", 1) == "L"
+        get_relative_orientation("N", -1) == "O"
+    """
+    return possible_directions[(possible_directions.index(orientation) + offset) % 4]
+
+
 def turn_to_direction(robot: Robot, target_direction):
     """Considerando a orientação atual do robô, faz uma curva para colocá-lo na orientação desejada"""
     if robot.orientation is None:
