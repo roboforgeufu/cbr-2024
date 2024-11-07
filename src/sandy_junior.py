@@ -39,11 +39,13 @@ from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
 from decision_trees.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
 from decision_trees.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p4_decision_tree
 
-from domain.localization import read_color
+from domain.localization import read_color, catch_color_routine
 
 
 def sandy_main(sandy: Robot):
-    sandy.catch_color()
+    lista = []
+    catch_color_routine(lista,sandy)
+    
     # Inicialização mapa
     #map_graph = Graph(map_matrix)
 
