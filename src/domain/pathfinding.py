@@ -91,13 +91,13 @@ class Graph:
 
         return caminho, distancias[fim], direcoes_pesos
 
-    def recalcular_caminho_sem_obstaculos(self, inicio, fim):
-        for vertice in self.obstaculos:
-            self.unmark_obstacle(vertice)
-            caminho, distancia, _ = self.dijkstra(inicio, fim)
-            if distancia != float("inf"):
-                return caminho, distancia
-        return None, float("inf")
+        def recalcular_caminho_sem_obstaculos(self, inicio, fim):
+            for vertice in self.obstaculos:
+                self.unmark_obstacle(vertice)
+                caminho, distancia, _ = self.dijkstra(inicio, fim)
+                if distancia != float("inf"):
+                    return caminho, distancia
+            return None, float("inf")
 
 
 map_matrix = [

@@ -4,187 +4,191 @@ from pybricks.ev3devices import ColorSensor
 
 import constants as const
 from pybricks.parameters import Color
-from core.decision_color_sensor import DecisionColorSensor
+from time import time, sleep
+
+#TODO testar a rotina de ler os 30cm para os 3 lados
+#TODO pensar em uma rotina para quando houver obstáculo
+#TODO completar a lógica com as quebras apenas no vermelho e azul
+#TODO criar rotinas para o preto e amarelo
 
 
-# TODO substituir as condições pelo tratamento de cores
-# TODO testar o robô para criar logs que permitam diferenciar os vértices
-# TODO descobrir se usaremos árvore de decisão ou apenas condicionais
-# TODO incrementar os resultados de diferenciação na função adivinhar vértice
-# TODO conectar com o restante do código
+wall_colors = [Color.BLACK, Color.BLUE, Color.RED, Color.YELLOW, Color.BROWN]
 
-""" 
-Abaixo estão as combinações e os vértices em que elas aparecem.
-
-    ['YELLOW', 'RED', 'YELLOW', 'RED']: [1, 14],
-    ['RED', 'YELLOW', 'RED', 'YELLOW']: [1, 14],
-    ['BLACK', 'RED', 'YELLOW', 'RED']: [3, 16, 27, 29]
-    ['RED', 'YELLOW', 'RED', 'BLACK']: [3, 16, 27, 29]
-    ['YELLOW', 'RED', 'BLACK', 'RED']: [3, 16, 27, 29]
-    ['RED', 'BLACK', 'RED', 'YELLOW']: [3, 16, 27, 29]
-    ['BLACK', 'RED', 'BLUE', 'RED']: [5, 9, 11, 18, 20, 22, 24]
-    ['RED', 'BLUE', 'RED', 'BLACK']: [5, 9, 11, 18, 20, 22, 24]
-    ['BLUE', 'RED', 'BLACK', 'RED']: [5, 9, 11, 18, 20, 22, 24]
-    ['RED', 'BLACK', 'RED', 'BLUE']: [5, 9, 11, 18, 20, 22, 24]
-    ['BLACK', 'RED', 'BLUE', 'YELLOW']: [7]
-    ['RED', 'BLUE', 'YELLOW', 'BLACK']: [7]
-    ['BLUE', 'YELLOW', 'BLACK', 'RED']: [7]
-    ['YELLOW', 'BLACK', 'RED', 'BLUE']: [7]
-    ['BLACK', 'BLACK', 'BLUE', 'YELLOW']: [8]
-    ['BLACK', 'BLUE', 'YELLOW', 'BLACK']: [8]
-    ['BLUE', 'YELLOW', 'BLACK', 'BLACK']: [8]
-    ['YELLOW', 'BLACK', 'BLACK', 'BLUE']: [8]
-    ['BLACK', 'YELLOW', 'BLUE', 'YELLOW']: [10, 23]
-    ['YELLOW', 'BLUE', 'YELLOW', 'BLACK']: [10, 23]
-    ['BLUE', 'YELLOW', 'BLACK', 'YELLOW']: [10, 23]
-    ['YELLOW', 'BLACK', 'YELLOW', 'BLUE']: [10, 23]
-    ['BLACK', 'YELLOW', 'BLUE', 'BLACK']: [21]
-    ['YELLOW', 'BLUE', 'BLACK', 'BLACK']: [21]
-    ['BLUE', 'BLACK', 'BLACK', 'YELLOW']: [21]
-    ['BLACK', 'BLACK', 'YELLOW', 'BLUE']: [21]
-    ['YELLOW', 'RED', 'BLUE', 'RED']: [31]
-    ['RED', 'BLUE', 'RED', 'YELLOW']: [31]
-    ['BLUE', 'RED', 'YELLOW', 'RED']: [31]
-    ['RED', 'YELLOW', 'RED', 'BLUE']: [31]
-"""
-
-laterais_vertices = [
+color_lateral_vertices = [
     [
         [1],
-        ["YELLOW", "RED", "YELLOW", "RED"],
-        ["RED", "YELLOW", "RED", "YELLOW"],
-        ["YELLOW", "RED", "YELLOW", "RED"],
-        ["RED", "YELLOW", "RED", "YELLOW"],
+        [
+            ["RED", "YELLOW", "WHITE", "YELLOW"],           # Rotação 0
+            ["YELLOW", "WHITE", "YELLOW", "RED"],           # Rotação 1
+            ["WHITE", "YELLOW", "RED", "YELLOW"],           # Rotação 2
+            ["YELLOW", "RED", "YELLOW", "WHITE"],           # Rotação 3
+        ]
     ],
     [
         [3],
-        ["BLACK", "RED", "YELLOW", "RED"],
-        ["RED", "YELLOW", "RED", "BLACK"],
-        ["YELLOW", "RED", "BLACK", "RED"],
-        ["RED", "BLACK", "RED", "YELLOW"],
+        [
+            ["RED", "YELLOW", "WHITE", "BLACK"],           # Rotação 0
+            ["YELLOW", "WHITE", "BLACK", "RED"],           # Rotação 1
+            ["WHITE", "BLACK", "RED", "YELLOW"],           # Rotação 2
+            ["BLACK", "RED", "YELLOW", "WHITE"],           # Rotação 3
+        ]
     ],
     [
         [5],
-        ["BLACK", "RED", "BLUE", "RED"],
-        ["RED", "BLUE", "RED", "BLACK"],
-        ["BLUE", "RED", "BLACK", "RED"],
-        ["RED", "BLACK", "RED", "BLUE"],
+        [
+            ["RED", "BLUE", "WHITE", "BLACK"],             # Rotação 0
+            ["BLUE", "WHITE", "BLACK", "RED"],             # Rotação 1
+            ["WHITE", "BLACK", "RED", "BLUE"],             # Rotação 2
+            ["BLACK", "RED", "BLUE", "WHITE"],             # Rotação 3
+        ]
     ],
     [
         [7],
-        ["BLACK", "RED", "BLUE", "YELLOW"],
-        ["RED", "BLUE", "YELLOW", "BLACK"],
-        ["BLUE", "YELLOW", "BLACK", "RED"],
-        ["YELLOW", "BLACK", "RED", "BLUE"],
+        [
+            ["WHITE", "WHITE", "WHITE", "BLACK"],          # Rotação 0
+            ["WHITE", "WHITE", "BLACK", "WHITE"],          # Rotação 1
+            ["WHITE", "BLACK", "WHITE", "WHITE"],          # Rotação 2
+            ["BLACK", "WHITE", "WHITE", "WHITE"],          # Rotação 3
+        ]
     ],
     [
         [8],
-        ["BLACK", "BLACK", "BLUE", "YELLOW"],
-        ["BLACK", "BLUE", "YELLOW", "BLACK"],
-        ["BLUE", "YELLOW", "BLACK", "BLACK"],
-        ["YELLOW", "BLACK", "BLACK", "BLUE"],
+        [
+            ["YELLOW", "WHITE", "BLACK", "WHITE"],         # Rotação 0
+            ["WHITE", "BLACK", "WHITE", "YELLOW"],         # Rotação 1
+            ["BLACK", "WHITE", "YELLOW", "WHITE"],         # Rotação 2
+            ["WHITE", "YELLOW", "WHITE", "BLACK"],         # Rotação 3
+        ]
     ],
     [
         [9],
-        ["BLACK", "RED", "BLUE", "RED"],
-        ["RED", "BLUE", "RED", "BLACK"],
-        ["BLUE", "RED", "BLACK", "RED"],
-        ["RED", "BLACK", "RED", "BLUE"],
+        [
+            ["WHITE", "WHITE", "WHITE", "WHITE"],          # Rotação 0
+            ["WHITE", "WHITE", "WHITE", "WHITE"],          # Rotação 1
+            ["WHITE", "WHITE", "WHITE", "WHITE"],          # Rotação 2
+            ["WHITE", "WHITE", "WHITE", "WHITE"],          # Rotação 3
+        ]
     ],
     [
         [10],
-        ["BLACK", "YELLOW", "BLUE", "YELLOW"],
-        ["YELLOW", "BLUE", "YELLOW", "BLACK"],
-        ["BLUE", "YELLOW", "BLACK", "YELLOW"],
-        ["YELLOW", "BLACK", "YELLOW", "BLUE"],
+        [
+            ["YELLOW", "WHITE", "YELLOW", "WHITE"],        # Rotação 0
+            ["WHITE", "YELLOW", "WHITE", "YELLOW"],        # Rotação 1
+            ["YELLOW", "WHITE", "YELLOW", "WHITE"],        # Rotação 2
+            ["WHITE", "YELLOW", "WHITE", "YELLOW"],        # Rotação 3
+        ]
     ],
     [
         [11],
-        ["BLACK", "RED", "BLUE", "RED"],
-        ["RED", "BLUE", "RED", "BLACK"],
-        ["BLUE", "RED", "BLACK", "RED"],
-        ["RED", "BLACK", "RED", "BLUE"],
+        [
+            ["WHITE", "BLUE", "WHITE", "WHITE"],           # Rotação 0
+            ["BLUE", "WHITE", "WHITE", "WHITE"],           # Rotação 1
+            ["WHITE", "WHITE", "WHITE", "BLUE"],           # Rotação 2
+            ["WHITE", "WHITE", "BLUE", "WHITE"],           # Rotação 3
+        ]
     ],
     [
         [14],
-        ["YELLOW", "RED", "YELLOW", "RED"],
-        ["RED", "YELLOW", "RED", "YELLOW"],
-        ["YELLOW", "RED", "YELLOW", "RED"],
-        ["RED", "YELLOW", "RED", "YELLOW"],
+        [
+            ["WHITE", "YELLOW", "WHITE", "YELLOW"],        # Rotação 0
+            ["YELLOW", "WHITE", "YELLOW", "WHITE"],        # Rotação 1
+            ["WHITE", "YELLOW", "WHITE", "YELLOW"],        # Rotação 2
+            ["YELLOW", "WHITE", "YELLOW", "WHITE"],        # Rotação 3
+        ]
     ],
     [
         [16],
-        ["YELLOW", "RED", "BLACK", "RED"],
-        ["RED", "BLACK", "RED", "YELLOW"],
-        ["BLACK", "RED", "YELLOW", "RED"],
-        ["RED", "YELLOW", "RED", "BLACK"],
+        [
+            ["WHITE", "BLACK", "WHITE", "YELLOW"],         # Rotação 0
+            ["BLACK", "WHITE", "YELLOW", "WHITE"],         # Rotação 1
+            ["WHITE", "YELLOW", "WHITE", "BLACK"],         # Rotação 2
+            ["YELLOW", "WHITE", "BLACK", "WHITE"],         # Rotação 3
+        ]
     ],
     [
         [18],
-        ["BLACK", "RED", "BLUE", "RED"],
-        ["RED", "BLUE", "RED", "BLACK"],
-        ["BLUE", "RED", "BLACK", "RED"],
-        ["RED", "BLACK", "RED", "BLUE"],
+        [
+            ["WHITE", "BLUE", "WHITE", "BLACK"],           # Rotação 0
+            ["BLUE", "WHITE", "BLACK", "WHITE"],           # Rotação 1
+            ["WHITE", "BLACK", "WHITE", "BLUE"],           # Rotação 2
+            ["BLACK", "WHITE", "BLUE", "WHITE"],           # Rotação 3
+        ]
     ],
     [
         [20],
-        ["BLACK", "RED", "BLUE", "RED"],
-        ["RED", "BLUE", "RED", "BLACK"],
-        ["BLUE", "RED", "BLACK", "RED"],
-        ["RED", "BLACK", "RED", "BLUE"],
+        [
+            ["WHITE", "WHITE", "WHITE", "BLACK"],          # Rotação 0
+            ["WHITE", "WHITE", "BLACK", "WHITE"],          # Rotação 1
+            ["WHITE", "BLACK", "WHITE", "WHITE"],          # Rotação 2
+            ["BLACK", "WHITE", "WHITE", "WHITE"],          # Rotação 3
+        ]
     ],
     [
         [21],
-        ["BLACK", "YELLOW", "BLUE", "BLACK"],
-        ["YELLOW", "BLUE", "BLACK", "BLACK"],
-        ["BLUE", "BLACK", "BLACK", "YELLOW"],
-        ["BLACK", "BLACK", "YELLOW", "BLUE"],
+        [
+            ["WHITE", "BLACK", "WHITE", "YELLOW"],         # Rotação 0
+            ["BLACK", "WHITE", "YELLOW", "WHITE"],         # Rotação 1
+            ["WHITE", "YELLOW", "WHITE", "BLACK"],         # Rotação 2
+            ["YELLOW", "WHITE", "BLACK", "WHITE"],         # Rotação 3
+        ]
     ],
     [
         [22],
-        ["BLACK", "RED", "BLUE", "RED"],
-        ["RED", "BLUE", "RED", "BLACK"],
-        ["BLUE", "RED", "BLACK", "RED"],
-        ["RED", "BLACK", "RED", "BLUE"],
+        [
+            ["WHITE", "WHITE", "WHITE", "WHITE"],          # Rotação 0
+            ["WHITE", "WHITE", "WHITE", "WHITE"],          # Rotação 1
+            ["WHITE", "WHITE", "WHITE", "WHITE"],          # Rotação 2
+            ["WHITE", "WHITE", "WHITE", "WHITE"],          # Rotação 3
+        ]
     ],
     [
         [23],
-        ["BLACK", "YELLOW", "BLUE", "YELLOW"],
-        ["YELLOW", "BLUE", "YELLOW", "BLACK"],
-        ["BLUE", "YELLOW", "BLACK", "YELLOW"],
-        ["YELLOW", "BLACK", "YELLOW", "BLUE"],
+        [
+            ["YELLOW", "WHITE", "YELLOW", "WHITE"],        # Rotação 0
+            ["WHITE", "YELLOW", "WHITE", "YELLOW"],        # Rotação 1
+            ["YELLOW", "WHITE", "YELLOW", "WHITE"],        # Rotação 2
+            ["WHITE", "YELLOW", "WHITE", "YELLOW"],        # Rotação 3
+        ]
     ],
     [
         [24],
-        ["BLACK", "RED", "BLUE", "RED"],
-        ["RED", "BLUE", "RED", "BLACK"],
-        ["BLUE", "RED", "BLACK", "RED"],
-        ["RED", "BLACK", "RED", "BLUE"],
+        [
+            ["WHITE", "BLUE", "WHITE", "WHITE"],           # Rotação 0
+            ["BLUE", "WHITE", "WHITE", "WHITE"],           # Rotação 1
+            ["WHITE", "WHITE", "WHITE", "BLUE"],           # Rotação 2
+            ["WHITE", "WHITE", "BLUE", "WHITE"],           # Rotação 3
+        ]
     ],
     [
         [27],
-        ["YELLOW", "RED", "BLACK", "RED"],
-        ["RED", "BLACK", "RED", "YELLOW"],
-        ["BLACK", "RED", "YELLOW", "RED"],
-        ["RED", "YELLOW", "RED", "BLACK"],
+        [
+            ["YELLOW", "RED", "BLACK", "RED"],             # Rotação 0
+            ["RED", "BLACK", "RED", "YELLOW"],             # Rotação 1
+            ["BLACK", "RED", "YELLOW", "RED"],             # Rotação 2
+            ["RED", "YELLOW", "RED", "BLACK"],             # Rotação 3
+        ]
     ],
     [
         [29],
-        ["YELLOW", "RED", "BLACK", "RED"],
-        ["RED", "BLACK", "RED", "YELLOW"],
-        ["BLACK", "RED", "YELLOW", "RED"],
-        ["RED", "YELLOW", "RED", "BLACK"],
+        [
+            ["WHITE", "BLACK", "RED", "YELLOW"],           # Rotação 0
+            ["BLACK", "RED", "YELLOW", "WHITE"],           # Rotação 1
+            ["RED", "YELLOW", "WHITE", "BLACK"],           # Rotação 2
+            ["YELLOW", "WHITE", "BLACK", "RED"],           # Rotação 3
+        ]
     ],
     [
         [31],
-        ["YELLOW", "RED", "BLUE", "RED"],
-        ["RED", "BLUE", "RED", "YELLOW"],
-        ["BLUE", "RED", "YELLOW", "RED"],
-        ["RED", "YELLOW", "RED", "BLUE"],
+        [
+            ["WHITE", "BLUE", "RED", "YELLOW"],            # Rotação 0
+            ["BLUE", "RED", "YELLOW", "WHITE"],            # Rotação 1
+            ["RED", "YELLOW", "WHITE", "BLUE"],            # Rotação 2
+            ["YELLOW", "WHITE", "BLUE", "RED"],            # Rotação 3
+        ]
     ],
 ]
 
-
+# Troca a cor lida pelo sensor para o nome sem o prefixo 'Color.'
 def read_color(color):
     if color == "Color.RED":
         return "RED"
@@ -197,56 +201,79 @@ def read_color(color):
     else:
         return None
 
+# Chega de frente no azul e faz a rotina do azul
+def blue_routine(robot: Robot):  
+    robot.pid_turn(90)
+    while read_color(robot.color_right.color()) != "RED" and read_color(robot.color_left.color) != "RED":
+        robot.pid_walk()
+    robot.pid_turn(180)
+    return "V31"
+   
+def black_routine(robot:Robot):
+    robot.align()
+    robot.pid_turn(180)
+    while read_color(robot.color_left.color()) == "WHITE" and read_color(robot.color_right.color()) == "WHITE":
+        robot.pid_walk()
 
-def blue_routine(robot: Robot):  # chega de frente no azul
-    robot.turn(90)
-    while robot.color_right.color() != "Color.RED" and robot.color_left.color != "Color.RED":
-        robot.walk()
-    robot.turn(90)
-    while robot.color_left.color() == "Color.WHITE" and robot.color_right == "Color.WHITE":
-        robot.walk()
-    if robot.color_left.color() == "Color.YELLOW" and robot.color_right == "Color.YELLOW":
-        return "V31"
-    return "V5"
+def red_routine(robot:Robot):
+    robot.pid_walk(cm=-30)
+    robot.pid_turn(90)
+    while read_color(robot.color_left.color()) == "WHITE" and read_color(robot.color_right.color()) == "WHITE":
+        robot.pid_walk()
+    if read_color(robot.color_left.color()) == "BLACK" or read_color(robot.color.right.color()) == "BLACK":
+        robot.align()
+        black_routine()
+    if read_color(robot.color_left.color()) == "BLUE" or read_color(robot.color_right.color()) == "BLUE":
+        robot.align()
+        blue_routine(robot)
+        return True
+    return False
 
+def all_white_routine(robot:Robot):
+    while read_color(robot.color_left.color()) != "WHITE" or read_color(robot.color_rigth.color()) != "WHITE":
+        robot.pid_walk()
+    if read_color(robot.color_left.color()) == "RED" and read_color(robot.color_right()) == "RED":
+        red_routine()
+    if read_color(robot.color_left.color()) == "BLACK" and read_color(robot.color_right()) == "BLACK":
+        black_routine()
+    if read_color(robot.color_left.color()) == "BLUE" and read_color(robot.color_right()) == "BLUE":
+        blue_routine()
+    
+def catch_color_routine(lista,robot:Robot):
+    distance, angle = 0,0
+    robot.motor_l.reset_angle()
+    robot.motor_l.reset_angle()
+    while read_color(robot.color_left.color()) == "WHITE" or read_color(robot.color_rigth.color()) == "WHITE" and distance < 30.5:
+        angle += (robot.motor_l.angle()+robot.motor_r.angle()/2)
+        distance = robot.motor_degrees_to_cm(angle)
+        robot.pid_walk()
+    if read_color.color_left.color() != "WHITE":
+        color = read_color(robot.color_left.color())
+        lista.append(color)
+    robot.pid_walk(-distance)
 
-def fill_list(
-    robot: Robot
-):
+def fill_list(robot: Robot):
     lista = []
-    for i in range(4):
-        robot.turn(90)
-        ini = robot.watch()
-        while robot.color_sensor.color() == "Color.WHITE":
-            robot.walk()
-        if robot.color_sensor.color() == "Color.BLUE":
+    for _ in range(3):
+        catch_color_routine(lista, robot)
+        if read_color(robot.color_left()) == "BLUE":
             blue_routine(robot)
-        else:
-            lista.append(read_color())
-            fim = robot.watch()
-            lista.append(fim-ini)
-            robot.hold_wheels()
-        return lista 
+            break
+        robot.pid_turn(90)
+    else:
+        catch_color_routine(lista, robot)
+    return lista
 
 
 def interprets_list(lista):
-    for vertice_info in laterais_vertices:
-        vertice_id = vertice_info[0][0]
-        combinacoes = vertice_info[1:]
-        if lista in combinacoes:
-            return "V{}".format(vertice_id)
-    return None
-
-
-resultado = interprets_list(
-    ["YELLOW", "RED", "YELLOW", "RED"]
-)  # retorna apenas o 1º id, fazer alteração para ter um tempo de cada movimentação
-
+    vertices = []
+    for i in range(len(color_lateral_vertices)):
+        vertice_id, combinacoes = color_lateral_vertices[i][0], color_lateral_vertices[i][1]
+        for item in combinacoes:
+            if lista == item and "V"+str(vertice_id[0]) not in vertices:
+                vertices.append("V"+str(vertice_id[0]))
+    return vertices
 
 def localization_routine(robot: Robot):
-    """
-    Rotina de localização inicial do robô.
-    Termina na origem: posição fixa pra iniciar a rotina de coleta de passageiros.
-    """
-    fill_list(robot)
-    robot.hold_wheels()
+    resultado = fill_list(robot)
+    print(resultado)

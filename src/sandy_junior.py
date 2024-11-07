@@ -39,18 +39,20 @@ from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
 from decision_trees.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
 from decision_trees.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p4_decision_tree
 
-def sandy_main(sandy: Robot):
-    sandy.bluetooth.start()
+from domain.localization import read_color
 
+
+def sandy_main(sandy: Robot):
+    sandy.catch_color()
     # Inicialização mapa
-    map_graph = Graph(map_matrix)
+    #map_graph = Graph(map_matrix)
 
     #
     # Localização inicial
     #
-    localization_routine(sandy)
+    #localization_routine(sandy)
 
-    while True:
+    """while True:
         #
         # Coleta de passageiros
         #
@@ -83,7 +85,7 @@ def sandy_main(sandy: Robot):
             path[-2]  # A penultima posição do caminho (antes do vértice de entrega)
         )
         path_control(sandy, path, directions)
-
+"""
 
 def junior_main(junior: Robot):
     junior.bluetooth.start()
@@ -93,7 +95,6 @@ def junior_main(junior: Robot):
     junior.motor_elevate_claw.hold()
     star_platinum.main(junior)
     
-
 
 
 def test_navigation_main(sandy: Robot):
@@ -137,7 +138,7 @@ def test_passenger_boarding(sandy: Robot):
 
 def main(hostname):
     if hostname == "sandy":
-        test_passenger_boarding(
+        sandy_main(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
