@@ -188,80 +188,65 @@ color_lateral_vertices = [
     ],
 ]
 
-# Troca a cor lida pelo sensor para o nome sem o prefixo 'Color.'
-def read_color(color):
-    if color == "Color.RED":
-        return "RED"
-    elif color == "Color.YELLOW":
-        return "YELLOW"
-    elif color == "Color.BLUE":
-        return "BLUE"
-    elif color == "Color.BLACK":
-        return "BLACK"
-    else:
-        return None
 
 # Chega de frente no azul e faz a rotina do azul
 def blue_routine(robot: Robot):  
     robot.pid_turn(90)
-    while read_color(robot.color_right.color()) != "RED" and read_color(robot.color_left.color) != "RED":
-        robot.pid_walk()
+    while robot.color_right.color() != "Color.RED" and robot.color_left.color != "Color.RED":
+        robot.walk()
     robot.pid_turn(180)
     return "V31"
    
 def black_routine(robot:Robot):
     robot.align()
     robot.pid_turn(180)
-    while read_color(robot.color_left.color()) == "WHITE" and read_color(robot.color_right.color()) == "WHITE":
-        robot.pid_walk()
+    while robot.color_left.color() == "Color.WHITE" and robot.color_right.color() == "Color.WHITE":
+        robot.walk()
 
 def red_routine(robot:Robot):
-    robot.pid_walk(cm=-30)
+    robot.walk(cm=-30)
     robot.pid_turn(90)
-    while read_color(robot.color_left.color()) == "WHITE" and read_color(robot.color_right.color()) == "WHITE":
-        robot.pid_walk()
-    if read_color(robot.color_left.color()) == "BLACK" or read_color(robot.color.right.color()) == "BLACK":
+    while robot.color_left.color() == "Color.WHITE" and robot.color_right.color() == "Color.WHITE":
+        robot.walk()
+    if robot.color_left.color() == "Color.BLACK" or robot.color.right.color() == "Color.BLACK":
         robot.align()
         black_routine()
-    if read_color(robot.color_left.color()) == "BLUE" or read_color(robot.color_right.color()) == "BLUE":
+    if robot.color_left.color() == "Color.BLUE" or robot.color_right.color() == "Color.BLUE":
         robot.align()
         blue_routine(robot)
         return True
     return False
 
 def all_white_routine(robot:Robot):
-    while read_color(robot.color_left.color()) != "WHITE" or read_color(robot.color_rigth.color()) != "WHITE":
-        robot.pid_walk()
-    if read_color(robot.color_left.color()) == "RED" and read_color(robot.color_right()) == "RED":
+    while robot.color_left.color() != "Color.WHITE" or robot.color_right.color() != "Color.WHITE":
+        robot.walk()
+    if robot.color_left.color() == "Color.RED" and robot.color_right.color() == "Color.RED":
         red_routine()
-    if read_color(robot.color_left.color()) == "BLACK" and read_color(robot.color_right()) == "BLACK":
+    if robot.color_left.color() == "Color.BLACK" and robot.color_right.color() == "Color.BLACK":
         black_routine()
-    if read_color(robot.color_left.color()) == "BLUE" and read_color(robot.color_right()) == "BLUE":
+    if robot.color_left.color() == "Color.BLUE" and robot.color_right.color() == "Color.BLUE":
         blue_routine()
     
-def catch_color_routine(lista,robot:Robot):
-    distance, angle = 0,0
-    robot.off_motors()
-    robot.off_motors()
-    while read_color(robot.color_left.color()) == "WHITE" or read_color(robot.color_right.color()) == "WHITE" and distance < 30.5:
-        angle += (robot.motor_l.angle()+robot.motor_r.angle()/2)
-        distance = robot.motor_degrees_to_cm(angle)
-        robot.pid_walk()
-    if read_color(robot.color_left.color()) != "WHITE":
-        color = read_color(robot.color_left.color())
-        lista.append(color)
-    robot.pid_walk(-distance)
+def walk_until_non_white(robot: Robot, speed=66):
+    """
+    Faz o robô andar uma distância de 30 cm ou até que os sensores detectem algo diferente de branco.
+    """
+    stop_condition = lambda: (
+        robot.color_left.color() != Color.WHITE or robot.color_right.color() != Color.WHITE
+    )
 
-def fill_list(robot: Robot):
-    lista = []
-    for _ in range(3):
-        catch_color_routine(lista, robot)
-        if read_color(robot.color_left()) == "BLUE":
-            blue_routine(robot)
-            break
-        robot.pid_turn(90)
-    else:
-        catch_color_routine(lista, robot)
+    has_detected_non_white, _ = robot.pid_walk(
+        cm=35,
+        speed=speed,
+        off_motors=True,   
+        obstacle_function=stop_condition,
+    )
+
+
+def catch_color_routine(lista, robot: Robot):
+    """
+    Copiar e colar quando o sandy main der certo aqui
+    """
     return lista
 
 
@@ -275,5 +260,4 @@ def interprets_list(lista):
     return vertices
 
 def localization_routine(robot: Robot):
-    resultado = fill_list(robot)
-    print(resultado)
+    ...
