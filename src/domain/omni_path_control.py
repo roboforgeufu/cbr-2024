@@ -38,8 +38,8 @@ def omni_turn_to_direction(robot: OmniRobot, target_direction):
 
 def get_obstacle_sensor_msg_and_distance(robot: OmniRobot):
     if robot.moving_direction_sign == 1:
-        return "ULTRA_FRONT", const.OMNI_OBSTACLE_FRONT_DISTANCE
-    return "ULTRA_BACK", const.OMNI_OBSTACLE_BACK_DISTANCE
+        return "ULTRA_FRONT", const.OMNI_OBSTACLE_DISTANCE
+    return "ULTRA_BACK", const.OMNI_OBSTACLE_DISTANCE
 
 
 def omni_path_control(robot: OmniRobot, path: list, directions: list):
