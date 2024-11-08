@@ -106,7 +106,7 @@ def path_control(robot: Robot, path: list, directions: list):
             obstacle_function=obstacle_function,
         )
         while has_seen_obstacle:
-            robot.off_motors()
+            robot.stop()
             if robot.color_left.color() in wall_colors:
                 # Alinhamento à esquerda
                 robot.ev3_print("à esquerda")
@@ -131,6 +131,6 @@ def path_control(robot: Robot, path: list, directions: list):
         new_position = path[position_index]
         if robot.orientation in walls_of_vertices[new_position]:
             # O robô está de frente pra uma parede, aproveita pra alinhar a frente
-            robot.off_motors()
+            robot.stop()
             robot.align()
             robot.pid_walk(const.ROBOT_SIZE_HALF, speed=-60)

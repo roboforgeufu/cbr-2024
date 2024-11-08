@@ -15,6 +15,8 @@ Não devem estar nesse módulo:
 
 import math
 
+from core.utils import PIDValues
+
 # Dimensões do robô
 WHEEL_DIAMETER = 6.8
 WHEEL_DIST = 16.2
@@ -31,6 +33,7 @@ MIN_DEGREES_CURVE_THRESHOLD = 30
 # Comunicação Bluetooth
 SERVER_NAME = "sandy"
 
+PID_WALK_VALUES = PIDValues(kp=3, ki=0.2, kd=8)
 
 # Distâncias
 OMNI_WALK_DISTANCE_CORRECTION = 0.95
@@ -39,5 +42,6 @@ OMNI_SIDE_ALING_PERCENTAGE = 0.53
 
 
 # Obstáculos
-OMNI_OBSTACLE_FRONT_DISTANCE = 400
-OMNI_OBSTACLE_BACK_DISTANCE = 150
+OMNI_OBSTACLE_DISTANCE = 150
+
+LINE_FOLLOW_TARGET_REFLECTION = 30

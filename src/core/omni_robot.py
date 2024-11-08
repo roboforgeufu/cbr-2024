@@ -68,9 +68,9 @@ class OmniRobot:
         color_back_left: DecisionColorSensor = None,
         color_back_right: DecisionColorSensor = None,
         color_side: DecisionColorSensor = None,
-        ultra_front: Port = None,
+        ultra_claw: Port = None,
         ultra_back: Port = None,
-        ultra_side: Port = None,
+        ultra_front: Port = None,
         server_name: str = None,
         turn_correction=1.2,
         debug=True,
@@ -108,12 +108,12 @@ class OmniRobot:
             self.color_back_left = color_back_left
         if color_back_right is not None:
             self.color_back_right = color_back_right
-        if ultra_front is not None:
-            self.ultra_front = UltrasonicSensor(ultra_front)
+        if ultra_claw is not None:
+            self.ultra_claw = UltrasonicSensor(ultra_claw)
         if ultra_back is not None:
             self.ultra_back = UltrasonicSensor(ultra_back)
-        if ultra_side is not None:
-            self.ultra_side = UltrasonicSensor(ultra_side)
+        if ultra_front is not None:
+            self.ultra_front = UltrasonicSensor(ultra_front)
         if color_side is not None:
             self.color_side = color_side
 
@@ -150,6 +150,10 @@ class OmniRobot:
     def cm_to_motor_degrees(self, cm: float):
         """Distância em centímetros -> grau nas rodas (motores) do robô"""
         return cm * (360 / (math.pi * self.wheel_diameter))
+
+    def motor_degrees_to_cm(self, degrees: float):
+        """Grau nas rodas (motores) do robô -> distância em centímetros"""
+        return degrees * (math.pi * self.wheel_diameter / 360)
 
     def abs_wheels_angle(self):
 
@@ -487,6 +491,7 @@ class OmniRobot:
     def align(
         self,
         direction: Direction = Direction.FRONT,
+        speed=75,
         pid: PIDValues = PIDValues(
             kp=1,
             ki=0.001,
@@ -526,7 +531,7 @@ class OmniRobot:
                     )
                     speeds[i] = min(75, max(-75, pid_correction))
                 else:
-                    speeds[i] = 75
+                    speeds[i] = speed
 
             all_speeds = two_axis_into_four_motors_speeds(
                 speeds[0], speeds[1], direction
@@ -559,7 +564,7 @@ class OmniRobot:
 
         if high_angle is None:
             self.claw_high_angle = self.motor_claw_lift.run_until_stalled(
-                speed=-300, duty_limit=15
+                speed=-300, duty_limit=30
             )
             self.ev3_print("High_angle:", self.claw_high_angle)
         else:
@@ -567,13 +572,48 @@ class OmniRobot:
 
         if low_angle is None:
             self.claw_low_angle = self.motor_claw_lift.run_until_stalled(
-                speed=300, duty_limit=20
+                speed=300, duty_limit=30
             )
             self.ev3_print("Low angle:", self.claw_low_angle)
         else:
             self.claw_low_angle = low_angle
 
         self.claw_mid_angle = self.claw_low_angle - 100
+
+    def line_follow(
+        self,
+        sensor,
+        loop_condition_function,
+        speed=60,
+        direction: Direction = Direction.FRONT,
+        pid: PIDValues = PIDValues(kp=0.5, ki=0, kd=0),
+    ):
+        """
+        Segue uma linha com um sensor de cor.
+        """
+        error = 0
+        error_i = 0
+        prev_error = 0
+        d_error = 0
+
+        all_motors = self.get_all_motors()
+        motor_signs = self.get_motors_direction_signs(direction)
+        while loop_condition_function():
+            error = sensor.reflection() - const.LINE_FOLLOW_TARGET_REFLECTION
+            error_i += error
+            d_error = error - prev_error
+            prev_error = error
+
+            pid_correction = pid.kp * error + pid.ki * error_i + pid.kd * d_error
+
+            # self.ev3_print(error, pid_correction, [speed, speed])
+            all_speeds = two_axis_into_four_motors_speeds(
+                speed + pid_correction, speed - pid_correction, direction
+            )
+            for motor, sign, motor_speed in zip(all_motors, motor_signs, all_speeds):
+                motor.dc(sign * (motor_speed))
+
+        self.off_motors()
 
 
 def two_axis_into_four_motors_speeds(speed_left, speed_right, direction: Direction):

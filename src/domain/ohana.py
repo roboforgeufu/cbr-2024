@@ -37,6 +37,6 @@ def transmit_signal(robot: OmniRobot, signal_function):
     robot.ev3_print("Transmitindo:")
     robot.bluetooth.message(signal_function(), force_send=True)
     while robot.bluetooth.message(should_wait=False) != "STOP":
-        robot.bluetooth.message(signal_function(), delay=10, force_send=True)
+        robot.bluetooth.message(signal_function(), force_send=True)
     robot.bluetooth.message(None, force_send=True)
     robot.ev3_print("Transmissao encerrada")
