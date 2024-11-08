@@ -39,13 +39,49 @@ from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
 from decision_trees.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
 from decision_trees.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p4_decision_tree
 
-from domain.localization import read_color, catch_color_routine
+from domain.localization import read_color, catch_color_routine, walk_until_non_white
+from core.robot import Robot
 
 
 def sandy_main(sandy: Robot):
+    """
+    Faz o robô andar até detectar uma cor diferente de branco, então armazena a cor detectada.
+    Ainda não está estruturado como deveria no arquivo localization.py
+    """
     lista = []
-    catch_color_routine(lista,sandy)
+    sandy.reset_wheels_angle()
+
+    walk_until_non_white(sandy)
+   
+    sandy.off_motors()
+   
+    detected_color = sandy.color_left.color()  
+    lista.append(detected_color)
     
+    angle = (sandy.motor_l.angle() + sandy.motor_r.angle()) / 2
+    distance = sandy.motor_degrees_to_cm(angle)
+    
+    sandy.pid_walk(cm=distance, speed=-60)
+    
+
+    sandy.reset_wheels_angle()
+
+    sandy.pid_turn(90)
+   
+    walk_until_non_white(sandy)
+   
+    sandy.off_motors()
+   
+    detected_color = sandy.color_left.color()  
+    lista.append(detected_color)
+    
+    angle = (sandy.motor_l.angle() + sandy.motor_r.angle()) / 2
+    distance = sandy.motor_degrees_to_cm(angle)
+    
+    sandy.pid_walk(cm=distance, speed=-60)
+
+    sandy.ev3_print(lista)
+
     # Inicialização mapa
     #map_graph = Graph(map_matrix)
 
