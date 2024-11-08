@@ -15,7 +15,7 @@ from pybricks.media.ev3dev import SoundFile, ImageFile, Font  # type: ignore
 from core.utils import ev3_print, ev3_draw, wait_button_pressed
 from core.decision_color_sensor import DecisionColorSensor
 from pybricks.parameters import Button  # type: ignore
-from core.utils import PIDValues
+from core.utils import PIDValues, PIDControl
 from core.network import Bluetooth
 import constants as const
 
@@ -129,10 +129,10 @@ class Robot:
 
     def reset_wheels_angle(self, angle=0):
         """Reseta o ângulo das rodas"""
-        self.r_wheel.reset_angle(angle)
-        self.l_wheel.reset_angle(angle)
+        self.motor_r.reset_angle(angle)
+        self.motor_l.reset_angle(angle)
 
-    def off_motors(self):
+    def stop(self):
         """Desliga motores de locomoção."""
         self.motor_l.dc(0)
         self.motor_r.dc(0)
@@ -144,22 +144,18 @@ class Robot:
     def wheels_angle(self):
 
         # Retorna a média do ângulo das duas rodas
-        return (self.l_wheel.angle() + self.l_wheel.angle()) / 2
+        return (self.motor_r.angle() + self.motor_l.angle()) / 2
 
     def abs_wheels_angle(self):
 
         # Retorna a média do módulo do ângulo das duas rodas
-        return (abs(self.r_wheel.angle()) + abs(self.l_wheel.angle())) / 2
+        return (abs(self.motor_r.angle()) + abs(self.motor_l.angle())) / 2
 
     def pid_walk(
         self,
         cm,
         speed=60,
-        pid: PIDValues = PIDValues(
-            kp=3,
-            ki=0.2,
-            kd=8,
-        ),
+        pid: PIDValues = const.PID_WALK_VALUES,
         obstacle_function=None,
         off_motors=True,
     ):
@@ -174,13 +170,10 @@ class Robot:
         """
         degrees = self.cm_to_motor_degrees(cm)
 
-        elapsed_time = 0
-        i_share = 0
-        error = 0
         motor_angle_average = 0
         initial_left_angle = self.motor_l.angle()
         initial_right_angle = self.motor_r.angle()
-        self.stopwatch.reset()
+        pid_c = PIDControl(pid)
 
         has_seen_obstacle = False
         while abs(motor_angle_average) < abs(degrees):
@@ -193,31 +186,21 @@ class Robot:
                 + (self.motor_r.angle() - initial_right_angle)
             ) / 2
 
-            elapsed_time, i_share, error = self.loopless_pid_walk(
-                elapsed_time,
-                i_share,
-                error,
-                vel=speed,
-                pid=pid,
+            self.loopless_pid_walk(
+                pid_control=pid_c,
+                speed=speed,
                 initial_left_angle=initial_left_angle,
                 initial_right_angle=initial_right_angle,
             )
 
         if off_motors:
-            self.off_motors()
+            self.stop()
         return has_seen_obstacle, abs(motor_angle_average) / abs(degrees)
 
     def loopless_pid_walk(
         self,
-        prev_elapsed_time=0,
-        i_share=0,
-        prev_error=0,
-        vel=60,
-        pid: PIDValues = PIDValues(
-            kp=3,
-            ki=0.2,
-            kd=8,
-        ),
+        pid_control: PIDControl,
+        speed=60,
         initial_left_angle=0,
         initial_right_angle=0,
     ):
@@ -227,24 +210,12 @@ class Robot:
         novos parâmetros (prev_elapsed_time, i_share, prev_error) devidamente
         inicializados a cada iteração.
         """
-        error = (self.motor_r.angle() - initial_right_angle) - (
-            self.motor_l.angle() - initial_left_angle
+        correction = pid_control.compute(
+            lambda: (self.motor_r.angle() - initial_right_angle)
+            - (self.motor_l.angle() - initial_left_angle)
         )
-        p_share = error * pid.kp
-
-        if abs(error) < 3:
-            i_share = i_share + (error * pid.ki)
-
-        wait(1)
-        elapsed_time = self.stopwatch.time()
-
-        d_share = ((error - prev_error) * pid.kd) / (elapsed_time - prev_elapsed_time)
-
-        pid_correction = p_share + i_share + d_share
-        self.motor_r.dc(vel - pid_correction)
-        self.motor_l.dc(vel + pid_correction)
-
-        return (elapsed_time, i_share, error) 
+        self.motor_r.dc(speed - correction)
+        self.motor_l.dc(speed + correction)
 
     def pid_turn(
         self,
@@ -341,8 +312,23 @@ class Robot:
                 and abs(right_wheel_angle_distance) > const.MIN_DEGREES_CURVE_THRESHOLD
             ):
                 break
-        self.off_motors()
+        self.stop()
         # self.ev3_print(n, "| END:", self.motor_l.angle(), self.motor_r.angle())
+
+    def line_follower(self, target: int, side: str, pid: PIDControl, speed: int = 50):
+        if side == 'R': 
+            sensor = self.color_right
+            side = 1
+        elif side == 'L':
+            sensor = self.color_left
+            side = -1
+        else: raise ValueError("Apenas 'R' ou 'L'")
+
+        correction = pid.compute(lambda: sensor.reflection() - target)
+
+        self.motor_l.dc(speed + correction * side)
+        self.motor_r.dc(speed - correction * side)
+
 
     def wait_button(self, button=Button.CENTER, beep=600):
         return wait_button_pressed(ev3=self.ev3, button=button, beep=beep)
@@ -466,7 +452,7 @@ class Robot:
 
                 right_speed = right_pid_speed * direction_sign
             else:
-                right_speed = 75
+                right_speed = speed
 
             self.motor_l.dc(left_speed)
             self.motor_r.dc(right_speed)
@@ -479,4 +465,4 @@ class Robot:
                 and abs(right_error) <= 7
             ):
                 break
-        self.off_motors()
+        self.stop()

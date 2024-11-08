@@ -24,13 +24,16 @@ def main(robot: Robot):
         request = robot.bluetooth.message(should_wait=True)
         robot.ev3_print(request, clear=True)
         if request == "SUPLEX":
+            robot.ev3_print("Executing")
             lift_claw(robot)
         elif request == "DOWN":
             robot.ev3_print("Executing")
             lift_claw(robot, -1)
         elif request == "OPEN":
+            robot.ev3_print("Executing")
             open_claw(robot, -1)
         elif request == "CLOSE":
+            robot.ev3_print("Executing")
             open_claw(robot)
         elif request == "PASSENGER INFO":
             adult, color = passenger_read_color_and_type(robot)

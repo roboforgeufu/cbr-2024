@@ -5,7 +5,7 @@ from pybricks.tools import wait  # type: ignore
 from pybricks.hubs import EV3Brick  # type: ignore
 
 from core.robot import Robot
-from core.utils import get_hostname, PIDValues
+from core.utils import get_hostname, PIDControl, PIDValues
 from core.decision_color_sensor import DecisionColorSensor
 
 import constants as const
@@ -15,10 +15,9 @@ from domain.boarding import passenger_boarding, passenger_unboarding
 from domain.path_control import path_control
 from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
 from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
-from decision_trees.lego_ev3_color_3 import lego_ev3_color_p3_decision_tree
-from decision_trees.lego_ev3_color_4 import lego_ev3_color_p4_decision_tree
+from decision_trees.sandy_lego_ev3_color_3 import lego_ev3_color_p3_decision_tree
+from decision_trees.sandy_lego_ev3_color_4 import lego_ev3_color_p4_decision_tree
 
-pid = PIDValues()
 r = Robot(
     wheel_diameter=const.WHEEL_DIAMETER,
     wheel_distance=const.WHEEL_DIST,
@@ -33,17 +32,6 @@ r = Robot(
         ColorSensor(Port.S4), lego_ev3_color_p4_decision_tree
     ),
 )
-ev3 = EV3Brick()
-
-BEEP = 0
-
-def display(*options, selected=None, error:str=None, clear=False):
-    lines = len(options)
-    if clear: r.ev3.screen.clear()
-    for line in range(lines-1):
-        r.ev3_draw(options[line], background=selected==line, line=line)
-    if error is not None: r.ev3_draw(*error, line=lines)
-
 
 '''def display(pid, functions, i, j):
     if i == 0:
@@ -72,13 +60,24 @@ def display(*options, selected=None, error:str=None, clear=False):
         r.ev3_print("KI: " + str(round(pid[2], 2)), line=2)
         r.ev3_print(functions[j], line=3)'''
 
+ev3 = EV3Brick()
+
+BEEP = 0
+
+def display(*options, selected=None, error:str=None, clear=False):
+    lines = len(options)
+    if clear: r.ev3.screen.clear()
+    for line in range(lines-1):
+        r.ev3_draw(options[line], background=selected==line, line=line)
+    if error is not None: r.ev3_draw(*error, line=lines)
+
 
 def main():
-    values = [pid.kp, pid.kd, pid.ki]
+    values = [0, 0, 0]
     header = ["KP:", "KD:", "KI:"]
     while True:
         error = False
-        functions = ["align", "walk", "turn"]
+        functions = ["align", "walk", "turn", "line_follower"]
         selected = 0
         while selected < len(header):
 
@@ -113,8 +112,11 @@ def main():
                 error = True
 
             wait(100)
+
         r.ev3.screen.clear()
         function = 0
+
+
         while True:
             display(options, selected = None, clear=True)
             r.ev3_draw(functions[function], background=True, line=3)
@@ -137,15 +139,22 @@ def main():
 
         ev3.screen.clear()
         wait(2000)
+
         display(options, selected = None)
         r.ev3_draw(functions[function], background=False, line=3)
+
         kp, kd, ki = values
+
+        pid = PIDControl(PIDValues(kp, ki, kd))
+
         if functions[function] == "align":
-            r.align(pid = PIDValues(kp, kd, ki))
+            r.align(pid = pid)
         elif functions[function] == "walk":
-            r.pid_walk(100, pid = PIDValues(kp, kd, ki))
+            r.pid_walk(100, pid = pid)
         elif functions[function] == "turn":
-            r.pid_turn(90, pid = PIDValues(kp, kd, ki))
+            r.pid_turn(90, pid = pid)
+        elif functions[function] == "line_follower":
+            r.line_follower(50, side = "R", pid = pid)
 
 
 main()
