@@ -129,8 +129,8 @@ class Robot:
 
     def reset_wheels_angle(self, angle=0):
         """Reseta o ângulo das rodas"""
-        self.r_wheel.reset_angle(angle)
-        self.l_wheel.reset_angle(angle)
+        self.motor_r.reset_angle(angle)
+        self.motor_l.reset_angle(angle)
 
     def off_motors(self):
         """Desliga motores de locomoção."""
@@ -205,6 +205,7 @@ class Robot:
 
         if off_motors:
             self.off_motors()
+
         return has_seen_obstacle, abs(motor_angle_average) / abs(degrees)
 
     def loopless_pid_walk(
