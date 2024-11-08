@@ -91,13 +91,22 @@ class Graph:
 
         return caminho, distancias[fim], direcoes_pesos
 
-        def recalcular_caminho_sem_obstaculos(self, inicio, fim):
-            for vertice in self.obstaculos:
-                self.unmark_obstacle(vertice)
-                caminho, distancia, _ = self.dijkstra(inicio, fim)
-                if distancia != float("inf"):
-                    return caminho, distancia
-            return None, float("inf")
+    def find_best_path(self, inicio: int, destinations: list):
+        """Encontra o melhor caminho entre um vértice de início e uma lista de destinos, retornando o caminho, a distância e o conjunto de instruções pra percorrer."""
+        paths = []
+        for target in destinations:
+            path, distance, instrunctions = self.dijkstra(inicio, target)
+            paths.append((path, distance, instrunctions))
+        paths.sort(key=lambda x: x[1])
+        return paths[0]
+
+    def recalcular_caminho_sem_obstaculos(self, inicio, fim):
+        for vertice in self.obstaculos:
+            self.unmark_obstacle(vertice)
+            caminho, distancia, _ = self.dijkstra(inicio, fim)
+            if distancia != float("inf"):
+                return caminho, distancia
+        return None, float("inf")
 
 
 map_matrix = [
@@ -166,15 +175,15 @@ def get_target_for_passenger(child_adult: str, color):
     """
     passenger_lookup_table = {
         "CHILD": {
-            Color.GREEN: (0, 13, 26),
-            Color.BLUE: 4,
-            Color.BROWN: 30,
+            Color.GREEN: [0, 13, 26],
+            Color.BLUE: [4],
+            Color.BROWN: [30],
         },
         "ADULT": {
-            Color.GREEN: 17,
-            Color.BLUE: 28,
-            Color.BROWN: 2,
-            Color.RED: 15,
+            Color.GREEN: [17],
+            Color.BLUE: [28],
+            Color.BROWN: [2],
+            Color.RED: [15],
         },
     }
 

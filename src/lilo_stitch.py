@@ -26,11 +26,12 @@ from domain.ohana import (
 )
 
 from domain.omni_path_control import omni_path_control
+from domain.boarding import omni_passenger_boarding
 import constants as const
 
 
 def lilo_main(lilo: OmniRobot):
-    lilo.bluetooth.start()
+    lilo.ev3_print(lilo.bluetooth.start())
 
     # Inicialização do mapa
     map_graph = Graph(map_matrix)
@@ -38,15 +39,22 @@ def lilo_main(lilo: OmniRobot):
     #
     # Localização inicial
     #
+    # localization_routine(lilo)
 
     while True:
         #
         # Coleta de passageiros
         #
+        lilo.orientation = "N"  # TODO: deixar na lógica de localização
+        passenger_info, vertice = omni_passenger_boarding(lilo)
+        lilo.ev3_print("P.i.:", passenger_info)
+        lilo.wait_button()
 
         #
         # Pathfinding e movimentação (obstáculos)
         #
+        target = get_target_for_passenger(*passenger_info)
+        move_from_position_to_targets(lilo, map_graph, vertice, target)
 
         #
         # Desembarque de passageiros
@@ -58,19 +66,20 @@ def lilo_main(lilo: OmniRobot):
         pass
 
 
-def move_from_position_to_target(
-    lilo: OmniRobot, map_graph, initial_position: int, target_position: int
+def move_from_position_to_targets(
+    lilo: OmniRobot, map_graph: Graph, initial_position: int, targets: list
 ):
     """Integra pathfinding e path control para mover o robô de uma posição inicial para uma posição alvo, recalculando rotas quando necessário.
     Retorna a posição final do robô.
     """
+
     completed = False
     current_position_idx = -1
     while not completed:
         if current_position_idx == -1:
             current_position = initial_position
 
-        path, _, directions = map_graph.dijkstra(current_position, target_position)
+        path, _, directions = map_graph.find_best_path(current_position, targets)
         lilo.ev3_print("Path:", path)
         lilo.ev3_print("Directions:", directions)
         completed, current_position_idx = omni_path_control(lilo, path, directions)
@@ -91,6 +100,11 @@ def move_from_position_to_target(
 
 def test_navigation_lilo(lilo: OmniRobot):
     lilo.bluetooth.start()
+
+    passenger_info = omni_passenger_boarding(lilo)
+
+    return
+
     map_graph = Graph(map_matrix)
 
     lilo.orientation = "N"
@@ -129,17 +143,19 @@ def test_bt_lilo(lilo: OmniRobot):
 
 def stitch_main(stitch: OmniRobot):
     stitch.start_claw(0, 90, -330, 0)
+    open_claw(stitch)
+    # stitch.start_claw()
     stitch.bluetooth.start()
 
     while True:
         request = stitch.bluetooth.message()
         stitch.ev3_print(request)
-        if request == "ULTRA_SIDE":
-            transmit_signal(stitch, stitch.ultra_side.distance)
+        if request == "ULTRA_FRONT":
+            transmit_signal(stitch, stitch.ultra_front.distance)
         elif request == "ULTRA_BACK":
             transmit_signal(stitch, stitch.ultra_back.distance)
-        elif request == "ULTRA_FRONT":
-            transmit_signal(stitch, stitch.ultra_front.distance)
+        elif request == "ULTRA_CLAW":
+            transmit_signal(stitch, stitch.ultra_claw.distance)
         elif request == "COLOR_SIDE":
             transmit_signal(stitch, stitch.color_side.color)
         elif request == "CLAW_LOW":
@@ -152,11 +168,14 @@ def stitch_main(stitch: OmniRobot):
             open_claw(stitch)
         elif request == "CLAW_CLOSE":
             close_claw(stitch)
+        stitch.bluetooth.message(None, force_send=True)
+        stitch.ev3_print("Request finished")
+        # stitch.ev3_print(stitch.ultra_claw.distance(), stitch.ultra_front.distance())
 
 
 def main(hostname):
     if hostname == "lilo":
-        test_navigation_lilo(
+        lilo_main(
             OmniRobot(
                 motor_front_left=Port.B,
                 motor_front_right=Port.C,
@@ -183,9 +202,9 @@ def main(hostname):
                 color_side=DecisionColorSensor(
                     Ev3devSensor(Port.S4), ht_nxt_color_v2_p2_decision_tree
                 ),
-                ultra_front=Port.S2,
+                ultra_claw=Port.S2,
                 ultra_back=Port.S1,
-                ultra_side=Port.S3,
+                ultra_front=Port.S3,
                 motor_claw_lift=Port.C,
                 motor_claw_gripper=Port.B,
                 server_name="lilo",
