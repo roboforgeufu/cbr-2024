@@ -186,10 +186,10 @@ class OmniRobot:
             motor.dc(0)
 
         for motor in motors:
-            motor.hold()
+            motor.stop()
 
         for motor in motors:
-            motor.dc(0)
+            motor.hold()
 
     def get_motors_direction_signs(self, robot_direction: Direction):
         """
@@ -366,7 +366,7 @@ class OmniRobot:
         self,
         angle,
         pid: PIDValues = PIDValues(
-            kp=1.5,
+            kp=1.3,
             ki=0.05,
             kd=1,
         ),
