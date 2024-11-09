@@ -9,7 +9,7 @@ from core.omni_robot import OmniRobot, Direction
 import math
 
 
-boarding_vertices = [31, 24, 18, 11, 5]
+boarding_vertices = [(31, 32), (24, 25), (18, 19), (11, 12), (5, 6)]
 
 
 def passenger_boarding(robot: Robot):
@@ -72,13 +72,51 @@ def omni_passenger_boarding(omni: OmniRobot):
 
     initial_angle_left = omni.motor_front_left.angle()
 
+    def condition_function():
+        color = omni.bluetooth.message(should_wait=False)
+        return color is None or color == Color.WHITE
+
     omni.line_follow(
         sensor=omni.color_front_right,
-        loop_condition_function=lambda: omni.bluetooth.message(should_wait=False)
-        is None,
+        loop_condition_function=condition_function,
     )
     passenger_color = omni.bluetooth.message(should_wait=False)
-    # omni.ev3_print("PASSENGER:", passenger_color)
+    omni.ev3_print("PASSENGER:", passenger_color)
+
+    t = 0
+    i = [0, 0, 0]
+    e = [0, 0, 0]
+    initial_angles = [motor.angle() for motor in omni.get_all_motors()]
+    while omni.bluetooth.message(should_wait=False) is None:
+        t, i, e = omni.loopless_pid_walk(
+            t,
+            i,
+            e,
+            20,
+            direction=Direction.BACK,
+            initial_front_left_angle=initial_angles[0],
+            initial_front_right_angle=initial_angles[1],
+            initial_back_left_angle=initial_angles[2],
+            initial_back_right_angle=initial_angles[3],
+        )
+    omni.off_motors()
+    t = 0
+    i = [0, 0, 0]
+    e = [0, 0, 0]
+    initial_angles = [motor.angle() for motor in omni.get_all_motors()]
+    while omni.bluetooth.message(should_wait=False) is not None:
+        t, i, e = omni.loopless_pid_walk(
+            t,
+            i,
+            e,
+            20,
+            initial_front_left_angle=initial_angles[0],
+            initial_front_right_angle=initial_angles[1],
+            initial_back_left_angle=initial_angles[2],
+            initial_back_right_angle=initial_angles[3],
+        )
+    omni.off_motors()
+    omni.bluetooth.message("STOP")
 
     final_angle_left = omni.motor_front_left.angle()
 
@@ -89,28 +127,12 @@ def omni_passenger_boarding(omni: OmniRobot):
     vertice = boarding_vertices[int(math.floor(walked_cells))]
     omni.ev3_print("vertice:", vertice)
 
-    t = 0
-    i = [0, 0, 0]
-    e = [0, 0, 0]
-    omni.reset_wheels_angle()
-    while omni.bluetooth.message(should_wait=False) is None:
-        t, i, e = omni.loopless_pid_walk(t, i, e, 20, direction=Direction.BACK)
-    omni.off_motors()
-    t = 0
-    i = [0, 0, 0]
-    e = [0, 0, 0]
-    omni.reset_wheels_angle()
-    while omni.bluetooth.message(should_wait=False) is not None:
-        t, i, e = omni.loopless_pid_walk(t, i, e, 20)
-    omni.off_motors()
-    omni.bluetooth.message("STOP")
-
     omni.pid_walk(cm=2, direction=Direction.BACK)
     omni.off_motors()
     omni.pid_walk(cm=5, direction=Direction.LEFT)
     omni.pid_turn(90)
-    omni.align()
-    omni.pid_walk(cm=6, direction=Direction.FRONT, speed=20)
+    omni.align(speed=50)
+    omni.pid_walk(cm=6, direction=Direction.FRONT, speed=35)
 
     omni.bluetooth.message("CLAW_CLOSE")
     omni.bluetooth.message()
@@ -127,7 +149,10 @@ def omni_passenger_boarding(omni: OmniRobot):
     distance_front = sum(distances) / len(distances)
 
     omni.ev3_print("P. DIST.:", distance_front, distances)
-    adult_or_child = "ADULT" if distance_front < 80 else "CHILD"
+
+    adult_or_child = (
+        "ADULT" if passenger_color == Color.RED or distance_front < 100 else "CHILD"
+    )
 
     omni.pid_walk(cm=8, direction=Direction.BACK)
     omni.pid_turn(-90)
@@ -143,12 +168,31 @@ def omni_passenger_boarding(omni: OmniRobot):
 
     # Retorna ao centro do vértice
     back_to_vertice_distance = walked_cells - int(math.floor(walked_cells))
+
+    correction = 4  # valor em cm, pode ser necessário recalibrar.
+    backwards_distance = (
+        back_to_vertice_distance * 30 * const.OMNI_WALK_DISTANCE_CORRECTION
+    ) - (correction * (math.floor(walked_cells) + 1))
+    omni.ev3_print("BACK_DIST:", backwards_distance)
+
     omni.pid_walk(
-        cm=back_to_vertice_distance * 30,
-        direction=Direction.BACK,
+        cm=abs(backwards_distance),
+        direction=Direction.BACK if backwards_distance >= 0 else Direction.FRONT,
         obstacle_function=lambda: omni.color_back_left.color() != Color.WHITE
-        or omni.color_back_right.color() != Color.WHITE,
+        or omni.color_back_right.color() != Color.WHITE
+        or omni.color_front_left.color() != Color.WHITE
+        or omni.color_front_right.color() != Color.WHITE,
     )
+    if (
+        omni.color_back_left.color() != Color.WHITE
+        or omni.color_back_right.color() != Color.WHITE
+    ):
+        omni.pid_walk(cm=2, direction=Direction.FRONT)
+    elif (
+        omni.color_front_left.color() != Color.WHITE
+        or omni.color_front_right.color() != Color.WHITE
+    ):
+        omni.pid_walk(cm=2, direction=Direction.BACK)
     omni.align(Direction.RIGHT)
     omni.pid_walk(cm=8, direction=Direction.LEFT)
 

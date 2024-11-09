@@ -7,6 +7,7 @@ from core.decision_color_sensor import DecisionColorSensor
 from pybricks.parameters import Port, Button
 from pybricks.ev3devices import ColorSensor
 from pybricks.iodevices import Ev3devSensor
+from pybricks.tools import wait
 
 from decision_trees.lilo_lego_ev3_color_1 import lilo_lego_ev3_color_p1_decision_tree
 from decision_trees.lilo_lego_ev3_color_2 import lilo_lego_ev3_color_p2_decision_tree
@@ -32,6 +33,7 @@ import constants as const
 
 def lilo_main(lilo: OmniRobot):
     lilo.ev3_print(lilo.bluetooth.start())
+    wait(100)
 
     # Inicialização do mapa
     map_graph = Graph(map_matrix)
@@ -46,7 +48,7 @@ def lilo_main(lilo: OmniRobot):
         # Coleta de passageiros
         #
         lilo.orientation = "N"  # TODO: deixar na lógica de localização
-        passenger_info, vertice = omni_passenger_boarding(lilo)
+        passenger_info, boarding_position = omni_passenger_boarding(lilo)
         lilo.ev3_print("P.i.:", passenger_info)
         lilo.wait_button()
 
@@ -54,15 +56,28 @@ def lilo_main(lilo: OmniRobot):
         # Pathfinding e movimentação (obstáculos)
         #
         target = get_target_for_passenger(*passenger_info)
-        move_from_position_to_targets(lilo, map_graph, vertice, target)
+        delivered_position = move_from_position_to_targets(
+            lilo, map_graph, boarding_position[0], target
+        )
+        lilo.wait_button()
 
         #
         # Desembarque de passageiros
         #
+        lilo.bluetooth.message("CLAW_LOW")
+        lilo.bluetooth.message()
+        lilo.bluetooth.message("CLAW_OPEN")
+        lilo.bluetooth.message()
+        lilo.bluetooth.message("CLAW_HIGH")
+        lilo.bluetooth.message()
 
         #
         # Retorno a zona de embarque
         #
+        move_from_position_to_targets(
+            lilo, map_graph, delivered_position, [boarding_position[1]]
+        )
+        lilo.wait_button()
         pass
 
 
