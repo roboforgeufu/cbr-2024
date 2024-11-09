@@ -1,14 +1,21 @@
 {
+    "sandy": {
+        "pid_walk": [1,0,0]
+        ,
+        "pid_turn": [1,0,0]
+        ,
+        "align": [1,0,0]
+        ,
+        "line_follower": [1,0,0]
+    }
+    ,
     "lilo": {
-        "pid_walk": {
-            "kp": 1,
-            "ki": 0,
-            "kd": 0
-        },
-        "pid_turn": {
-            "kp": 1,
-            "ki": 0,
-            "kd": 0
-        }
+        "pid_walk": [1,0,0]
+        ,
+        "pid_turn": [1,0,0]
+        ,
+        "align": [1,0,0]
+        ,
+        "line_follower": [1,0,0]
     }
 }
