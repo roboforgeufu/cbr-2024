@@ -27,6 +27,7 @@ class PIDControl:
     def __init__(self, values: PIDValues):
         self.values = values
         self.reset()
+        self.stopwatch = StopWatch()
 
     def set_values(self, error_function):
         self._elapsed_time = 0

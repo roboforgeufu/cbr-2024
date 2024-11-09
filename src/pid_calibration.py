@@ -7,6 +7,7 @@ from pybricks.hubs import EV3Brick  # type: ignore
 from core.robot import Robot
 from core.utils import get_hostname, PIDControl, PIDValues
 from core.decision_color_sensor import DecisionColorSensor
+from core.display import screen, menu
 
 import constants as const
 from domain.localization import localization_routine
@@ -17,7 +18,8 @@ from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
 from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
 from decision_trees.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
 from decision_trees.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p4_decision_tree
-from core.display import screen, menu
+
+import json
 
 robot = Robot(
     wheel_diameter=const.WHEEL_DIAMETER,
@@ -35,29 +37,33 @@ robot = Robot(
 )
 
 def main():
-    values = [0, 0, 0]
-    header = ["KP:", "KD:", "KI:"]
+    header = ["KP", "KD", "KI"]
     functions = ["align", "walk", "turn", "line_follower"]
 
     while True:
+
+        with open("pid_const.json", "r") as file:
+            data = json.load(file)
+
+        values = [0,0,0]
         
-        kp, kd, ki, selected_function, selected_options = menu(values, header, functions, robot, ki_line = 2, clear=True)
-        
-        pid = PIDControl(PIDValues(kp, ki, kd))
+        selected_options = menu(values, header, functions, robot, ki_line = 2, clear=True)
+        kp, kd, ki, selected_function = selected_options
+
+
+        values = (kp, kd, ki)
 
         if selected_function == "align":
-            robot.align(pid = pid)
+            robot.align(pid = PIDValues(values))
         elif selected_function == "walk":
-            robot.pid_walk(100, pid = pid)
+            robot.pid_walk(100, pid = PIDValues(values))
         elif selected_function == "turn":
-            robot.pid_turn(90, pid = pid)
+            robot.pid_turn(90, pid = PIDValues(values))
         elif selected_function == "line_follower":
-            robot.line_follower(50, side = "R", pid = pid)
+            robot.line_follower(50, side = "R", pid = PIDControl(PIDValues(values)))
 
-        values = [kp, kd, ki]
 
         screen(selected_options, "Save parameters?", selected=None, clear=True, robot=robot)
-
 
         button = robot.wait_button([Button.UP, Button.DOWN, Button.CENTER, Button.LEFT, Button.RIGHT])
         
