@@ -7,7 +7,7 @@ from pybricks.hubs import EV3Brick  # type: ignore
 from core.robot import Robot
 from core.utils import get_hostname, PIDControl, PIDValues
 from core.decision_color_sensor import DecisionColorSensor
-from core.display import screen, menu
+from core.display import screen, calibration_menu
 
 import constants as const
 from domain.localization import localization_routine
@@ -37,40 +37,46 @@ robot = Robot(
 )
 
 def main():
-    header = ["KP", "KD", "KI"]
-    functions = ["align", "walk", "turn", "line_follower"]
+
+    header = ["KP", "KI", "KD"]
+    file_name = "pid_const.json"
 
     while True:
 
-        with open("pid_const.json", "r") as file:
-            data = json.load(file)
+        selected_options, showed_data = calibration_menu(file_name, header, robot, clear=True)
+        selected_function, kp, ki, kd = selected_options
 
-        values = [0,0,0]
-        
-        selected_options = menu(values, header, functions, robot, ki_line = 2, clear=True)
-        kp, kd, ki, selected_function = selected_options
+        values = [kp, ki, kd]
 
+        screen(showed_data, "RUNNING", selected=None, clear=True, robot=robot)
 
-        values = (kp, kd, ki)
+        while robot.ev3.buttons.pressed() == []:
+            if selected_function == "align":
+                robot.align(pid = PIDValues(kp, ki, kd))
+            elif selected_function == "walk":
+                robot.pid_walk(100, pid = PIDValues(kp, ki, kd))
+            elif selected_function == "turn":
+                robot.pid_turn(90, pid = PIDValues(kp, ki, kd))
+            elif selected_function == "line_follower":
+                robot.line_follower(50, side = "R", pid = PIDControl(PIDValues(kp, ki, kd)))
 
-        if selected_function == "align":
-            robot.align(pid = PIDValues(values))
-        elif selected_function == "walk":
-            robot.pid_walk(100, pid = PIDValues(values))
-        elif selected_function == "turn":
-            robot.pid_turn(90, pid = PIDValues(values))
-        elif selected_function == "line_follower":
-            robot.line_follower(50, side = "R", pid = PIDControl(PIDValues(values)))
+        robot.stop()
 
-
-        screen(selected_options, "Save parameters?", selected=None, clear=True, robot=robot)
+        screen(showed_data, "Save parameters?", selected=None, clear=True, robot=robot)
 
         button = robot.wait_button([Button.UP, Button.DOWN, Button.CENTER, Button.LEFT, Button.RIGHT])
         
         if button == Button.CENTER:
-            screen(selected_options, "Saved!", selected=None, clear=True, robot=robot)
+            screen(showed_data, "Saved!", selected=None, clear=True, robot=robot)
+            with open(file_name, "r") as file:
+                data = json.load(file)
+            data[robot.name][selected_function] = values
+            print(data)
+            with open(file_name, "w") as file:
+                json.dump(data, file, indent=4)
+                
+            robot.wait_button([Button.UP, Button.DOWN, Button.CENTER, Button.LEFT, Button.RIGHT])
         else:
-            screen(selected_options, "Not saved!", selected=None, clear=True, robot=robot)
-        wait(1000)
+            screen(showed_data, "Not saved!", selected=None, clear=True, robot=robot)
 
 main()

@@ -3,6 +3,8 @@ from pybricks.parameters import Button  # type: ignore
 from pybricks.tools import wait  # type: ignore
 from core.robot import Robot
 
+import json
+
 
 def screen(
     lines: list, *extralines, selected=None, clear=False, info=None, robot: Robot
@@ -18,52 +20,62 @@ def screen(
         robot.ev3_draw(info, line=lines_len)
 
 
-def menu(
-    parameters: list,
+def calibration_menu(
+    file_name: str,
     headers: list,
-    functions: list,
     robot: Robot,
-    ki_line=None,
     delay=50,
+    selected_function=0,
     clear=False,
 ):
-    selected = 0
-    function_number = 0
-    info = None
+    with open(file_name, "r") as file:
+        data = json.load(file)
+
+    functions = list(data[robot.name].keys())
+    ki_line = 2
+    selected_function = selected_function
     enter = False
     enter_pressed = False
+    reset = False
+    functions_line = 0
+    parameters = data[robot.name][functions[selected_function]]
+    selected = 0
+    detailed = 1
+
     if clear:
         robot.ev3.screen.clear()
 
     while True:
 
-        showed_function = functions[function_number]
-        extra_lines = [showed_function, "Start"]
-        options = parameters + extra_lines
-        showed_options = [
-            str(x) + ": " + "{:.3g}".format(y) for x, y in zip(headers, parameters)
-        ] + extra_lines
-        functions_line = len(parameters)
-        start_line = len(showed_options) - 1
+        if reset:
+            with open(file_name, "r") as file:
+                data = json.load(file)
+            reset = False
+        parameters = data[robot.name][functions[selected_function]]
+        options = [functions[selected_function]] + parameters + ["Start"] + ["Reset"]
+        reset_line = len(options) - 2
+        start_line = len(options) - 1
 
-        screen(showed_options, selected=selected, clear=True, robot=robot, info=info)
+        showed_data = [(functions[selected_function])]+ [x + ": " + "{:.3g}".format(y) for x, y in zip(headers, parameters)]
+        showed_options = (
+            showed_data
+            + ["Reset"]
+            + ["Start"]
+        )
 
-        info = None
+        screen(showed_options, selected=selected, clear=True, robot=robot)
+
         button = robot.wait_button(
             [Button.UP, Button.DOWN, Button.CENTER, Button.LEFT, Button.RIGHT]
         )
 
         if button == Button.CENTER:
             if selected == start_line:
-                screen(
-                    showed_options,
-                    "RUNNING",
-                    selected=None,
-                    clear=True,
-                    robot=robot,
-                )
+                wait(delay*4)
                 break
-            elif selected != functions_line:
+            elif selected == reset_line:
+                reset = True
+            elif selected > functions_line:
                 if enter:
                     enter = False
                 elif not enter:
@@ -81,34 +93,32 @@ def menu(
                 if selected > start_line:
                     selected = 0
         else:
-            info = "Detailed edit"
             if button == Button.UP:
                 if selected == ki_line:
-                    parameters[selected] += 0.001
+                    parameters[selected - 1] += 0.001
                 else:
-                    parameters[selected] += 0.01
+                    parameters[selected - 1] += 0.01
 
             elif button == Button.DOWN:
                 if selected == ki_line:
-                    parameters[selected] -= 0.001
+                    parameters[selected - 1] -= 0.001
                 else:
-                    parameters[selected] -= 0.01
-                if parameters[selected] < 0:
-                    parameters[selected] = 0
-                    info = "Maior que zero!"
+                    parameters[selected - 1] -= 0.01
+                if parameters[selected - 1] < 0:
+                    parameters[selected - 1] = round(0, 0)
 
         if selected == functions_line:
 
             if button == Button.RIGHT:
-                function_number += 1
+                selected_function += 1
             elif button == Button.LEFT:
-                function_number -= 1
+                selected_function -= 1
 
-            if function_number < 0:
-                function_number = len(functions) - 1
+            if selected_function < 0:
+                selected_function = len(functions) - 1
 
-            if function_number > len(functions) - 1:
-                function_number = 0
+            if selected_function > len(functions) - 1:
+                selected_function = 0
 
         else:
             if button == Button.RIGHT:
@@ -117,22 +127,21 @@ def menu(
                 else:
                     detailed = 1
                 if selected == ki_line:
-                    parameters[selected] += 0.1 * detailed
+                    parameters[selected - 1] += 0.1 * detailed
                 else:
-                    parameters[selected] += 1 * detailed
+                    parameters[selected - 1] += 1 * detailed
 
             elif button == Button.LEFT:
                 if selected == ki_line:
-                    parameters[selected] -= 0.1 * detailed
+                    parameters[selected - 1] -= 0.1 * detailed
                 else:
-                    parameters[selected] -= 1 * detailed
-                if parameters[selected] < 0:
-                    parameters[selected] = 0
-                    info = "Maior que zero!"
+                    parameters[selected - 1] -= 1 * detailed
+                if parameters[selected - 1] < 0:
+                    parameters[selected - 1] = round(0, 0)
 
-        if enter_pressed: 
-            wait(2*delay)
+        if enter_pressed:
+            wait(2 * delay)
             enter_pressed = False
         wait(delay)
 
-    return options
+    return options[:4], showed_data
