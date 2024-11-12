@@ -167,7 +167,7 @@ def test_passenger_boarding(sandy: Robot):
 
 def main(hostname):
     if hostname == "sandy":
-        sandy_main(
+        test_path_control(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
