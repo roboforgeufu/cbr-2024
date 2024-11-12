@@ -2,7 +2,7 @@
 
 """
 Módulo para centralização dos processos e gerência da estratégia geral.
-
+3
 Podem estar nesse módulo coisas como:
     - Código que controla a ordem que as rotinas serão executadas
     - Código para controle de fluxo geral do robô
@@ -162,7 +162,7 @@ def test_passenger_boarding(sandy: Robot):
 
 def main(hostname):
     if hostname == "sandy":
-        test_path_control(
+        sandy_main(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,

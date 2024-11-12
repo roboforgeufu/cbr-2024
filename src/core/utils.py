@@ -67,7 +67,7 @@ class PIDControl:
         self._elapsed_time = elapsed_time
         self._prev_error = error
 
-        print(p_share, d_share, self._i_share)
+        # print(p_share, d_share, self._i_share)
 
         return pid_correction
 
