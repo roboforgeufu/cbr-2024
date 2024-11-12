@@ -128,7 +128,7 @@ def path_control(robot: Robot, path: list, directions: list):
         if needs_align == 0:
             alignment_found = False
         # se houver possibilidade de alinhamentos faceis no futuro, nao alinhar
-        if future_possible_alignment(robot, position_index, path, directions) and not alignment_found:
+        if not alignment_found and future_possible_alignment(robot, position_index, path, directions):
             needs_align = 0
             alignment_found = True
 
