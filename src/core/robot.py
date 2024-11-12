@@ -447,7 +447,7 @@ class Robot:
             self.motor_l.dc(left_speed)
             self.motor_r.dc(right_speed)
 
-            self.ev3_print(left_error, left_error_i, right_error, right_error_i)
+            # self.ev3_print(left_error, left_error_i, right_error, right_error_i)
             if (
                 has_seen_left
                 and has_seen_right

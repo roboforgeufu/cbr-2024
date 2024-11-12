@@ -145,10 +145,10 @@ def test_path_control(sandy: Robot):
         Button.DOWN: "S",
     }
     sandy.orientation = button_to_direction[pressed]
-    sandy.ev3_print("{}".format(pressed))
+    sandy.ev3_print(pressed)
     map_graph = Graph(map_matrix)
     initial_position = 5
-    targets = [0, 13, 26]
+    targets = [27]
     sandy.ev3_print("Press button to start:")
     sandy.wait_button()
     move_to_target(sandy, map_graph, initial_position, targets)
@@ -167,7 +167,7 @@ def test_passenger_boarding(sandy: Robot):
 
 def main(hostname):
     if hostname == "sandy":
-        sandy_main(
+        test_path_control(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
