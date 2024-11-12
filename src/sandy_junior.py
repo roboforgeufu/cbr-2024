@@ -147,8 +147,8 @@ def test_path_control(sandy: Robot):
     sandy.orientation = button_to_direction[pressed]
     sandy.ev3_print(pressed)
     map_graph = Graph(map_matrix)
-    initial_position = 11
-    targets = [20]
+    initial_position = 1
+    targets = [26]
     sandy.ev3_print("Press button to start:")
     sandy.wait_button()
     move_to_target(sandy, map_graph, initial_position, targets)

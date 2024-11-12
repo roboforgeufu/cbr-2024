@@ -89,30 +89,22 @@ def future_possible_alignment(robot: Robot, initial_position_idx: int, path: lis
         return position in walls_of_vertices[path[index]]
     
 
-def align_right(robot):
-    robot.ev3_print("Align right")
-    robot.stop()
-    robot.pid_turn(90)
-    robot.align(speed=40)
+def align_side(robot: Robot, side: str):
+    print_str = "Align right" if side == "right" else "Align left"
+    mult = 1 if side == "right" else -1
+    robot.ev3_print(print_str)
+    robot.pid_turn(mult * 90)
     robot.pid_walk(
-        const.ROBOT_SIZE_HALF,
-        speed=-50,
-        off_motors=False,
+        cm=5,
+        speed=-40,
     )
-    robot.pid_turn(-90)
-
-
-def align_left(robot):
-    robot.ev3_print("Align left")
-    robot.stop()
-    robot.pid_turn(-90)
-    robot.align(speed=40)
+    robot.align(speed=30)
     robot.pid_walk(
-        const.ROBOT_SIZE_HALF,
+        (const.CELL_DISTANCE / 2),
         speed=-50,
-        off_motors=False,
     )
-    robot.pid_turn(90)
+    robot.pid_turn(mult * (-90))
+
 
 def path_control(robot: Robot, path: list, directions: list):
     """
@@ -124,7 +116,7 @@ def path_control(robot: Robot, path: list, directions: list):
         robot.ev3_print("Current position:", path[position_index])
         robot.ev3_print("Step:", direction, distance)
 
-        # apos alinhar procurar por possiveis alinhamentos
+        # apos alinhar procura por possiveis alinhamentos
         if needs_align == 0:
             alignment_found = False
         # se houver possibilidade de alinhamentos faceis no futuro, nao alinhar
@@ -136,11 +128,10 @@ def path_control(robot: Robot, path: list, directions: list):
         if (robot.orientation in walls_of_vertices[path[position_index]]):
             robot.ev3_print("Align front")
             robot.stop()
-            robot.align(speed=40)
+            robot.align(speed=30)
             robot.pid_walk(
                 const.ROBOT_SIZE_HALF,
                 speed=-50,
-                off_motors=False,
             )
             needs_align = 0
 
@@ -149,18 +140,17 @@ def path_control(robot: Robot, path: list, directions: list):
             needs_align += 1
         
         # caso a orientacao nao coincida alinha na prox parede disponivel
-        # alinhamento sub otimo
         if (needs_align >= 2):
             if (
                 get_relative_orientation(robot.orientation, 1)
                 in walls_of_vertices[path[position_index]]
             ):
-                align_right(robot)
+                align_side(robot, "right")
             elif (
                 get_relative_orientation(robot.orientation, -1)
                 in walls_of_vertices[path[position_index]]
             ):
-                align_left(robot)
+                align_side(robot, "left")
             needs_align = 0
 
         if idx == len(directions) - 1:
@@ -197,38 +187,36 @@ def path_control(robot: Robot, path: list, directions: list):
                 return False, position_index
             elif robot.color_right.color() in wall_colors:
                 # Alinhamento à direita
-                robot.ev3_print("Line right")
-                robot.pid_turn(-20)
-                has_seen_obstacle, walked_perc = robot.pid_walk(
-                    cm=distance * (1 - walked_perc),
-                    off_motors=should_stop,
-                    obstacle_function=obstacle_function,
-                )
+                robot.ev3_print("Line right")           
+                # caso tenha uma parede e o robo andou menos que 50% da celula, alinhe
                 if (
                     (get_relative_orientation(robot.orientation, 1) 
                      in walls_of_vertices[path[position_index]])
                     and walked_perc <= 0.5
                 ):
-                    robot.pid_turn(20)
-                    align_right(robot)
+                    align_side(robot, "right")
                     needs_align = 0
-            elif robot.color_left.color() in wall_colors:
-                # Alinhamento à esquerda
-                robot.ev3_print("Line left")
-                robot.pid_turn(20)
                 has_seen_obstacle, walked_perc = robot.pid_walk(
                     cm=distance * (1 - walked_perc),
                     off_motors=should_stop,
                     obstacle_function=obstacle_function,
                 )
+            elif robot.color_left.color() in wall_colors:
+                # Alinhamento à esquerda
+                robot.ev3_print("Line left")
+                # caso tenha uma parede e o robo andou menos que 50% da celula, alinhe
                 if (
                     (get_relative_orientation(robot.orientation, -1) 
                      in walls_of_vertices[path[position_index]])
                     and walked_perc <= 0.5
                 ):
-                    robot.pid_turn(-20)
-                    align_left(robot)
+                    align_side(robot, "left")
                     needs_align = 0
+                has_seen_obstacle, walked_perc = robot.pid_walk(
+                    cm=distance * (1 - walked_perc),
+                    off_motors=should_stop,
+                    obstacle_function=obstacle_function,
+                )
 
         position_index += 1
 
