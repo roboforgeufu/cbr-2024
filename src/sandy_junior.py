@@ -39,7 +39,7 @@ from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
 from decision_trees.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
 from decision_trees.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p4_decision_tree
 
-from domain.localization import read_color, catch_color_routine, walk_until_non_white
+from domain.localization import walk_until_non_white
 from core.robot import Robot
 
 
@@ -134,13 +134,25 @@ def junior_main(junior: Robot):
     star_platinum.main(junior)
 
 
-def test_navigation_main(sandy: Robot):
-    # sandy.bluetooth.start()
-    while True:
-        sandy.pid_walk(20, speed=80)
+def move_to_target(sandy: Robot, map_graph: Graph, initial_position: int, targets: list):
+    completed = False
+    current_position_idx = -1
+    while not completed:
+        if current_position_idx == -1:
+            current_position = initial_position
 
-    map_graph = Graph(map_matrix)
+        path, _, directions = map_graph.find_best_path(current_position, targets)
+        sandy.ev3_print("Path:", path)
+        sandy.ev3_print("Directions:", directions)
+        completed, current_position_idx = path_control(sandy, path, directions)
+        if not completed:
+            map_graph.mark_obstacle("V{}".format(path[current_position_idx + 1]))
+            sandy.ev3_print(
+                "Obstacle detected at V{}".format(path[current_position_idx + 1])
+            )
+            current_position = path[current_position_idx]
 
+def test_path_control(sandy: Robot):
     sandy.ev3_print("Press initial robot orientation:")
     pressed = sandy.wait_button([Button.UP, Button.LEFT, Button.RIGHT, Button.DOWN])
     button_to_direction = {
@@ -150,16 +162,14 @@ def test_navigation_main(sandy: Robot):
         Button.DOWN: "S",
     }
     sandy.orientation = button_to_direction[pressed]
+    sandy.ev3_print("{}".format(pressed))
+    map_graph = Graph(map_matrix)
 
-    map_graph.mark_obstacle("V10")
-    map_graph.mark_obstacle("V21")
-    path, _, directions = map_graph.dijkstra(5, 26)
-
-    path_control(sandy, path, directions)
-
+    initial_position = 5
+    targets = [0, 13, 26]
+    sandy.ev3_print("Press button to start:")
     sandy.wait_button()
-    path, _, directions = map_graph.dijkstra(27, 6)
-    path_control(sandy, path, directions)
+    move_to_target(sandy, map_graph, initial_position, targets)
 
 
 def test_calibrate_align_pid(robot: Robot):
@@ -175,7 +185,7 @@ def test_passenger_boarding(sandy: Robot):
 
 def main(hostname):
     if hostname == "sandy":
-        sandy_main(
+        test_path_control(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,

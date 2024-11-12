@@ -95,8 +95,8 @@ class Graph:
         """Encontra o melhor caminho entre um vértice de início e uma lista de destinos, retornando o caminho, a distância e o conjunto de instruções pra percorrer."""
         paths = []
         for target in destinations:
-            path, distance, instrunctions = self.dijkstra(inicio, target)
-            paths.append((path, distance, instrunctions))
+            path, distance, instructions = self.dijkstra(inicio, target)
+            paths.append((path, distance, instructions))
         paths.sort(key=lambda x: x[1])
         return paths[0]
 
