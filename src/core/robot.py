@@ -58,7 +58,7 @@ class Robot:
         server_name: str = None,
         debug=True,
     ):
-        
+
         self.name = get_hostname()
 
         # Ev3
@@ -219,11 +219,7 @@ class Robot:
         self.motor_r.dc(speed - correction)
         self.motor_l.dc(speed + correction)
 
-    def pid_turn(
-        self,
-        angle,
-        pid: PIDValues = const.PID_TURN_VALUES
-    ):
+    def pid_turn(self, angle, pid: PIDValues = const.PID_TURN_VALUES):
         """
         Curva com controle PID.
         - Angulo relativo ao eixo do robô.
@@ -315,19 +311,19 @@ class Robot:
 
     def line_follower(self, target: int, side: str, pid: PIDControl, speed: int = 50):
         pid = PIDControl(const.LINE_FOLLOWER_VALUES)
-        if side == 'R': 
+        if side == "R":
             sensor = self.color_right
             side = 1
-        elif side == 'L':
+        elif side == "L":
             sensor = self.color_left
             side = -1
-        else: raise ValueError("Apenas 'R' ou 'L'")
+        else:
+            raise ValueError("Apenas 'R' ou 'L'")
 
         correction = pid.compute(lambda: sensor.reflection() - target)
 
         self.motor_l.dc(speed + correction * side)
         self.motor_r.dc(speed - correction * side)
-
 
     def wait_button(self, button=Button.CENTER, beep=600):
         return wait_button_pressed(ev3=self.ev3, button=button, beep=beep)

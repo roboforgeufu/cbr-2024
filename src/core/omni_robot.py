@@ -514,6 +514,8 @@ class OmniRobot:
         targets = [0, 0]
 
         speeds = [0, 0]
+
+        speeds_stops = 0
         while True:
             for i, sensor in enumerate(sensors):
                 if not has_seen[i] and sensor.color() != initial_colors[i]:
@@ -539,7 +541,16 @@ class OmniRobot:
             for motor, sign, speed in zip(all_motors, all_signs, all_speeds):
                 motor.dc(sign * speed)
 
-            if all(has_seen) and all([abs(e) <= 15 for e in error]):
+            if all([s <= 20 for s in speeds]):
+                speeds_stops += 1
+            else:
+                speeds_stops = 0
+
+            # self.ev3_print("speeds_stops:", speeds_stops)
+
+            if all(has_seen) and (
+                all([abs(e) <= 15 for e in error]) or speeds_stops > 10
+            ):
                 break
         self.off_motors()
 
