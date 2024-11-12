@@ -207,7 +207,7 @@ def path_control(robot: Robot, path: list, directions: list):
                 if (
                     (get_relative_orientation(robot.orientation, 1) 
                      in walls_of_vertices[path[position_index]])
-                    and walked_perc < const.ROBOT_SIZE_HALF
+                    and walked_perc <= 0.5
                 ):
                     robot.pid_turn(20)
                     align_right(robot)
@@ -224,20 +224,13 @@ def path_control(robot: Robot, path: list, directions: list):
                 if (
                     (get_relative_orientation(robot.orientation, -1) 
                      in walls_of_vertices[path[position_index]])
-                    and walked_perc < const.ROBOT_SIZE_HALF
+                    and walked_perc <= 0.5
                 ):
                     robot.pid_turn(-20)
                     align_left(robot)
                     needs_align = 0
 
         position_index += 1
-
-        new_position = path[position_index]
-        if robot.orientation in walls_of_vertices[new_position]:
-            # O robô está de frente pra uma parede, aproveita pra alinhar a frente
-            robot.stop()
-            robot.align()
-            robot.pid_walk(const.ROBOT_SIZE_HALF, speed=-60)
 
         if idx == len(path) - 1:
             robot.stop()
