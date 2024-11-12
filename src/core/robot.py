@@ -314,7 +314,7 @@ class Robot:
         # self.ev3_print(n, "| END:", self.motor_l.angle(), self.motor_r.angle())
 
     def line_follower(self, target: int, side: str, pid: PIDControl, speed: int = 50):
-        pid = PIDControl(const.)
+        pid = PIDControl(const.LINE_FOLLOWER_VALUES)
         if side == 'R': 
             sensor = self.color_right
             side = 1
@@ -452,7 +452,7 @@ class Robot:
             self.motor_l.dc(left_speed)
             self.motor_r.dc(right_speed)
 
-            self.ev3_print(left_error, left_error_i, right_error, right_error_i)
+            # self.ev3_print(left_error, left_error_i, right_error, right_error_i)
             if (
                 has_seen_left
                 and has_seen_right
