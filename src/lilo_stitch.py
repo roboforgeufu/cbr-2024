@@ -8,12 +8,40 @@ from pybricks.parameters import Port, Button
 from pybricks.ev3devices import ColorSensor
 from pybricks.iodevices import Ev3devSensor
 from pybricks.tools import wait
+import constants as const
 
-from decision_trees.lilo_lego_ev3_color_1 import lilo_lego_ev3_color_p1_decision_tree
-from decision_trees.lilo_lego_ev3_color_2 import lilo_lego_ev3_color_p2_decision_tree
-from decision_trees.lilo_lego_ev3_color_3 import lilo_lego_ev3_color_p3_decision_tree
-from decision_trees.lilo_lego_ev3_color_4 import lilo_lego_ev3_color_p4_decision_tree
-from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
+if const.MAP_COLOR_CALIBRATION == "OFICIAL":
+    from decision_trees.oficial.lilo_lego_ev3_color_1 import (
+        lilo_lego_ev3_color_p1_decision_tree,
+    )
+    from decision_trees.oficial.lilo_lego_ev3_color_2 import (
+        lilo_lego_ev3_color_p2_decision_tree,
+    )
+    from decision_trees.oficial.lilo_lego_ev3_color_3 import (
+        lilo_lego_ev3_color_p3_decision_tree,
+    )
+    from decision_trees.oficial.lilo_lego_ev3_color_4 import (
+        lilo_lego_ev3_color_p4_decision_tree,
+    )
+    from decision_trees.oficial.stitch_ht_nxt_color_v2_4 import (
+        stitch_ht_nxt_color_v2_p4_decision_tree,
+    )
+elif const.MAP_COLOR_CALIBRATION == "HOME":
+    from decision_trees.home.lilo_lego_ev3_color_1 import (
+        lilo_lego_ev3_color_p1_decision_tree,
+    )
+    from decision_trees.home.lilo_lego_ev3_color_2 import (
+        lilo_lego_ev3_color_p2_decision_tree,
+    )
+    from decision_trees.home.lilo_lego_ev3_color_3 import (
+        lilo_lego_ev3_color_p3_decision_tree,
+    )
+    from decision_trees.home.lilo_lego_ev3_color_4 import (
+        lilo_lego_ev3_color_p4_decision_tree,
+    )
+    from decision_trees.home.stitch_ht_nxt_color_v2_4 import (
+        stitch_ht_nxt_color_v2_p4_decision_tree,
+    )
 
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 
@@ -27,8 +55,11 @@ from domain.ohana import (
 )
 
 from domain.omni_path_control import omni_path_control
-from domain.boarding import omni_passenger_boarding
-import constants as const
+from domain.boarding import (
+    omni_passenger_boarding,
+    omni_passenger_unboarding,
+    omni_manouver_to_get_passenger,
+)
 
 
 def lilo_main(lilo: OmniRobot):
@@ -50,7 +81,6 @@ def lilo_main(lilo: OmniRobot):
         lilo.orientation = "N"  # TODO: deixar na lógica de localização
         passenger_info, boarding_position = omni_passenger_boarding(lilo)
         lilo.ev3_print("P.i.:", passenger_info)
-        lilo.wait_button()
 
         #
         # Pathfinding e movimentação (obstáculos)
@@ -59,17 +89,11 @@ def lilo_main(lilo: OmniRobot):
         delivered_position = move_from_position_to_targets(
             lilo, map_graph, boarding_position[0], target
         )
-        lilo.wait_button()
 
         #
         # Desembarque de passageiros
         #
-        lilo.bluetooth.message("CLAW_LOW")
-        lilo.bluetooth.message()
-        lilo.bluetooth.message("CLAW_OPEN")
-        lilo.bluetooth.message()
-        lilo.bluetooth.message("CLAW_HIGH")
-        lilo.bluetooth.message()
+        omni_passenger_unboarding(lilo)
 
         #
         # Retorno a zona de embarque
@@ -77,8 +101,7 @@ def lilo_main(lilo: OmniRobot):
         move_from_position_to_targets(
             lilo, map_graph, delivered_position, [boarding_position[1]]
         )
-        lilo.wait_button()
-        pass
+        omni_manouver_to_get_passenger(lilo)
 
 
 def move_from_position_to_targets(
@@ -215,7 +238,7 @@ def main(hostname):
         stitch_main(
             OmniRobot(
                 color_side=DecisionColorSensor(
-                    Ev3devSensor(Port.S4), ht_nxt_color_v2_p2_decision_tree
+                    Ev3devSensor(Port.S4), stitch_ht_nxt_color_v2_p4_decision_tree
                 ),
                 ultra_claw=Port.S2,
                 ultra_back=Port.S1,

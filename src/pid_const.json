@@ -1,21 +1,68 @@
 {
     "sandy": {
-        "pid_walk": [3, 0.2, 8]
-        ,
-        "pid_turn": [0.8, 0.01, 0.4]
-        ,
-        "align": [1, 0.015, 1.5]
-        ,
-        "line_follower": [1.8, 0.03, 0]
-    }
-    ,
+        "pid_walk": [
+            3,
+            0.2,
+            8
+        ],
+        "pid_turn": [
+            0.8,
+            0.01,
+            0.4
+        ],
+        "align": [
+            1,
+            0.015,
+            1.5
+        ],
+        "line_follower": [
+            1.8,
+            0.03,
+            0
+        ]
+    },
     "lilo": {
-        "pid_walk": [1,0,0]
-        ,
-        "pid_turn": [1,0,0]
-        ,
-        "align": [1,0,0]
-        ,
-        "line_follower": [1,0,0]
+        "pid_walk": [
+            1,
+            0,
+            0
+        ],
+        "pid_turn": [
+            1,
+            0,
+            0
+        ],
+        "align": [
+            1,
+            0,
+            0
+        ],
+        "line_follower": [
+            1,
+            0,
+            0
+        ]
+    },
+    "stitch": {
+        "pid_walk": [
+            1,
+            0,
+            0
+        ],
+        "pid_turn": [
+            1,
+            0,
+            0
+        ],
+        "align": [
+            1,
+            0,
+            0
+        ],
+        "line_follower": [
+            1,
+            0,
+            0
+        ]
     }
 }

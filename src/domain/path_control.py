@@ -179,7 +179,7 @@ def path_control(robot: Robot, path: list, directions: list):
                 has_seen_obstacle, walked_perc = robot.pid_walk(
                     cm=distance * (1 - walked_perc),
                     off_motors=should_stop,
-                    
+
                     obstacle_function=obstacle_function,
                 )
                 return False, position_index
@@ -201,7 +201,6 @@ def path_control(robot: Robot, path: list, directions: list):
                     off_motors=should_stop,
                     obstacle_function=obstacle_function,
                 )
-            
         position_index += 1
 
         new_position = path[position_index]

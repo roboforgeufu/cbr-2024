@@ -35,21 +35,22 @@ def passenger_boarding(robot: Robot):
     star_platinum(robot, "PASSENGER INFO")
     vertice = robot.bluetooth.message()
     if len(vertice) == 0:
-        robot.pid_walk(-2,50)
+        robot.pid_walk(5,-50)
         robot.align()
         robot.pid_turn(-90)
         return passenger_boarding(robot)
     star_platinum(robot, "UP")
     walk_until_non_white(robot)
-    robot.pid_walk(-2)
+    robot.pid_walk(5, -50)
     robot.align()
-    robot.pid_walk(-13,5)
+    robot.pid_walk(13.5, -60)
     robot.pid_turn(90)
     robot.align()
-    robot.pid_walk(-13,5)
+    robot.pid_walk(13.5, -60)
     robot.orientation = "O"
-    
+
     return vertice
+
 
 def passenger_unboarding(robot: Robot):
     """
@@ -59,21 +60,88 @@ def passenger_unboarding(robot: Robot):
     robot.align()
 
     while True:
-        angle = robot.robot_axis_to_motor_degrees(30)/2
-        if robot.color_left.color() == Color.YELLOW and robot.color_right.color() == Color.YELLOW:
+        angle = robot.robot_axis_to_motor_degrees(30) / 2
+        if (
+            robot.color_left.color() == Color.YELLOW
+            and robot.color_right.color() == Color.YELLOW
+        ):
             break
         elif robot.color_left.color() != Color.YELLOW():
-            robot.motor_l.run_angle(200,-angle)
-            robot.motor_r.run_angle(200,-angle)
+            robot.motor_l.run_angle(200, -angle)
+            robot.motor_r.run_angle(200, -angle)
             robot.align()
         elif robot.color_right.color() != Color.YELLOW():
-            robot.motor_r.run_angle(200,-angle)
-            robot.motor_l.run_angle(200,-angle)
+            robot.motor_r.run_angle(200, -angle)
+            robot.motor_l.run_angle(200, -angle)
             robot.align()
-        angle *= 2/3
+        angle *= 2 / 3
 
     star_platinum("DOWN")
     star_platinum("OPEN")
+
+
+def omni_passenger_unboarding(omni: OmniRobot):
+    """
+    Rotina de desembarque de passageiro
+    """
+    if omni.moving_direction_sign == -1:
+        omni.pid_turn(180)
+        omni.moving_direction_sign = 1
+
+    omni.align()
+
+    omni.pid_walk(2, speed=30)
+
+    t = 0
+    i = [0, 0, 0]
+    e = [0, 0, 0]
+    initial_angles = [motor.angle() for motor in omni.get_all_motors()]
+
+    if omni.color_front_left.color() == Color.YELLOW:
+        while omni.color_front_right.color() != Color.YELLOW:
+            t, i, e = omni.loopless_pid_walk(
+                t,
+                i,
+                e,
+                20,
+                direction=Direction.LEFT,
+                initial_front_left_angle=initial_angles[0],
+                initial_front_right_angle=initial_angles[1],
+                initial_back_left_angle=initial_angles[2],
+                initial_back_right_angle=initial_angles[3],
+            )
+    elif omni.color_front_right.color() == Color.YELLOW:
+        while omni.color_front_left.color() != Color.YELLOW:
+            t, i, e = omni.loopless_pid_walk(
+                t,
+                i,
+                e,
+                20,
+                direction=Direction.RIGHT,
+                initial_front_left_angle=initial_angles[0],
+                initial_front_right_angle=initial_angles[1],
+                initial_back_left_angle=initial_angles[2],
+                initial_back_right_angle=initial_angles[3],
+            )
+
+    omni.align(direction=Direction.BACK)
+    omni.align()
+
+    omni.pid_walk(10, 20)
+    omni.bluetooth.message("CLAW_LOW")
+    omni.bluetooth.message()
+
+    omni.bluetooth.message("CLAW_OPEN")
+    omni.bluetooth.message()
+
+    omni.pid_walk(15, 25, direction=Direction.BACK)
+
+
+def omni_manouver_to_get_passenger(omni: OmniRobot):
+    if omni.moving_direction_sign == -1:
+        omni.pid_turn(90)
+    else:
+        omni.pid_turn(-90)
 
 
 def omni_passenger_boarding(omni: OmniRobot):

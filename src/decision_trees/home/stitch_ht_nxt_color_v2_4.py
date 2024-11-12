@@ -1,6 +1,7 @@
 from pybricks.parameters import Color
 
-def ht_nxt_color_v2_p2_decision_tree(R, G, B, W):
+
+def stitch_ht_nxt_color_v2_p4_decision_tree(R, G, B, W):
     if R <= 206.0:
         if G <= 219.0:
             if R <= 39.5:
