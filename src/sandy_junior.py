@@ -31,7 +31,7 @@ import domain.star_platinum as star_platinum
 
 
 import constants as const
-from domain.localization import localization_routine
+from domain.localization import localization_routine, wall_colors_check, color_lateral_vertices
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 from domain.path_control import path_control
 from domain.boarding import passenger_unboarding, passenger_boarding
@@ -90,10 +90,10 @@ def sandy_main(sandy: Robot):
         rotation = sandy.wheels_angle()
         distance = sandy.motor_degrees_to_cm(rotation)
 
-        if distance < 30:
+        if has_seen_obstacle:
             sandy.align()
         
-        cor = sandy.color_left.color()
+        cor = wall_colors_check(sandy)
         lista.append(cor)
 
         print(lista)  
@@ -103,8 +103,11 @@ def sandy_main(sandy: Robot):
         sandy.pid_turn(90)
 
     print("Cores detectadas nos quatro lados:", lista)
+
+    # vertice_inicial = color_lateral_vertices
+    # TODO: Acessar dicionário
     
-    next_vertice = passenger_boarding()
+    # next_vertice = passenger_boarding()
     
 
 def junior_main(junior: Robot):

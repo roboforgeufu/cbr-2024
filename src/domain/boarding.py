@@ -35,18 +35,18 @@ def passenger_boarding(robot: Robot):
     star_platinum(robot, "PASSENGER INFO")
     vertice = robot.bluetooth.message()
     if len(vertice) == 0:
-        robot.pid_walk(-2,50)
+        robot.pid_walk(5,-50)
         robot.align()
         robot.pid_turn(-90)
         return passenger_boarding(robot)
     star_platinum(robot, "UP")
     walk_until_non_white(robot)
-    robot.pid_walk(-2)
+    robot.pid_walk(5, -50)
     robot.align()
-    robot.pid_walk(-13,5)
+    robot.pid_walk(13.5, -60)
     robot.pid_turn(90)
     robot.align()
-    robot.pid_walk(-13,5)
+    robot.pid_walk(13.5, -60)
     robot.orientation = "O"
     
     return vertice

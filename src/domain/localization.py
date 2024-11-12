@@ -14,7 +14,7 @@ from time import time, sleep
 
 wall_colors = [Color.BLACK, Color.BLUE, Color.RED, Color.YELLOW, Color.BROWN]
 
-color_lateral_vertices = [
+color_lateral_vertices = {
     [
         [1],
         [
@@ -186,7 +186,7 @@ color_lateral_vertices = [
             ["YELLOW", "WHITE", "BLUE", "RED"],            # Rotação 3
         ]
     ],
-]
+}
 
 
 # Chega de frente no azul e faz a rotina do azul
@@ -244,6 +244,14 @@ def walk_until_non_white(robot: Robot, speed=60):
         obstacle_function=stop_condition,
     )
 
+
+def wall_colors_check(robot: Robot):
+
+    if robot.color_left.color() == Color.YELLOW or robot.color_right.color() == Color.YELLOW: color = "Yellow"
+    elif robot.color_left.color() == Color.BLACK or robot.color_right.color() == Color.BLACK: color = "Black"
+    elif robot.color_left.color() == Color.RED or robot.color_right.color() == Color.RED: color = "Red"
+    elif robot.color_left.color() == Color.BLUE or robot.color_right.color() == Color.BLUE: color = "Blue"
+    return color
 
 def catch_color_routine(lista, robot: Robot):
     """
