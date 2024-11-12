@@ -227,16 +227,18 @@ def all_white_routine(robot:Robot):
     if robot.color_left.color() == "Color.BLUE" and robot.color_right.color() == "Color.BLUE":
         blue_routine()
     
-def walk_until_non_white(robot: Robot, speed=66):
+def walk_until_non_white(robot: Robot, speed=60):
     """
     Faz o robô andar uma distância de 30 cm ou até que os sensores detectem algo diferente de branco.
     """
+    print(robot.color_right.color())
+    
     stop_condition = lambda: (
-        robot.color_left.color() != Color.WHITE or robot.color_right.color() != Color.WHITE
+        robot.color_left.color() != "Color.WHITE" or robot.color_right.color() != "Color.WHITE"
     )
 
     has_detected_non_white, _ = robot.pid_walk(
-        cm=35,
+        cm=32,
         speed=speed,
         off_motors=True,   
         obstacle_function=stop_condition,
