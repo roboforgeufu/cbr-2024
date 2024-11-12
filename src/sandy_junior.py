@@ -2,7 +2,7 @@
 
 """
 Módulo para centralização dos processos e gerência da estratégia geral.
-
+3
 Podem estar nesse módulo coisas como:
     - Código que controla a ordem que as rotinas serão executadas
     - Código para controle de fluxo geral do robô
@@ -69,38 +69,40 @@ def sandy_main(sandy: Robot):
     Faz o robô andar até detectar uma cor diferente de branco, então armazena a cor detectada.
     Ainda não está estruturado como deveria no arquivo localization.py
     """
-    lista = []
+    lista = [] 
+    for _ in range(4):
+        obstacle_function = (
+            lambda: (
+                sandy.color_left.color() != Color.WHITE
+                or sandy.color_right.color() != Color.WHITE
+            )
+        )
+        
+        sandy.reset_wheels_angle()  
+
+
+        has_seen_obstacle, _ = sandy.pid_walk(
+            30,
+            speed=55,
+            obstacle_function=obstacle_function,
+        )
+
+        rotation = sandy.wheels_angle()
+        distance = sandy.motor_degrees_to_cm(rotation)
+
+        if distance < 30:
+            sandy.align()
+        
+        cor = sandy.color_left.color()
+        lista.append(cor)
+
+        print(lista)  
+
+        sandy.pid_walk(cm=distance, speed=-60)
     
+        sandy.pid_turn(90)
 
-    obstacle_function = (
-        lambda: (
-            sandy.color_left.color() != Color.WHITE
-            or sandy.color_right.color() != Color.WHITE
-        ) 
-    )
-    
-    sandy.reset_wheels_angle()
-
-    
-    has_seen_obstacle, _ = sandy.pid_walk(
-        30,
-        obstacle_function=obstacle_function,
-    )
-
-    if has_seen_obstacle:
-        sandy.stop()
-
-    sandy.align()
-    sandy.stop()
-    cor = sandy.color_left.color()
-    lista.append(cor)
-    rotation = sandy.wheels_angle()
-    distance = sandy.motor_degrees_to_cm(rotation)
-
-    sandy.pid_walk(cm=distance, speed=-60)
-    sandy.pid_turn(90)
-
-
+    print("Cores detectadas nos quatro lados:", lista)
     
     next_vertice = passenger_boarding()
     
@@ -165,7 +167,7 @@ def test_passenger_boarding(sandy: Robot):
 
 def main(hostname):
     if hostname == "sandy":
-        test_path_control(
+        sandy_main(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
