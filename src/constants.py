@@ -14,8 +14,27 @@ Não devem estar nesse módulo:
 """
 
 import math
+import json
+from core.utils import get_hostname
 
 from core.utils import PIDValues
+
+
+def load_json_file():
+    with open("pid_const.json", "r") as file:
+        data = json.load(file)
+    return data
+
+
+const_map = load_json_file()
+hostname = get_hostname()
+
+# Constantes PID
+
+PID_WALK_VALUES = PIDValues(const_map[hostname]["pid_walk"])
+PID_TURN_VALUES = PIDValues(const_map[hostname]["pid_turn"])
+ALIGN_VALUES = PIDValues(const_map[hostname]["align"])
+LINE_FOLLOWER_VALUES = PIDValues(const_map[hostname]["line_follower"])
 
 # Dimensões do robô
 WHEEL_DIAMETER = 6.8
@@ -33,7 +52,6 @@ MIN_DEGREES_CURVE_THRESHOLD = 30
 # Comunicação Bluetooth
 SERVER_NAME = "sandy"
 
-PID_WALK_VALUES = PIDValues(kp=3, ki=0.2, kd=8)
 
 # Distâncias
 OMNI_WALK_DISTANCE_CORRECTION = 0.95
@@ -42,6 +60,9 @@ OMNI_SIDE_ALING_PERCENTAGE = 0.53
 
 
 # Obstáculos
-OMNI_OBSTACLE_DISTANCE = 150
+OBSTACLE_DISTANCE = 150
 
 LINE_FOLLOW_TARGET_REFLECTION = 30
+
+# Calibração de cor
+MAP_COLOR_CALIBRATION = "OFICIAL"  # OFICIAL, HOME, TEST

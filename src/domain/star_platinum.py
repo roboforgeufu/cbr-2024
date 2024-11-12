@@ -1,12 +1,30 @@
 #!/usr/bin/env pybricks-micropython
 from core.robot import Robot
-from pybricks.parameters import Stop # type: ignore
+from pybricks.parameters import Stop, Color # type: ignore
 
 
-def passenger_read_color_and_type(robot: Robot):
+def passenger_info(robot: Robot):
+    passenger_lookup_table = {
+        "CHILD": {
+            Color.GREEN: [0, 13, 26],
+            Color.BLUE: [4],
+            Color.BROWN: [30],
+            Color.WHITE: []
+        },
+        "ADULT": {
+            Color.GREEN: [17],
+            Color.BLUE: [28],
+            Color.BROWN: [2],
+            Color.RED: [15],
+            Color.WHITE: []
+        },
+    }
     color = robot.color_claw.color()
-    adult = robot.ultra_head.distance() <= 100
-    return adult, color
+    if robot.ultra_head.distance() <= 100:
+        height = "ADULT"
+    else: height = "CHILD"
+
+    return passenger_lookup_table[height][color]
 
 
 def lift_claw(robot: Robot, side=1):
@@ -23,7 +41,7 @@ def main(robot: Robot):
         robot.ev3_print("Waiting request")
         request = robot.bluetooth.message(should_wait=True)
         robot.ev3_print(request, clear=True)
-        if request == "SUPLEX":
+        if request == "UP":
             robot.ev3_print("Executing")
             lift_claw(robot)
         elif request == "DOWN":
@@ -36,8 +54,8 @@ def main(robot: Robot):
             robot.ev3_print("Executing")
             open_claw(robot)
         elif request == "PASSENGER INFO":
-            adult, color = passenger_read_color_and_type(robot)
-            robot.bluetooth.message((adult, str(color)))
+            info = passenger_info(robot)
+            robot.bluetooth.message(info)
         robot.ev3_print("Done!")
         robot.bluetooth.message("Done!")
 
