@@ -21,6 +21,12 @@ class PIDValues:
         self.kd = kd
         self.target = target
 
+    @staticmethod
+    def from_list(pid_list):
+        return PIDValues(kp = pid_list[0],
+                         ki = pid_list[1],
+                         kd = pid_list[0])
+
 class PIDControl:
     """Classe para controle PID"""
 

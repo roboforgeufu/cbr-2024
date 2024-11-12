@@ -170,7 +170,8 @@ def test_calibrate_align_pid(robot: Robot):
 
 def test_passenger_boarding(sandy: Robot):
     sandy.bluetooth.start()
-    passenger_boarding(sandy)
+    passenger_info = passenger_boarding(sandy)
+
 
 
 def main(hostname):

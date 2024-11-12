@@ -222,11 +222,7 @@ class Robot:
     def pid_turn(
         self,
         angle,
-        pid: PIDValues = PIDValues(
-            kp=0.8,
-            ki=0.01,
-            kd=0.4,
-        ),
+        pid: PIDValues = const.PID_TURN_VALUES
     ):
         """
         Curva com controle PID.
@@ -318,6 +314,7 @@ class Robot:
         # self.ev3_print(n, "| END:", self.motor_l.angle(), self.motor_r.angle())
 
     def line_follower(self, target: int, side: str, pid: PIDControl, speed: int = 50):
+        pid = PIDControl(const.)
         if side == 'R': 
             sensor = self.color_right
             side = 1
@@ -382,10 +379,6 @@ class Robot:
             bold=bold,
             **kwargs,
         )
-
-    def walk_while_same_reflection(self, speed=200):
-        """Retorna o tempo passado andando até chegar na cor diferente"""
-        ...
 
     def align(
         self,
