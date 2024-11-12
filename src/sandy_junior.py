@@ -34,10 +34,28 @@ from domain.localization import localization_routine
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 from domain.path_control import path_control
 from domain.boarding import passenger_unboarding, passenger_boarding
-from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
-from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
-from decision_trees.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
-from decision_trees.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p4_decision_tree
+
+if const.MAP_COLOR_CALIBRATION == "OFICIAL":
+    from decision_trees.oficial.sandy_lego_ev3_color_3 import (
+        sandy_lego_ev3_color_p3_decision_tree,
+    )
+    from decision_trees.oficial.sandy_lego_ev3_color_4 import (
+        sandy_lego_ev3_color_p4_decision_tree,
+    )
+    from decision_trees.oficial.junior_lego_ev3_color_2 import (
+        junior_lego_ev3_color_p2_decision_tree,
+    )
+elif const.MAP_COLOR_CALIBRATION == "HOME":
+    from decision_trees.home.sandy_lego_ev3_color_3 import (
+        sandy_lego_ev3_color_p3_decision_tree,
+    )
+    from decision_trees.home.sandy_lego_ev3_color_4 import (
+        sandy_lego_ev3_color_p4_decision_tree,
+    )
+    from decision_trees.home.junior_lego_ev3_color_2 import (
+        junior_lego_ev3_color_p2_decision_tree,
+    )
+
 
 from domain.localization import walk_until_non_white
 from core.robot import Robot
@@ -52,32 +70,31 @@ def sandy_main(sandy: Robot):
     sandy.reset_wheels_angle()
 
     walk_until_non_white(sandy)
-   
+
     sandy.off_motors()
-   
-    detected_color = sandy.color_left.color()  
+
+    detected_color = sandy.color_left.color()
     lista.append(detected_color)
-    
+
     angle = (sandy.motor_l.angle() + sandy.motor_r.angle()) / 2
     distance = sandy.motor_degrees_to_cm(angle)
-    
+
     sandy.pid_walk(cm=distance, speed=-60)
-    
 
     sandy.reset_wheels_angle()
 
     sandy.pid_turn(90)
-   
+
     walk_until_non_white(sandy)
-   
+
     sandy.off_motors()
-   
-    detected_color = sandy.color_left.color()  
+
+    detected_color = sandy.color_left.color()
     lista.append(detected_color)
-    
+
     angle = (sandy.motor_l.angle() + sandy.motor_r.angle()) / 2
     distance = sandy.motor_degrees_to_cm(angle)
-    
+
     sandy.pid_walk(cm=distance, speed=-60)
 
     sandy.ev3_print(lista)
@@ -134,7 +151,9 @@ def junior_main(junior: Robot):
     star_platinum.main(junior)
 
 
-def move_to_target(sandy: Robot, map_graph: Graph, initial_position: int, targets: list):
+def move_to_target(
+    sandy: Robot, map_graph: Graph, initial_position: int, targets: list
+):
     completed = False
     current_position_idx = -1
     while not completed:
@@ -151,6 +170,7 @@ def move_to_target(sandy: Robot, map_graph: Graph, initial_position: int, target
                 "Obstacle detected at V{}".format(path[current_position_idx + 1])
             )
             current_position = path[current_position_idx]
+
 
 def test_path_control(sandy: Robot):
     sandy.ev3_print("Press initial robot orientation:")
@@ -183,7 +203,6 @@ def test_passenger_boarding(sandy: Robot):
     passenger_info = passenger_boarding(sandy)
 
 
-
 def main(hostname):
     if hostname == "sandy":
         test_path_control(
@@ -211,7 +230,7 @@ def main(hostname):
                 motor_elevate_claw=Port.C,
                 motor_open_claw=Port.B,
                 color_claw=DecisionColorSensor(
-                    ColorSensor(Port.S2), levo_ev3_color_1_decision_tree
+                    ColorSensor(Port.S2), junior_lego_ev3_color_p2_decision_tree
                 ),
                 ultra_head=Port.S1,
                 server_name="sandy",

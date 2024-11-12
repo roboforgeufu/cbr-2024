@@ -19,10 +19,12 @@ from core.utils import get_hostname
 
 from core.utils import PIDValues
 
+
 def load_json_file():
     with open("pid_const.json", "r") as file:
         data = json.load(file)
     return data
+
 
 const_map = load_json_file()
 hostname = get_hostname()
@@ -61,3 +63,6 @@ OMNI_SIDE_ALING_PERCENTAGE = 0.53
 OBSTACLE_DISTANCE = 150
 
 LINE_FOLLOW_TARGET_REFLECTION = 30
+
+# Calibração de cor
+MAP_COLOR_CALIBRATION = "OFICIAL"  # OFICIAL, HOME, TEST
