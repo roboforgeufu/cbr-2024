@@ -32,27 +32,27 @@ possible_directions = ["N", "L", "S", "O"]  # sentido horário
 wall_colors = [Color.BLACK, Color.BLUE, Color.RED, Color.YELLOW, Color.BROWN]
 
 
-# def get_side_directions(robot_orientation: str):
-#     """Considerando a orientação atual do robô, retorna as direções laterais a ele.
-#     A primeira posição será a direção à direita do robô, a segunda posição será a direção à esquerda do robô
-#     Exemplos:
-#         Se o robô aponta para o Norte, as laterais são Leste e Oeste.
-#         Se o robô aponta para o Leste, as laterais são Sul e Norte.
-#     """
-#     orientation_idx = possible_directions.index(robot_orientation)
-#     return [
-#         possible_directions[(orientation_idx + 1) % 4],
-#         possible_directions[(orientation_idx - 1) % 4],
-#     ]
+def get_side_directions(robot_orientation: str):
+    """Considerando a orientação atual do robô, retorna as direções laterais a ele.
+    A primeira posição será a direção à direita do robô, a segunda posição será a direção à esquerda do robô
+    Exemplos:
+        Se o robô aponta para o Norte, as laterais são Leste e Oeste.
+        Se o robô aponta para o Leste, as laterais são Sul e Norte.
+    """
+    orientation_idx = possible_directions.index(robot_orientation)
+    return [
+        possible_directions[(orientation_idx + 1) % 4],
+        possible_directions[(orientation_idx - 1) % 4],
+    ]
 
 
-# def get_relative_orientation(orientation: str, offset: int):
-#     """Retorna a orientação relativa à orientação passada, considerando um offset.
-#     Exemplos:
-#         get_relative_orientation("N", 1) == "L"
-#         get_relative_orientation("N", -1) == "O"
-#     """
-#     return possible_directions[(possible_directions.index(orientation) + offset) % 4]
+def get_relative_orientation(orientation: str, offset: int):
+    """Retorna a orientação relativa à orientação passada, considerando um offset.
+    Exemplos:
+        get_relative_orientation("N", 1) == "L"
+        get_relative_orientation("N", -1) == "O"
+    """
+    return possible_directions[(possible_directions.index(orientation) + offset) % 4]
 
 
 def turn_to_direction(robot: Robot, target_direction):
@@ -134,7 +134,6 @@ def path_control(robot: Robot, path: list, directions: list):
                     off_motors=should_stop,
                     obstacle_function=obstacle_function,
                 )
-            
 
         position_index += 1
 

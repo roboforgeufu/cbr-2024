@@ -55,7 +55,11 @@ from domain.ohana import (
 )
 
 from domain.omni_path_control import omni_path_control
-from domain.boarding import omni_passenger_boarding
+from domain.boarding import (
+    omni_passenger_boarding,
+    omni_passenger_unboarding,
+    omni_manouver_to_get_passenger,
+)
 
 
 def lilo_main(lilo: OmniRobot):
@@ -77,7 +81,6 @@ def lilo_main(lilo: OmniRobot):
         lilo.orientation = "N"  # TODO: deixar na lógica de localização
         passenger_info, boarding_position = omni_passenger_boarding(lilo)
         lilo.ev3_print("P.i.:", passenger_info)
-        lilo.wait_button()
 
         #
         # Pathfinding e movimentação (obstáculos)
@@ -86,17 +89,11 @@ def lilo_main(lilo: OmniRobot):
         delivered_position = move_from_position_to_targets(
             lilo, map_graph, boarding_position[0], target
         )
-        lilo.wait_button()
 
         #
         # Desembarque de passageiros
         #
-        lilo.bluetooth.message("CLAW_LOW")
-        lilo.bluetooth.message()
-        lilo.bluetooth.message("CLAW_OPEN")
-        lilo.bluetooth.message()
-        lilo.bluetooth.message("CLAW_HIGH")
-        lilo.bluetooth.message()
+        omni_passenger_unboarding(lilo)
 
         #
         # Retorno a zona de embarque
@@ -104,8 +101,7 @@ def lilo_main(lilo: OmniRobot):
         move_from_position_to_targets(
             lilo, map_graph, delivered_position, [boarding_position[1]]
         )
-        lilo.wait_button()
-        pass
+        omni_manouver_to_get_passenger(lilo)
 
 
 def move_from_position_to_targets(

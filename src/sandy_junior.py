@@ -39,6 +39,7 @@ from domain.localization import localization_routine
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 from domain.path_control import path_control
 from domain.boarding import passenger_unboarding, passenger_boarding
+
 if const.MAP_COLOR_CALIBRATION == "OFICIAL":
     from decision_trees.oficial.sandy_lego_ev3_color_3 import (
         sandy_lego_ev3_color_p3_decision_tree,
@@ -70,18 +71,14 @@ def sandy_main(sandy: Robot):
     Ainda não está estruturado como deveria no arquivo localization.py
     """
     lista = []
-    
 
-    obstacle_function = (
-        lambda: (
-            sandy.color_left.color() != Color.WHITE
-            or sandy.color_right.color() != Color.WHITE
-        ) 
+    obstacle_function = lambda: (
+        sandy.color_left.color() != Color.WHITE
+        or sandy.color_right.color() != Color.WHITE
     )
-    
+
     sandy.reset_wheels_angle()
 
-    
     has_seen_obstacle, _ = sandy.pid_walk(
         30,
         obstacle_function=obstacle_function,
@@ -100,10 +97,8 @@ def sandy_main(sandy: Robot):
     sandy.pid_walk(cm=distance, speed=-60)
     sandy.pid_turn(90)
 
+    next_vertice = passenger_boarding()
 
-    
-    next_vertice = passenger_boarding())
-    
 
 def junior_main(junior: Robot):
     junior.bluetooth.start()
@@ -112,6 +107,7 @@ def junior_main(junior: Robot):
     junior.motor_elevate_claw.run_until_stalled(200, Stop.HOLD, 70)
     junior.motor_elevate_claw.hold()
     star_platinum.main(junior)
+
 
 def move_to_target(
     sandy: Robot, map_graph: Graph, initial_position: int, targets: list
@@ -158,6 +154,7 @@ def test_calibrate_align_pid(robot: Robot):
         robot.wait_button()
         robot.align()
 
+
 def test_passenger_boarding(sandy: Robot):
     sandy.bluetooth.start()
     passenger_info = passenger_boarding(sandy)
@@ -196,6 +193,7 @@ def main(hostname):
                 server_name="sandy",
             )
         )
+
 
 if __name__ == "__main__":
     main(get_hostname())
