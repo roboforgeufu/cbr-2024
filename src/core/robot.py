@@ -59,11 +59,10 @@ class Robot:
         debug=True,
     ):
 
-        self.name = get_hostname()
-
         # Ev3
         self.ev3 = EV3Brick()
         self.stopwatch = StopWatch()
+        self.name = get_hostname() 
 
         # Rodas
         self.wheel_diameter = wheel_diameter

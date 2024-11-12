@@ -75,7 +75,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
         ):
             # O robô está de costas pra uma parede, aproveita pra alinhar atrás
             robot.ev3_print("WALL BACKWARDS")
-            robot.off_motors()
+            robot.stop()
             robot.align(Direction.get_relative_direction(omni_direction, 4))
             needs_align = 0
             robot.pid_walk(
@@ -87,7 +87,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
 
         if idx == len(directions) - 1:
             # nao anda a ultima distancia, pra nao entrar no estabelecimento
-            robot.off_motors()
+            robot.stop()
             return True, position_index
 
         # Confere se a próxima movimentação é na mesma direção que a atual, pra não desligar os motores entre elas.
@@ -119,7 +119,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
             direction=omni_direction,
         )
         while has_seen_obstacle:
-            robot.off_motors()
+            robot.stop()
             robot.ev3_print("Obs.:", sensor_left.color(), sensor_right.color())
             right_direction, left_direction = get_side_directions(robot.orientation)
             relative_right = Direction.get_relative_direction(omni_direction, 2)
@@ -219,7 +219,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
         if robot.orientation in walls_of_vertices[new_position]:
             # O robô está de frente pra uma parede, aproveita pra alinhar a frente
             robot.ev3_print("WALL IN FRONT")
-            robot.off_motors()
+            robot.stop()
             robot.align(omni_direction)
             needs_align = 0
             robot.pid_walk(const.ROBOT_SIZE_HALF, speed=-60, direction=omni_direction)
@@ -228,7 +228,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
                 get_side_directions(robot.orientation)
             ):
                 if side_orientation in walls_of_vertices[new_position]:
-                    robot.off_motors()
+                    robot.stop()
                     robot.pid_walk(
                         5, direction=Direction.get_relative_direction(omni_direction, 4)
                     )
