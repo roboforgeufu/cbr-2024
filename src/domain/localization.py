@@ -14,7 +14,7 @@ from time import time, sleep
 
 wall_colors = [Color.BLACK, Color.BLUE, Color.RED, Color.YELLOW, Color.BROWN]
 
-color_lateral_vertices = [
+color_lateral_vertices = {
     [
         [1],
         [
@@ -186,7 +186,7 @@ color_lateral_vertices = [
             ["YELLOW", "WHITE", "BLUE", "RED"],            # Rotação 3
         ]
     ],
-]
+}
 
 
 # Chega de frente no azul e faz a rotina do azul
