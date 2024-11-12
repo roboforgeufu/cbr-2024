@@ -102,7 +102,7 @@ def sandy_main(sandy: Robot):
 
 
     
-    next_vertice = passenger_boarding())
+    next_vertice = passenger_boarding()
     
 
 def junior_main(junior: Robot):

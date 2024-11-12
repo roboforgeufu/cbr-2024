@@ -31,10 +31,10 @@ hostname = get_hostname()
 
 # Constantes PID
 
-PID_WALK_VALUES = PIDValues(const_map[hostname]["pid_walk"])
-PID_TURN_VALUES = PIDValues(const_map[hostname]["pid_turn"])
-ALIGN_VALUES = PIDValues(const_map[hostname]["align"])
-LINE_FOLLOWER_VALUES = PIDValues(const_map[hostname]["line_follower"])
+PID_WALK_VALUES = PIDValues.from_list(const_map[hostname]["pid_walk"])
+PID_TURN_VALUES = PIDValues.from_list(const_map[hostname]["pid_turn"])
+ALIGN_VALUES = PIDValues.from_list(const_map[hostname]["align"])
+LINE_FOLLOWER_VALUES = PIDValues.from_list(const_map[hostname]["line_follower"])
 
 # Dimensões do robô
 WHEEL_DIAMETER = 6.8
