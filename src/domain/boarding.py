@@ -76,6 +76,59 @@ def passenger_unboarding(robot: Robot):
     star_platinum("OPEN")
 
 
+def omni_passenger_unboarding(omni: OmniRobot):
+    """
+    Rotina de desembarque de passageiro
+    """
+    if omni.moving_direction_sign == -1:
+        omni.pid_turn(180)
+    
+    omni.align()
+    
+    omni.pid_walk(2)
+    
+    t = 0
+    i = [0, 0, 0]
+    e = [0, 0, 0]
+    initial_angles = [motor.angle() for motor in omni.get_all_motors()]
+    
+    if omni.color_front_left == Color.YELLOW:
+        while omni.color_front_right != Color.YELLOW:
+            t, i, e = omni.loopless_pid_walk(
+            t,
+            i,
+            e,
+            20,
+            direction=Direction.LEFT,
+            initial_front_left_angle=initial_angles[0],
+            initial_front_right_angle=initial_angles[1],
+            initial_back_left_angle=initial_angles[2],
+            initial_back_right_angle=initial_angles[3],
+        )
+    elif omni.color_front_right == Color.YELLOW:
+        while omni.color_front_left != Color.YELLOW:
+            t, i, e = omni.loopless_pid_walk(
+            t,
+            i,
+            e,
+            20,
+            direction=Direction.RIGHT,
+            initial_front_left_angle=initial_angles[0],
+            initial_front_right_angle=initial_angles[1],
+            initial_back_left_angle=initial_angles[2],
+            initial_back_right_angle=initial_angles[3],
+        )
+    
+    omni.pid_walk(10, 35)
+    omni.bluetooth.message("CLAW_LOW")
+    omni.bluetooth.message()
+
+    omni.bluetooth.message("CLAW_OPEN")
+    omni.bluetooth.message()
+    
+    omni.pid_walk(15, direction=Direction.BACK)
+    
+
 def omni_passenger_boarding(omni: OmniRobot):
     omni.bluetooth.message("CLAW_MID")
     omni.bluetooth.message()
