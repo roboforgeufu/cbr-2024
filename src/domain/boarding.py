@@ -119,14 +119,14 @@ def omni_passenger_unboarding(omni: OmniRobot):
             initial_back_right_angle=initial_angles[3],
         )
     
-    omni.pid_walk(10, 35)
+    omni.pid_walk(10, 20)
     omni.bluetooth.message("CLAW_LOW")
     omni.bluetooth.message()
 
     omni.bluetooth.message("CLAW_OPEN")
     omni.bluetooth.message()
     
-    omni.pid_walk(15, direction=Direction.BACK)
+    omni.pid_walk(15, 25, direction=Direction.BACK)
     
 
 def omni_passenger_boarding(omni: OmniRobot):
