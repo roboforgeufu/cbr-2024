@@ -38,7 +38,7 @@ LINE_FOLLOWER_VALUES = PIDValues.from_list(const_map[hostname]["line_follower"])
 
 # Dimensões do robô
 WHEEL_DIAMETER = 6.8
-WHEEL_DIST = 16.4
+WHEEL_DIST = 16.1
 WHEEL_LENGTH = WHEEL_DIAMETER * math.pi
 
 ROBOT_SIZE = 15  # considerando a distância dos sensores de cor da frente até a parte de trás do robô
