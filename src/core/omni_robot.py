@@ -249,6 +249,8 @@ class OmniRobot:
             True, 1
         """
         degrees = self.cm_to_motor_degrees(cm)
+        if degrees == 0:
+            return True, 1
 
         elapsed_time = 0
         i_share = [0, 0, 0]
