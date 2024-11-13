@@ -459,7 +459,7 @@ class Robot:
                 break
         self.stop()
 
-    def line_grabber(self, time, speed=20, multiplier = 1.5):
+    def line_grabber(self, time, speed=35, multiplier = 0.8):
         color_reads = []
         num_reads = 10
         wrong_read_perc = 0.5

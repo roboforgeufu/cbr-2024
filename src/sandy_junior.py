@@ -102,7 +102,7 @@ def test_calibrate_align_pid(robot: Robot):
 
 def test_passenger_boarding(sandy: Robot):
     sandy.bluetooth.start()
-    sandy.line_grabber(time = 5000)
+    sandy.line_grabber(time = 3000)
     sandy.ev3_print(passenger_boarding(sandy))
 
 
@@ -152,7 +152,7 @@ def sandy_main(sandy: Robot):
     # rotina de localização inicial
     localization_routine(sandy)
 
-    #loop 
+    ### loop ###
     while True:
         ### embarque de passageiro ###
         # embarca o passageiro e retorna o(s) vertice(s) de destino
@@ -177,8 +177,8 @@ def junior_main(junior: Robot):
     junior.bluetooth.start()
 
     # Levanta garra inicialmente
-    # junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 90)
-    # junior.motor_elevate_claw.hold()
+    junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 90)
+    junior.motor_elevate_claw.hold()
     star_platinum.main(junior)
 
 

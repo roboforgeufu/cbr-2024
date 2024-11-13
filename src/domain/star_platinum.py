@@ -40,10 +40,10 @@ def open_claw(robot: Robot, side=1):
 
 
 def main(robot: Robot):
+    info = "None"
     while True:
-        info = "None"
         robot.ev3_print("Waiting request")
-        request = robot.bluetooth.message(force_send=True, should_wait=True)
+        request = robot.bluetooth.message(should_wait=True)
         robot.ev3_print(request, clear=True)
         if request == "UP":
             robot.ev3_print("Executing")
