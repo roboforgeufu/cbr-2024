@@ -4,6 +4,8 @@ from domain.localization import wall_colors, wall_colors_check
 from core.omni_robot import Direction
 from pybricks.parameters import Color
 
+from core.utils import PIDControl
+
 import constants as const
 
 
@@ -11,15 +13,13 @@ def omni_blue_routine(robot: OmniRobot):
     robot.ev3_print("Blue routine")
     robot.pid_turn(-90)
 
-    t = 0
-    i = [0, 0, 0]
-    e = [0, 0, 0]
+    pid = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
     robot.reset_wheels_angle()
     while (
         robot.color_back_left.color() != Color.RED
         and robot.color_back_right.color() != Color.RED
     ):
-        t, i, e = robot.loopless_pid_walk(t, i, e, direction=Direction.BACK)
+        robot.loopless_pid_walk(pid, direction=Direction.BACK)
     robot.off_motors()
     robot.pid_walk(2, speed=40)
     return 31
@@ -30,9 +30,7 @@ def omni_red_routine(robot: OmniRobot):
     robot.pid_walk(30, speed=40, direction=Direction.BACK)
     robot.pid_turn(90)
 
-    t = 0
-    i = [0, 0, 0]
-    e = [0, 0, 0]
+    pid = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
     robot.reset_wheels_angle()
     while (
         robot.color_front_left.color() not in wall_colors
@@ -53,7 +51,7 @@ def omni_red_routine(robot: OmniRobot):
             # Curva à esquerda
             robot.pid_turn(-20)
             robot.reset_wheels_angle()
-        robot.loopless_pid_walk(t, i, e)
+        robot.loopless_pid_walk(pid)
     robot.off_motors()
 
     robot.pid_walk(2, speed=40, direction=Direction.BACK)
@@ -78,9 +76,7 @@ def omni_red_routine(robot: OmniRobot):
 
 def omni_all_white_routine(robot: OmniRobot):
     robot.ev3_print("White routine")
-    t = 0
-    i = [0, 0, 0]
-    e = [0, 0, 0]
+    pid = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
     robot.reset_wheels_angle()
     while (
         robot.color_front_left.color() not in wall_colors
@@ -100,7 +96,7 @@ def omni_all_white_routine(robot: OmniRobot):
             # Curva à esquerda
             robot.pid_turn(-20)
             robot.reset_wheels_angle()
-        robot.loopless_pid_walk(t, i, e)
+        robot.loopless_pid_walk(pid)
     robot.off_motors()
 
     robot.pid_walk(2, speed=40, direction=Direction.BACK)
@@ -128,9 +124,7 @@ def omni_black_routine(robot: OmniRobot):
     robot.ev3_print("Black routine")
     robot.pid_turn(180)
 
-    t = 0
-    i = [0, 0, 0]
-    e = [0, 0, 0]
+    pid = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
     robot.reset_wheels_angle()
     while (
         robot.color_front_left.color() not in wall_colors
@@ -150,7 +144,7 @@ def omni_black_routine(robot: OmniRobot):
             # Curva à esquerda
             robot.pid_turn(-20)
             robot.reset_wheels_angle()
-        robot.loopless_pid_walk(t, i, e)
+        robot.loopless_pid_walk(pid)
     robot.off_motors()
 
     robot.pid_walk(2, speed=40, direction=Direction.BACK)
