@@ -158,7 +158,7 @@ def origin_alignment_routine(sandy: Robot):
 
 def test_sandy_main(sandy: Robot):
     # inicia a comunicacao bluetooth
-    # sandy.bluetooth.start()
+    sandy.bluetooth.start()
 
     # #
     # # localização inicial
@@ -167,21 +167,21 @@ def test_sandy_main(sandy: Robot):
     # localization_routine(sandy)
     # ## rotina de localização inicial
 
-    map_graph = Graph(map_matrix)
-    ORIGIN_VERTEX = 31
-    BOARDING_VERTEX = [6]
+    # map_graph = Graph(map_matrix)
+    # ORIGIN_VERTEX = 31
+    # BOARDING_VERTEX = [6]
 
     ### apenas para testes
-    targets = [17]
-    sandy.orientation = "S"
+    # targets = [17]
+    # sandy.orientation = "S"
     ###
 
     # ## loop    
-    # while True:
+    while True:
     #     #
     #     # embarque de passageiro
     #     #
-    #     targets = passenger_boarding(sandy)
+        targets = passenger_boarding(sandy)
 
     #
     # calculo de rota e controle de caminho
