@@ -42,6 +42,22 @@ elif const.MAP_COLOR_CALIBRATION == "HOME":
     from decision_trees.home.stitch_ht_nxt_color_v2_4 import (
         stitch_ht_nxt_color_v2_p4_decision_tree,
     )
+elif const.MAP_COLOR_CALIBRATION == "TEST":
+    from decision_trees.test.lilo_lego_ev3_color_1 import (
+        lilo_lego_ev3_color_p1_decision_tree,
+    )
+    from decision_trees.test.lilo_lego_ev3_color_2 import (
+        lilo_lego_ev3_color_p2_decision_tree,
+    )
+    from decision_trees.test.lilo_lego_ev3_color_3 import (
+        lilo_lego_ev3_color_p3_decision_tree,
+    )
+    from decision_trees.test.lilo_lego_ev3_color_4 import (
+        lilo_lego_ev3_color_p4_decision_tree,
+    )
+    from decision_trees.test.stitch_ht_nxt_color_v2_4 import (
+        stitch_ht_nxt_color_v2_p4_decision_tree,
+    )
 
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 
@@ -60,6 +76,7 @@ from domain.boarding import (
     omni_passenger_unboarding,
     omni_manouver_to_get_passenger,
 )
+from domain.omni_localization import localization_routine
 
 
 def lilo_main(lilo: OmniRobot):
@@ -72,13 +89,13 @@ def lilo_main(lilo: OmniRobot):
     #
     # Localização inicial
     #
-    # localization_routine(lilo)
+    localization_routine(lilo)
+    lilo.orientation = "N"  # TODO: deixar na lógica de localização
 
     while True:
         #
         # Coleta de passageiros
         #
-        lilo.orientation = "N"  # TODO: deixar na lógica de localização
         passenger_info, boarding_position = omni_passenger_boarding(lilo)
         lilo.ev3_print("P.i.:", passenger_info)
 

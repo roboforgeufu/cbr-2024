@@ -31,7 +31,11 @@ import domain.star_platinum as star_platinum
 
 
 import constants as const
-from domain.localization import localization_routine, wall_colors_check, color_lateral_vertices
+from domain.localization import (
+    localization_routine,
+    wall_colors_check,
+    color_lateral_vertices,
+)
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 from domain.path_control import path_control
 from domain.boarding import passenger_unboarding, passenger_boarding
@@ -61,34 +65,21 @@ elif const.MAP_COLOR_CALIBRATION == "HOME":
         junior_lego_ev3_color_p2_decision_tree,
     )
 
-from domain.localization import catch_color_routine, walk_until_non_white
+from domain.localization import walk_until_non_white
 from core.robot import Robot
 
 
-# def test_path_control(sandy: Robot):
-#     sandy.ev3_print("Press initial robot orientation:")
-#     pressed = sandy.wait_button([Button.UP, Button.LEFT, Button.RIGHT, Button.DOWN])
-#     button_to_direction = {
-#         Button.UP: "N",
-#         Button.LEFT: "O",
-#         Button.RIGHT: "L",
-#         Button.DOWN: "S",
-#     }
-#     sandy.orientation = button_to_direction[pressed]
-#     sandy.ev3_print(pressed)
-#     map_graph = Graph(map_matrix)
-#     initial_position = 1
-#     targets = [26]
-#     sandy.ev3_print("Press button to start:")
-#     sandy.wait_button()
-#     move_to_target(sandy, map_graph, initial_position, targets)
+def sandy_main(sandy: Robot):
+    localization_routine(sandy)
+
+    # next_vertice = passenger_boarding()
 
 
 def junior_main(junior: Robot):
     junior.bluetooth.start()
 
     # Levanta garra inicialmente
-    junior.motor_elevate_claw.run_until_stalled(200, Stop.HOLD, 70)
+    junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 90)
     junior.motor_elevate_claw.hold()
     star_platinum.main(junior)
 
@@ -115,14 +106,15 @@ def move_to_target(
     return current_position
 
 
-def sandy_main(sandy: Robot):
+def test_sandy_main(sandy: Robot):
     # inicia a comunicacao bluetooth
-    sandy.bluetooth.start()
+    # sandy.bluetooth.start()
 
     #
     # localização inicial
     #
 
+    localization_routine(sandy)
     ## rotina de localização inicial
 
     map_graph = Graph(map_matrix)
@@ -149,6 +141,7 @@ def sandy_main(sandy: Robot):
         # retorno para a origem
         #
         move_to_target(sandy, map_graph, current_position, list(localization_vertex))
+
 
 
 def main(hostname):

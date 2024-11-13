@@ -1,7 +1,7 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.parameters import Port, Button  # type: ignore
 from pybricks.ev3devices import ColorSensor  # type: ignore
-from pybricks.tools import wait  # type: ignore
+from pybricks.tools import wait, StopWatch # type: ignore
 from pybricks.hubs import EV3Brick  # type: ignore
 
 from core.robot import Robot
@@ -26,6 +26,7 @@ from decision_trees.oficial.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p
 import json
 
 robot = None
+showed_data = None
 
 if get_hostname() == "lilo":
     robot = OmniRobot(
@@ -74,37 +75,41 @@ def main():
 
         values = [kp, ki, kd]
 
-        screen(showed_data, "RUNNING", "HOLD TO STOP", selected=None, clear=True, robot=robot)
+        screen(showed_data, selected=None, clear=True, robot=robot)
 
-        while robot.ev3.buttons.pressed() == []:
+        watch = StopWatch() 
+
+        while watch.time() <3000:
             if selected_function == "align":
                 robot.align(pid = PIDValues(kp, ki, kd))
             elif selected_function == "pid_walk":
                 robot.pid_walk(100, pid = PIDValues(kp, ki, kd))
             elif selected_function == "pid_turn":
+                robot.reset_wheels_angle()
                 robot.pid_turn(90, pid = PIDValues(kp, ki, kd))
+                print(robot.abs_wheels_angle())
             elif selected_function == "line_follower":
                 robot.line_follower(50, side = "R", pid = PIDControl(PIDValues(kp, ki, kd)))
 
         robot.stop()
 
-        screen(showed_data, "Save parameters?", selected=None, clear=True, robot=robot)
+        screen(showed_data + ["Save parameters?"], selected=None, robot=robot, clear=True)
 
         wait(1000)
 
         button = robot.wait_button([Button.UP, Button.DOWN, Button.CENTER, Button.LEFT, Button.RIGHT])
         
         if button == Button.CENTER:
-            screen(lines = showed_data, extralines = "Saved!", selected=None, clear=True, robot=robot)
             with open(file_name, "r") as file:
                 data = json.load(file)
             data[robot.name][selected_function] = values
             print(data)
             with open(file_name, "w") as file:
                 json.dump(data, file, indent=4)
+            screen(showed_data + ["Saved!"], selected=None, robot=robot, clear=True)
                 
             robot.wait_button([Button.UP, Button.DOWN, Button.CENTER, Button.LEFT, Button.RIGHT])
         else:
-            screen(showed_data, "Not saved!", selected=None, clear=True, robot=robot)
+            screen(showed_data + ["Not saved!"], selected=None, robot=robot, clear=True)
 
 main()

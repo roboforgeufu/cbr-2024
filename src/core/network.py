@@ -104,7 +104,6 @@ class Bluetooth:
     def message(
         self, message=None, channel="Main", delay=0, should_wait=True, force_send=False
     ):  # Envia ou recebe uma mensagem (no canal principal por padrão)
-
         mbox = self.mail_boxes[channel]
         if message != None or force_send:
 
