@@ -109,7 +109,7 @@ def junior_main(junior: Robot):
     junior.bluetooth.start()
 
     # Levanta garra inicialmente
-    junior.motor_elevate_claw.run_until_stalled(200, Stop.HOLD, 70)
+    junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 90)
     junior.motor_elevate_claw.hold()
     star_platinum.main(junior)
 
@@ -167,12 +167,13 @@ def test_passenger_boarding(sandy: Robot):
 
 def sandy_main(sandy: Robot):
     # inicia a comunicacao bluetooth
-    sandy.bluetooth.start()
+    # sandy.bluetooth.start()
 
     #
     # localização inicial
     #
 
+    localization_routine(sandy)
     ## rotina de localização inicial
 
     ## loop    
@@ -180,7 +181,7 @@ def sandy_main(sandy: Robot):
     #
     # embarque de passageiro
     #
-    passenger_boarding(sandy)   
+    # passenger_boarding(sandy)   
 
 
     #

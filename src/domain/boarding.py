@@ -32,8 +32,7 @@ def passenger_boarding(robot: Robot):
     robot.align(30)
     robot.pid_walk(8, 40)
     star_platinum(robot, "CLOSE")
-    star_platinum(robot, "PASSENGER INFO")
-    vertice = robot.bluetooth.message()
+    vertice = star_platinum(robot, "PASSENGER INFO")
     if len(vertice) == 0:
         star_platinum(robot, "OPEN")
         robot.pid_walk(5,-50)

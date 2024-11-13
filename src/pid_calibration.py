@@ -75,17 +75,19 @@ def main():
 
         values = [kp, ki, kd]
 
-        screen(showed_data, "RUNNING", "HOLD TO STOP", selected=None, clear=True, robot=robot)
+        screen(showed_data, selected=None, clear=True, robot=robot)
 
         watch = StopWatch() 
 
-        while watch.time() < 5000:
+        while watch.time() <3000:
             if selected_function == "align":
                 robot.align(pid = PIDValues(kp, ki, kd))
             elif selected_function == "pid_walk":
                 robot.pid_walk(100, pid = PIDValues(kp, ki, kd))
             elif selected_function == "pid_turn":
+                robot.reset_wheels_angle()
                 robot.pid_turn(90, pid = PIDValues(kp, ki, kd))
+                print(robot.abs_wheels_angle())
             elif selected_function == "line_follower":
                 robot.line_follower(50, side = "R", pid = PIDControl(PIDValues(kp, ki, kd)))
 

@@ -270,4 +270,4 @@ def interprets_list(lista):
     return vertices
 
 def localization_routine(robot: Robot):
-    ...
+    
