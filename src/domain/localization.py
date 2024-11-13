@@ -7,12 +7,8 @@ from pybricks.parameters import Color
 from time import time, sleep
 from core.utils import PIDControl
 
-
-# TODO testar a rotina de ler os 30cm para os 3 lados
-# TODO pensar em uma rotina para quando houver obstáculo
-# TODO completar a lógica com as quebras apenas no vermelho e azul
-# TODO criar rotinas para o preto e amarelo
-
+#TODO tratar obstáculos nas routines
+#TODO refazer tratativa do alinhamento
 
 wall_colors = [Color.BLACK, Color.BLUE, Color.RED, Color.YELLOW, Color.BROWN]
 
@@ -214,13 +210,13 @@ def black_routine(robot: Robot):
     robot.pid_turn(180)
     pid_control = PIDControl(const.PID_WALK_VALUES)
 
-    robot.reset_wheels_angle()
+    robot.reset_wheels_angle() # Resetar ângulo para o PID funcionar corretamente
     while (
         robot.color_left.color() == Color.WHITE
         or robot.color_right.color() == Color.WHITE
     ):
         if (
-            robot.color_left.color() in (Color.BLACK, Color.YELLOW)
+            robot.color_left.color() in (Color.BLACK, Color.YELLOW) 
             and robot.color_right.color() == Color.WHITE
         ):
             # Curva à direita
