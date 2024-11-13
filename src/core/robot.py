@@ -170,6 +170,8 @@ class Robot:
             True, 1
         """
         degrees = self.cm_to_motor_degrees(cm)
+        if degrees == 0:
+            return
 
         motor_angle_average = 0
         initial_left_angle = self.motor_l.angle()

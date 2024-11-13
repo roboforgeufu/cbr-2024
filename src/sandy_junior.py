@@ -25,7 +25,7 @@ from pybricks.ev3devices import ColorSensor  # type: ignore
 from pybricks.tools import wait  # type: ignore
 
 from core.robot import Robot
-from core.utils import get_hostname
+from core.utils import get_hostname, PIDControl
 from core.decision_color_sensor import DecisionColorSensor
 import domain.star_platinum as star_platinum
 
@@ -102,7 +102,7 @@ def move_to_target(
             sandy.ev3_print(
                 "Obstacle detected at V{}".format(path[current_position_idx + 1])
             )
-            current_position = path[current_position_idx]
+        current_position = path[current_position_idx]
     return current_position
 
 
@@ -110,43 +110,50 @@ def test_sandy_main(sandy: Robot):
     # inicia a comunicacao bluetooth
     # sandy.bluetooth.start()
 
-    #
-    # localização inicial
-    #
+    # #
+    # # localização inicial
+    # #
 
-    localization_routine(sandy)
-    ## rotina de localização inicial
+    # localization_routine(sandy)
+    # ## rotina de localização inicial
 
     map_graph = Graph(map_matrix)
-    origin_vertex = 31
-    localization_vertex = 5
-    ## loop    
-    while True:
-        #
-        # embarque de passageiro
-        #
-        targets = passenger_boarding(sandy)
+    ORIGIN_VERTEX = 31
+    BOARDING_VERTEX = [6]
 
-        #
-        # calculo de rota e controle de caminho
-        #
-        current_position = move_to_target(sandy, map_graph, origin_vertex, targets)
+    ### apenas para testes
+    targets = [17]
+    sandy.orientation = "S"
+    ###
 
-        #
-        # desembarque de passageiro
-        #
+    # ## loop    
+    # while True:
+    #     #
+    #     # embarque de passageiro
+    #     #
+    #     targets = passenger_boarding(sandy)
 
+    #
+    # calculo de rota e controle de caminho
+    #
+    current_position = move_to_target(sandy, map_graph, ORIGIN_VERTEX, targets)
+    #
+    # desembarque de passageiro
+    #
 
-        #
-        # retorno para a origem
-        #
-        move_to_target(sandy, map_graph, current_position, list(localization_vertex))
-
-
+    #
+    # retorno para a origem
+    #
+    move_to_target(sandy, map_graph, current_position, BOARDING_VERTEX)
+    sandy.pid_turn(45)
+    pid = PIDControl(const.PID_WALK_VALUES)
+    while sandy.color_left.color() == Color.WHITE:
+        sandy.loopless_pid_walk(pid)
+    sandy.stop()
 
 def main(hostname):
     if hostname == "sandy":
-        sandy_main(
+        test_sandy_main(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
