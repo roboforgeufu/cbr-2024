@@ -20,7 +20,7 @@ def passenger_boarding(robot: Robot):
 
     Retorna uma tupla como ("CHILD", Color.BLUE) ou ("ADULT", Color.GREEN)
     """
-    backwards_distance = robot.line_grabber(time = 5000)
+    backwards_distance = robot.line_grabber(time = 3000)
     robot.pid_walk(cm = backwards_distance, speed =-40)
     robot.reset_wheels_angle()
     pid = PIDControl(const.LINE_FOLLOWER_VALUES)
@@ -38,12 +38,12 @@ def passenger_boarding(robot: Robot):
     vertice = star_platinum(robot, "PASSENGER INFO")
     if len(vertice) == 0:
         star_platinum(robot, "OPEN")
-        robot.pid_walk(5, -50)
+        robot.pid_walk(10, -40)
         robot.align()
         robot.pid_turn(-90)
         return passenger_boarding(robot)
     star_platinum(robot, "UP")
-    robot.pid_walk(15, -40)
+    robot.pid_walk(10, -40)
     robot.align(speed = 40)
     robot.pid_walk(4,-30)
     robot.pid_turn(90)
@@ -52,11 +52,11 @@ def passenger_boarding(robot: Robot):
     while robot.color_right.color() != Color.RED:
         robot.line_follower(target, "L", pid, 60)
     robot.pid_walk(cm=5, speed=-40)
-    robot.pid_turn(-90)
+    robot.pid_turn(90)
     robot.pid_walk(cm=2, speed=-40)
     robot.align()
     robot.pid_walk(cm=13.5, speed=-60)
-    robot.pid_turn(90)
+    robot.pid_turn(-90)
     robot.align()
     robot.pid_walk(cm=13.5, speed=-60)
     robot.orientation = "S"

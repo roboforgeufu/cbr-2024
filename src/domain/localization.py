@@ -188,7 +188,7 @@ color_lateral_vertices = [
 
 
 def origin_alignment_routine(sandy: Robot):
-    sandy.pid_turn(45)
+    sandy.pid_turn(60)
     sandy.reset_wheels_angle()
     pid = PIDControl(const.PID_WALK_VALUES)
     while sandy.color_left.color() == Color.WHITE:
