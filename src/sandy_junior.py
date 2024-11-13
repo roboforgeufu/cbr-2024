@@ -184,7 +184,7 @@ def junior_main(junior: Robot):
 
 def main(hostname):
     if hostname == "sandy":
-        test_passenger_boarding(
+        sandy_main(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,

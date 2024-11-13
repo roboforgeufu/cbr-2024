@@ -37,7 +37,7 @@ ALIGN_VALUES = PIDValues.from_list(const_map[hostname]["align"])
 LINE_FOLLOWER_VALUES = PIDValues.from_list(const_map[hostname]["line_follower"])
 
 # Dimensões do robô
-WHEEL_DIAMETER = 6.8
+WHEEL_DIAMETER = 6.7
 WHEEL_DIST = 16.1
 WHEEL_LENGTH = WHEEL_DIAMETER * math.pi
 

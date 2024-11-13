@@ -321,11 +321,12 @@ def red_routine(robot: Robot):
     robot.pid_turn(90)
     pid_control = PIDControl(const.PID_WALK_VALUES)
 
+    print("Início da tratativa do vermelho")
+
     """
     INÍCIO DA TRATATIVA DE OBSTÁCULO
     
     """
-    print("Início da tratativa do vermelho")
     if robot.ultra_feet.distance() < 160: # Anda próximo o suficiente para identificar
         robot.reset_wheels_angle()
         robot.pid_walk(cm=30, speed=-50) # Volta para o vértice anterior
@@ -391,7 +392,7 @@ def red_routine(robot: Robot):
         
     # Rotina para quando não identifica o obstáculo
     robot.reset_wheels_angle()
-    while robot.color_left.color() == Color.BLUE or robot.color_right.color() == Color.BLUE:
+    while robot.color_left.color() != Color.BLUE or robot.color_right.color() != Color.BLUE:
         if robot.color_left.color() in (Color.BLACK, Color.YELLOW):
             robot.pid_turn(20)
             robot.reset_wheels_angle()
@@ -399,6 +400,8 @@ def red_routine(robot: Robot):
             robot.pid_turn(-20)
             robot.reset_wheels_angle()
         robot.loopless_pid_walk(pid_control, speed=50)
+    
+    print(robot.color_left.color(), robot.color_right.color(), wall_colors_check(robot.color_left.color(), robot.color_right.color()))
     robot.stop()
 
     robot.pid_walk(cm=4, speed=-30)
