@@ -25,7 +25,7 @@ from pybricks.ev3devices import ColorSensor  # type: ignore
 from pybricks.tools import wait  # type: ignore
 
 from core.robot import Robot
-from core.utils import get_hostname
+from core.utils import get_hostname, PIDControl
 from core.decision_color_sensor import DecisionColorSensor
 import domain.star_platinum as star_platinum
 
@@ -33,6 +33,7 @@ import domain.star_platinum as star_platinum
 import constants as const
 from domain.localization import (
     localization_routine,
+    origin_alignment_routine,
     wall_colors_check,
     color_lateral_vertices,
 )
@@ -69,41 +70,9 @@ from domain.localization import walk_until_non_white
 from core.robot import Robot
 
 
-def sandy_main(sandy: Robot):
+def test_sandy_main(sandy: Robot):
     localization_routine(sandy)
-
     # next_vertice = passenger_boarding()
-
-
-def junior_main(junior: Robot):
-    junior.bluetooth.start()
-
-    # Levanta garra inicialmente
-    # junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 90)
-    # junior.motor_elevate_claw.hold()
-    star_platinum.main(junior)
-
-
-def move_to_target(
-    sandy: Robot, map_graph: Graph, initial_position: int, targets: list
-):
-    completed = False
-    current_position_idx = -1
-    while not completed:
-        if current_position_idx == -1:
-            current_position = initial_position
-
-        path, _, directions = map_graph.find_best_path(current_position, targets)
-        sandy.ev3_print("Path:", path)
-        sandy.ev3_print("Directions:", directions)
-        completed, current_position_idx = path_control(sandy, path, directions)
-        if not completed:
-            map_graph.mark_obstacle("V{}".format(path[current_position_idx + 1]))
-            sandy.ev3_print(
-                "Obstacle detected at V{}".format(path[current_position_idx + 1])
-            )
-            current_position = path[current_position_idx]
-    return current_position
 
 
 def test_path_control(sandy: Robot):
@@ -126,14 +95,15 @@ def test_path_control(sandy: Robot):
 
 
 def test_calibrate_align_pid(robot: Robot):
-    while True:
+    while True: 
         robot.wait_button()
         robot.align()
 
 
 def test_passenger_boarding(sandy: Robot):
     sandy.bluetooth.start()
-    passenger_info = passenger_boarding(sandy)
+    sandy.ev3_print(passenger_boarding(sandy))
+    sandy.wait_button()
 
 
 def test_passenger_unboarding(sandy: Robot):
@@ -148,48 +118,73 @@ def test_passenger_unboarding(sandy: Robot):
     passenger_unboarding(sandy)
 
 
+def move_to_target(
+    sandy: Robot, map_graph: Graph, initial_position: int, targets: list
+):
+    completed = False
+    current_position_idx = -1
+    while not completed:
+        if current_position_idx == -1:
+            current_position = initial_position
+
+        path, _, directions = map_graph.find_best_path(current_position, targets)
+        sandy.ev3_print("Path:", path)
+        sandy.ev3_print("Directions:", directions)
+        completed, current_position_idx = path_control(sandy, path, directions)
+        if not completed:
+            map_graph.mark_obstacle("V{}".format(path[current_position_idx + 1]))
+            sandy.ev3_print(
+                "Obstacle detected at V{}".format(path[current_position_idx + 1])
+            )
+        current_position = path[current_position_idx]
+    return current_position
+
+
 def sandy_main(sandy: Robot):
-def test_sandy_main(sandy: Robot):
+
+    ### inicialização ###
     # inicia a comunicacao bluetooth
-    # sandy.bluetooth.start()
-
-    #
-    # localização inicial
-    #
-
-    localization_routine(sandy)
-    ## rotina de localização inicial
-
+    sandy.bluetooth.start()
+    # cria o mapa do desafio 
     map_graph = Graph(map_matrix)
-    origin_vertex = 31
-    localization_vertex = 5
-    ## loop    
+
+    ### localização inicial ###
+    # rotina de localização inicial
+    localization_routine(sandy)
+
+    #loop 
     while True:
-        #
-        # embarque de passageiro
-        #
+        ### embarque de passageiro ###
+        # embarca o passageiro e retorna o(s) vertice(s) de destino
         targets = passenger_boarding(sandy)
 
-        #
-        # calculo de rota e controle de caminho
-        #
-        current_position = move_to_target(sandy, map_graph, origin_vertex, targets)
+        ### calculo de rota e controle de caminho ###
+        # calculo de rota e movimento até o destino
+        current_position = move_to_target(sandy, map_graph, const.SANDY_ORIGIN_VERTEX, targets)
 
-        #
-        # desembarque de passageiro
-        #
+        ### desembarque de passageiro ###
+        # desembarque do passageiro
+        passenger_unboarding(sandy)
+
+        ### retorno para a origem ###
+        # movimentação de retorno à origem
+        move_to_target(sandy, map_graph, current_position, const.SANDY_BOARDING_VERTEX)
+        # rotina de alinhamento na zona de embarque
+        origin_alignment_routine(sandy)
 
 
-        #
-        # retorno para a origem
-        #
-        move_to_target(sandy, map_graph, current_position, list(localization_vertex))
+def junior_main(junior: Robot):
+    junior.bluetooth.start()
 
+    # Levanta garra inicialmente
+    # junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 90)
+    # junior.motor_elevate_claw.hold()
+    star_platinum.main(junior)
 
 
 def main(hostname):
     if hostname == "sandy":
-        test_passenger_unboarding(
+        test_passenger_boarding(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
