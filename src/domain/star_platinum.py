@@ -9,14 +9,16 @@ def passenger_info(robot: Robot):
             Color.GREEN: [0, 13, 26],
             Color.BLUE: [4],
             Color.BROWN: [30],
-            Color.WHITE: []
+            Color.WHITE: [],
+            None: []
         },
         "ADULT": {
             Color.GREEN: [17],
             Color.BLUE: [28],
             Color.BROWN: [2],
             Color.RED: [15],
-            Color.WHITE: []
+            Color.WHITE: [],
+            None: []      
         },
     }
     color = robot.color_claw.color()
@@ -41,7 +43,7 @@ def main(robot: Robot):
     while True:
         info = "None"
         robot.ev3_print("Waiting request")
-        request = robot.bluetooth.message(should_wait=True)
+        request = robot.bluetooth.message(force_send=True, should_wait=True)
         robot.ev3_print(request, clear=True)
         if request == "UP":
             robot.ev3_print("Executing")

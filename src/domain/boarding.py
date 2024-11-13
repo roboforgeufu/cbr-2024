@@ -42,6 +42,11 @@ def passenger_boarding(robot: Robot):
         robot.pid_turn(-90)
         return passenger_boarding(robot)
     star_platinum(robot, "UP")
+    robot.pid_walk(15, -40)
+    robot.align(speed = 40)
+    robot.pid_walk(4,-30)
+    robot.pid_turn(90)
+    
     pid = PIDControl(const.LINE_FOLLOWER_VALUES)
     while robot.color_right.color() != Color.RED:
         robot.line_follower(target, "L", pid, 60)
