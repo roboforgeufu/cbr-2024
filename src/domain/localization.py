@@ -191,9 +191,19 @@ color_lateral_vertices = [
 ]
 
 
+def origin_alignment_routine(sandy: Robot):
+    sandy.pid_turn(45)
+    sandy.reset_wheels_angle()
+    pid = PIDControl(const.PID_WALK_VALUES)
+    while sandy.color_left.color() == Color.WHITE:
+        sandy.loopless_pid_walk(pid)
+    sandy.stop()
+
+
 # Chega de frente no azul e faz a rotina do azul
 def blue_routine(robot: Robot):
     print(robot.color_left.color(), robot.color_right.color())
+    robot.pid_walk(cm = const.LINE_TO_CELL_CENTER_DISTANCE, speed = -40)
     robot.pid_turn(-90)
     pid_control = PIDControl(const.PID_WALK_VALUES)
     robot.reset_wheels_angle()
@@ -204,9 +214,8 @@ def blue_routine(robot: Robot):
         robot.loopless_pid_walk(pid_control, speed=40)
     robot.pid_walk(cm=2, speed=-30)
     robot.align(speed=30)
-    
-
-    robot.pid_turn(180)
+    robot.pid_turn(90)
+    origin_alignment_routine(robot)
     return "V5"  # Verificar se a virada está com o sinal correto
 
 

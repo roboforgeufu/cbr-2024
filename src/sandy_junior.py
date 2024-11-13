@@ -33,6 +33,7 @@ import domain.star_platinum as star_platinum
 import constants as const
 from domain.localization import (
     localization_routine,
+    origin_alignment_routine,
     wall_colors_check,
     color_lateral_vertices,
 )
@@ -69,19 +70,52 @@ from domain.localization import walk_until_non_white
 from core.robot import Robot
 
 
-def sandy_main(sandy: Robot):
+def test_sandy_main(sandy: Robot):
     localization_routine(sandy)
-
     # next_vertice = passenger_boarding()
 
 
-def junior_main(junior: Robot):
-    junior.bluetooth.start()
+def test_path_control(sandy: Robot):
+    sandy.ev3_print("Press initial robot orientation:")
+    pressed = sandy.wait_button([Button.UP, Button.LEFT, Button.RIGHT, Button.DOWN])
+    button_to_direction = {
+        Button.UP: "N",
+        Button.LEFT: "O",
+        Button.RIGHT: "L",
+        Button.DOWN: "S",
+    }
+    sandy.orientation = button_to_direction[pressed]
+    sandy.ev3_print(pressed)
+    map_graph = Graph(map_matrix)
+    initial_position = 1
+    targets = [26]
+    sandy.ev3_print("Press button to start:")
+    sandy.wait_button()
+    move_to_target(sandy, map_graph, initial_position, targets)
 
-    # Levanta garra inicialmente
-    # junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 90)
-    # junior.motor_elevate_claw.hold()
-    star_platinum.main(junior)
+
+def test_calibrate_align_pid(robot: Robot):
+    while True: 
+        robot.wait_button()
+        robot.align()
+
+
+def test_passenger_boarding(sandy: Robot):
+    sandy.bluetooth.start()
+    sandy.ev3_print(passenger_boarding(sandy))
+    sandy.wait_button()
+
+
+def test_passenger_unboarding(sandy: Robot):
+    sandy.bluetooth.start()
+    wait(100)
+    from domain.star_platinum import star_platinum
+    
+    star_platinum(sandy, 'DOWN')
+    star_platinum(sandy, 'CLOSE')
+    star_platinum(sandy, 'UP')
+    
+    passenger_unboarding(sandy)
 
 
 def move_to_target(
@@ -106,100 +140,51 @@ def move_to_target(
     return current_position
 
 
-def test_path_control(sandy: Robot):
-    sandy.ev3_print("Press initial robot orientation:")
-    pressed = sandy.wait_button([Button.UP, Button.LEFT, Button.RIGHT, Button.DOWN])
-    button_to_direction = {
-        Button.UP: "N",
-        Button.LEFT: "O",
-        Button.RIGHT: "L",
-        Button.DOWN: "S",
-    }
-    sandy.orientation = button_to_direction[pressed]
-    sandy.ev3_print(pressed)
-    map_graph = Graph(map_matrix)
-    initial_position = 1
-    targets = [26]
-    sandy.ev3_print("Press button to start:")
-    sandy.wait_button()
-    move_to_target(sandy, map_graph, initial_position, targets)
+def sandy_main(sandy: Robot):
 
-
-def test_calibrate_align_pid(robot: Robot):
-    while True:
-        robot.wait_button()
-        robot.align()
-
-
-def test_passenger_boarding(sandy: Robot):
-    sandy.bluetooth.start()
-    passenger_info = passenger_boarding(sandy)
-
-
-def test_passenger_unboarding(sandy: Robot):
-    sandy.bluetooth.start()
-    wait(100)
-    from domain.star_platinum import star_platinum
-    
-    star_platinum(sandy, 'DOWN')
-    star_platinum(sandy, 'CLOSE')
-    star_platinum(sandy, 'UP')
-    
-    passenger_unboarding(sandy)
-
-
-def origin_alignment_routine(sandy: Robot):
-    sandy.pid_turn(45)
-    sandy.reset_wheels_angle()
-    pid = PIDControl(const.PID_WALK_VALUES)
-    while sandy.color_left.color() == Color.WHITE:
-        sandy.loopless_pid_walk(pid)
-    sandy.stop()
-
-def test_sandy_main(sandy: Robot):
+    ### inicialização ###
     # inicia a comunicacao bluetooth
-    # sandy.bluetooth.start()
-
-    # #
-    # # localização inicial
-    # #
-
-    # localization_routine(sandy)
-    # ## rotina de localização inicial
-
+    sandy.bluetooth.start()
+    # cria o mapa do desafio 
     map_graph = Graph(map_matrix)
-    ORIGIN_VERTEX = 31
-    BOARDING_VERTEX = [6]
 
-    ### apenas para testes
-    targets = [17]
-    sandy.orientation = "S"
-    ###
+    ### localização inicial ###
+    # rotina de localização inicial
+    localization_routine(sandy)
 
-    # ## loop    
-    # while True:
-    #     #
-    #     # embarque de passageiro
-    #     #
-    #     targets = passenger_boarding(sandy)
+    #loop 
+    while True:
+        ### embarque de passageiro ###
+        # embarca o passageiro e retorna o(s) vertice(s) de destino
+        targets = passenger_boarding(sandy)
 
-    #
-    # calculo de rota e controle de caminho
-    #
-    current_position = move_to_target(sandy, map_graph, ORIGIN_VERTEX, targets)
-    #
-    # desembarque de passageiro
-    #
+        ### calculo de rota e controle de caminho ###
+        # calculo de rota e movimento até o destino
+        current_position = move_to_target(sandy, map_graph, const.SANDY_ORIGIN_VERTEX, targets)
 
-    #
-    # retorno para a origem
-    #
-    move_to_target(sandy, map_graph, current_position, BOARDING_VERTEX)
-    origin_alignment_routine(sandy)
+        ### desembarque de passageiro ###
+        # desembarque do passageiro
+        passenger_unboarding(sandy)
+
+        ### retorno para a origem ###
+        # movimentação de retorno à origem
+        move_to_target(sandy, map_graph, current_position, const.SANDY_BOARDING_VERTEX)
+        # rotina de alinhamento na zona de embarque
+        origin_alignment_routine(sandy)
+
+
+def junior_main(junior: Robot):
+    junior.bluetooth.start()
+
+    # Levanta garra inicialmente
+    # junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 90)
+    # junior.motor_elevate_claw.hold()
+    star_platinum.main(junior)
+
 
 def main(hostname):
     if hostname == "sandy":
-        test_sandy_main(
+        test_passenger_boarding(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,

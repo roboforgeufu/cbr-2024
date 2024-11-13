@@ -20,6 +20,8 @@ def passenger_boarding(robot: Robot):
 
     Retorna uma tupla como ("CHILD", Color.BLUE) ou ("ADULT", Color.GREEN)
     """
+    robot.line_grabber()
+    robot.reset_wheels_angle()
     pid = PIDControl(const.LINE_FOLLOWER_VALUES)
     target = 20
     while robot.infra_side.distance() >= 30:
@@ -54,7 +56,6 @@ def passenger_boarding(robot: Robot):
     robot.orientation = "S"
 
     return vertice
-
 
 def passenger_unboarding(robot: Robot):
     """
