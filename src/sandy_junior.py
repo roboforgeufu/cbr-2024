@@ -79,8 +79,8 @@ def junior_main(junior: Robot):
     junior.bluetooth.start()
 
     # Levanta garra inicialmente
-    junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 90)
-    junior.motor_elevate_claw.hold()
+    # junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 90)
+    # junior.motor_elevate_claw.hold()
     star_platinum.main(junior)
 
 
@@ -135,6 +135,18 @@ def test_passenger_boarding(sandy: Robot):
     passenger_info = passenger_boarding(sandy)
 
 
+def test_passenger_unboarding(sandy: Robot):
+    sandy.bluetooth.start()
+    wait(100)
+    from domain.star_platinum import star_platinum
+    
+    star_platinum(sandy, 'DOWN')
+    star_platinum(sandy, 'CLOSE')
+    star_platinum(sandy, 'UP')
+    
+    passenger_unboarding(sandy)
+
+
 def sandy_main(sandy: Robot):
     # inicia a comunicacao bluetooth
     # sandy.bluetooth.start()
@@ -164,7 +176,7 @@ def sandy_main(sandy: Robot):
 
 def main(hostname):
     if hostname == "sandy":
-        sandy_main(
+        test_passenger_unboarding(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
