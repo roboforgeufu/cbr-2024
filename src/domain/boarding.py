@@ -20,7 +20,8 @@ def passenger_boarding(robot: Robot):
 
     Retorna uma tupla como ("CHILD", Color.BLUE) ou ("ADULT", Color.GREEN)
     """
-    robot.line_grabber()
+    backwards_distance = robot.line_grabber(time = 5000)
+    robot.pid_walk(cm = backwards_distance, speed =-40)
     robot.reset_wheels_angle()
     pid = PIDControl(const.LINE_FOLLOWER_VALUES)
     target = 20

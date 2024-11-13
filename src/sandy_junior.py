@@ -102,8 +102,8 @@ def test_calibrate_align_pid(robot: Robot):
 
 def test_passenger_boarding(sandy: Robot):
     sandy.bluetooth.start()
+    sandy.line_grabber(time = 5000)
     sandy.ev3_print(passenger_boarding(sandy))
-    sandy.wait_button()
 
 
 def test_passenger_unboarding(sandy: Robot):
