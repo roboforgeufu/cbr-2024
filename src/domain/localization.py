@@ -223,6 +223,7 @@ def black_routine(robot: Robot):
     INÍCIO DA TRATATIVA DE OBSTÁCULO
     
     """
+    print("Início da tratativa do preto")
 
     if robot.ultra_feet.distance() < 160: # Anda próximo o suficiente para identificar
         robot.reset_wheels_angle()
@@ -324,7 +325,7 @@ def red_routine(robot: Robot):
     INÍCIO DA TRATATIVA DE OBSTÁCULO
     
     """
-
+    print("Início da tratativa do vermelho")
     if robot.ultra_feet.distance() < 160: # Anda próximo o suficiente para identificar
         robot.reset_wheels_angle()
         robot.pid_walk(cm=30, speed=-50) # Volta para o vértice anterior
@@ -451,7 +452,7 @@ def all_white_routine(robot: Robot):
         return blue_routine(robot)
 
 
-"""def walk_until_non_white(robot: Robot, speed=60):
+def walk_until_non_white(robot: Robot, speed=60):
    
     print(robot.color_right.color())
 
@@ -465,7 +466,7 @@ def all_white_routine(robot: Robot):
         speed=speed,
         off_motors=True,
         obstacle_function=stop_condition,
-    )"""
+    )
 
 
 def wall_colors_check(left_color, right_color):
