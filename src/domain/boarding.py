@@ -35,7 +35,7 @@ def passenger_boarding(robot: Robot):
     vertice = star_platinum(robot, "PASSENGER INFO")
     if len(vertice) == 0:
         star_platinum(robot, "OPEN")
-        robot.pid_walk(5,-50)
+        robot.pid_walk(5, -50)
         robot.align()
         robot.pid_turn(-90)
         return passenger_boarding(robot)
@@ -43,14 +43,14 @@ def passenger_boarding(robot: Robot):
     pid = PIDControl(const.LINE_FOLLOWER_VALUES)
     while robot.color_right.color() != Color.RED:
         robot.line_follower(target, "L", pid, 60)
-    robot.pid_walk(cm = 5, speed= -40)
+    robot.pid_walk(cm=5, speed=-40)
     robot.pid_turn(-90)
-    robot.pid_walk(cm = 2, speed= -40)
+    robot.pid_walk(cm=2, speed=-40)
     robot.align()
-    robot.pid_walk(cm = 13.5, speed= -60)
+    robot.pid_walk(cm=13.5, speed=-60)
     robot.pid_turn(90)
     robot.align()
-    robot.pid_walk(cm = 13.5, speed= -60)
+    robot.pid_walk(cm=13.5, speed=-60)
     robot.orientation = "S"
 
     return vertice
@@ -96,36 +96,17 @@ def omni_passenger_unboarding(omni: OmniRobot):
 
     omni.pid_walk(2, speed=30)
 
-    t = 0
-    i = [0, 0, 0]
-    e = [0, 0, 0]
+    pid_controls = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
     initial_angles = [motor.angle() for motor in omni.get_all_motors()]
-
     if omni.color_front_left.color() == Color.YELLOW:
         while omni.color_front_right.color() != Color.YELLOW:
-            t, i, e = omni.loopless_pid_walk(
-                t,
-                i,
-                e,
-                20,
-                direction=Direction.LEFT,
-                initial_front_left_angle=initial_angles[0],
-                initial_front_right_angle=initial_angles[1],
-                initial_back_left_angle=initial_angles[2],
-                initial_back_right_angle=initial_angles[3],
+            omni.loopless_pid_walk(
+                pid_controls, 20, direction=Direction.LEFT, initials=initial_angles
             )
     elif omni.color_front_right.color() == Color.YELLOW:
         while omni.color_front_left.color() != Color.YELLOW:
-            t, i, e = omni.loopless_pid_walk(
-                t,
-                i,
-                e,
-                20,
-                direction=Direction.RIGHT,
-                initial_front_left_angle=initial_angles[0],
-                initial_front_right_angle=initial_angles[1],
-                initial_back_left_angle=initial_angles[2],
-                initial_back_right_angle=initial_angles[3],
+            omni.loopless_pid_walk(
+                pid_controls, 20, direction=Direction.RIGHT, initials=initial_angles
             )
 
     omni.align(direction=Direction.BACK)
@@ -165,45 +146,29 @@ def omni_passenger_boarding(omni: OmniRobot):
         color = omni.bluetooth.message(should_wait=False)
         return color is None or color == Color.WHITE
 
-    omni.line_follow(
+    omni.line_follower(
         sensor=omni.color_front_right,
         loop_condition_function=condition_function,
     )
     passenger_color = omni.bluetooth.message(should_wait=False)
     omni.ev3_print("PASSENGER:", passenger_color)
 
-    t = 0
-    i = [0, 0, 0]
-    e = [0, 0, 0]
+    pid_controls = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
     initial_angles = [motor.angle() for motor in omni.get_all_motors()]
     while omni.bluetooth.message(should_wait=False) is None:
-        t, i, e = omni.loopless_pid_walk(
-            t,
-            i,
-            e,
-            20,
-            direction=Direction.BACK,
-            initial_front_left_angle=initial_angles[0],
-            initial_front_right_angle=initial_angles[1],
-            initial_back_left_angle=initial_angles[2],
-            initial_back_right_angle=initial_angles[3],
+        omni.loopless_pid_walk(
+            pid_controls, 20, direction=Direction.BACK, initials=initial_angles
         )
     omni.stop()
-    t = 0
-    i = [0, 0, 0]
-    e = [0, 0, 0]
+
+    for pid in pid_controls:
+        pid.reset()
     initial_angles = [motor.angle() for motor in omni.get_all_motors()]
     while omni.bluetooth.message(should_wait=False) is not None:
-        t, i, e = omni.loopless_pid_walk(
-            t,
-            i,
-            e,
-            20,
-            initial_front_left_angle=initial_angles[0],
-            initial_front_right_angle=initial_angles[1],
-            initial_back_left_angle=initial_angles[2],
-            initial_back_right_angle=initial_angles[3],
+        omni.loopless_pid_walk(
+            pid_controls, 20, direction=Direction.BACK, initials=initial_angles
         )
+
     omni.stop()
     omni.bluetooth.message("STOP")
 

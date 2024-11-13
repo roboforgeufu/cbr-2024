@@ -31,7 +31,11 @@ import domain.star_platinum as star_platinum
 
 
 import constants as const
-from domain.localization import localization_routine, wall_colors_check, color_lateral_vertices
+from domain.localization import (
+    localization_routine,
+    wall_colors_check,
+    color_lateral_vertices,
+)
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 from domain.path_control import path_control
 from domain.boarding import passenger_unboarding, passenger_boarding
@@ -61,49 +65,15 @@ elif const.MAP_COLOR_CALIBRATION == "HOME":
         junior_lego_ev3_color_p2_decision_tree,
     )
 
-from domain.localization import catch_color_routine, walk_until_non_white
+from domain.localization import walk_until_non_white
 from core.robot import Robot
 
 
-# def sandy_main(sandy: Robot):
-#     """
-#     Faz o robô andar até detectar uma cor diferente de branco, então armazena a cor detectada.
-#     Ainda não está estruturado como deveria no arquivo localization.py
-#     """
-#     lista = []
+def sandy_main(sandy: Robot):
+    localization_routine(sandy)
 
-#     obstacle_function = lambda: (
-#         sandy.color_left.color() != Color.WHITE
-#         or sandy.color_right.color() != Color.WHITE
-#     )
+    # next_vertice = passenger_boarding()
 
-#     sandy.reset_wheels_angle()
-
-#     has_seen_obstacle, _ = sandy.pid_walk(
-#         30,
-#         obstacle_function=obstacle_function,
-#     )
-
-#     if has_seen_obstacle:
-#         sandy.align()
-    
-#     cor = wall_colors_check(sandy)
-    
-#     lista.append(cor)
-
-#     rotation = sandy.wheels_angle()
-#     distance = sandy.motor_degrees_to_cm(rotation)
-
-#     sandy.pid_walk(cm=distance, speed=-60)
-#     sandy.pid_turn(90)
-
-#     print("Cores detectadas nos quatro lados:", lista)
-
-#     # vertice_inicial = color_lateral_vertices
-#     # TODO: Acessar dicionário
-    
-#     # next_vertice = passenger_boarding()
-    
 
 def junior_main(junior: Robot):
     junior.bluetooth.start()
@@ -176,13 +146,12 @@ def sandy_main(sandy: Robot):
     localization_routine(sandy)
     ## rotina de localização inicial
 
-    ## loop    
+    ## loop
 
     #
     # embarque de passageiro
     #
-    # passenger_boarding(sandy)   
-
+    passenger_boarding(sandy)
 
     #
     # calculo de rota e controle de caminho
@@ -191,6 +160,7 @@ def sandy_main(sandy: Robot):
     #
     # retorno para a origem
     #
+
 
 def main(hostname):
     if hostname == "sandy":

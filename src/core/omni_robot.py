@@ -6,17 +6,13 @@ from pybricks.hubs import EV3Brick
 from pybricks.tools import StopWatch
 from pybricks.parameters import Port, Button
 
-from core.utils import (
-    wait_button_pressed,
-    ev3_print,
-    ev3_draw,
-    PIDValues,
-    get_hostname
-)
+from core.utils import wait_button_pressed, ev3_print, ev3_draw, PIDValues, get_hostname
 from core.network import Bluetooth
 from core.decision_color_sensor import DecisionColorSensor
 from pybricks.ev3devices import Motor, UltrasonicSensor
 from pybricks.tools import wait
+
+from core.utils import PIDControl
 
 import constants as const
 import math
@@ -81,7 +77,7 @@ class OmniRobot:
         # Ev3
         self.ev3 = EV3Brick()
         self.watch = StopWatch()
-        self.name = get_hostname() 
+        self.name = get_hostname()
 
         # Rodas
         self.wheel_diameter = wheel_diameter
@@ -252,16 +248,12 @@ class OmniRobot:
             True, 1
         """
         degrees = self.cm_to_motor_degrees(cm)
+        if degrees == 0:
+            return True, 1
 
-        elapsed_time = 0
-        i_share = [0, 0, 0]
-        error = [0, 0, 0]
-        initial_fl_angle = self.motor_front_left.angle()
-        initial_fr_angle = self.motor_front_right.angle()
-        initial_bl_angle = self.motor_back_left.angle()
-        initial_br_angle = self.motor_back_right.angle()
-        self.watch.reset()
+        pid_controls = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
 
+        initial_angles = [motor.angle() for motor in self.get_all_motors()]
         motor_angle_average = 0
 
         has_seen_obstacle = False
@@ -271,22 +263,20 @@ class OmniRobot:
                 break
 
             motor_angle_average = (
-                abs(self.motor_front_left.angle() - initial_fl_angle)
-                + abs(self.motor_front_right.angle() - initial_fr_angle)
-                + abs(self.motor_back_left.angle() - initial_bl_angle)
-                + abs(self.motor_back_right.angle() - initial_br_angle)
-            ) / 4
+                sum(
+                    [
+                        abs(motor.angle() - initial)
+                        for motor, initial in zip(self.get_all_motors(), initial_angles)
+                    ]
+                )
+                / 4
+            )
 
-            elapsed_time, i_share, error = self.loopless_pid_walk(
-                prev_elapsed_time=elapsed_time,
-                i_share=i_share,
-                prev_error=error,
+            self.loopless_pid_walk(
+                pid_controls=pid_controls,
                 vel=speed,
                 direction=direction,
-                initial_front_left_angle=initial_fl_angle,
-                initial_front_right_angle=initial_fr_angle,
-                initial_back_left_angle=initial_bl_angle,
-                initial_back_right_angle=initial_br_angle,
+                initials=initial_angles,
             )
 
         if off_motors:
@@ -295,20 +285,10 @@ class OmniRobot:
 
     def loopless_pid_walk(
         self,
-        prev_elapsed_time=0,
-        i_share=[0, 0, 0],
-        prev_error=[0, 0, 0],
+        pid_controls: list[PIDControl],  # 3 instâncias de PIDControl
         vel=60,
-        pid: PIDValues = PIDValues(
-            kp=1,
-            ki=0,
-            kd=0,
-        ),
         direction: Direction = Direction.FRONT,
-        initial_front_left_angle=0,
-        initial_front_right_angle=0,
-        initial_back_left_angle=0,
-        initial_back_right_angle=0,
+        initials=[0, 0, 0, 0],
     ):
         """
         Controle PID entre os motores sem um loop específico.
@@ -325,54 +305,30 @@ class OmniRobot:
         ):
             raise ValueError("Direction must be a straight direction")
 
-        fl_sign, fr_sign, bl_sign, br_sign = self.get_motors_direction_signs(direction)
-
+        fl_sign, *direction_signs = self.get_motors_direction_signs(direction)
         # Usa o motor dianteiro esquerdo como alvo, os outros 4 o seguem
-        target = (self.motor_front_left.angle() - initial_front_left_angle) * fl_sign
+        target = (self.motor_front_left.angle() - initials[0]) * fl_sign
 
-        currents = [
-            (self.motor_front_right.angle() - initial_front_right_angle) * fr_sign,
-            (self.motor_back_left.angle() - initial_back_left_angle) * bl_sign,
-            (self.motor_back_right.angle() - initial_back_right_angle) * br_sign,
-        ]
-        errors = [c - target for c in currents]
+        corrections = []
+        for pid_control, direction_sign, motor, initial in zip(
+            pid_controls, direction_signs, self.get_all_motors()[1:], initials[1:]
+        ):
+            current = (motor.angle() - initial) * direction_sign
+            corrections.append(pid_control.compute(lambda: current - target))
 
-        wait(1)
-        elapsed_time = self.watch.time()
-        pid_corrections = [0, 0, 0]
-        for i in range(3):
-            p_share = errors[i] * pid.kp
-
-            if abs(errors[i]) < 3:
-                i_share[i] = i_share[i] + (errors[i] * pid.ki)
-
-            d_share = ((errors[i] - prev_error[i]) * pid.kd) / (
-                elapsed_time - prev_elapsed_time
-            )
-
-            pid_corrections[i] = p_share + i_share[i] + d_share
-
-        speeds = [
-            fl_sign * vel,
-            fr_sign * (vel - pid_corrections[0]),
-            bl_sign * (vel - pid_corrections[1]),
-            br_sign * (vel - pid_corrections[2]),
+        speeds = [fl_sign * vel] + [
+            sign * (vel - correction)
+            for sign, correction in zip(direction_signs, corrections)
         ]
         self.motor_front_left.dc(speeds[0])
         self.motor_front_right.dc(speeds[1])
         self.motor_back_left.dc(speeds[2])
         self.motor_back_right.dc(speeds[3])
 
-        return (elapsed_time, i_share, errors)
-
     def pid_turn(
         self,
         angle,
-        pid: PIDValues = PIDValues(
-            kp=1.3,
-            ki=0.05,
-            kd=1,
-        ),
+        pid: PIDValues = const.PID_TURN_VALUES,
     ):
         """
         Curva com controle PID.
@@ -490,7 +446,7 @@ class OmniRobot:
             end=end,
             **kwargs,
         )
-    
+
     def ev3_draw(
         self,
         *args,
@@ -522,11 +478,7 @@ class OmniRobot:
         self,
         direction: Direction = Direction.FRONT,
         speed=75,
-        pid: PIDValues = PIDValues(
-            kp=1,
-            ki=0.001,
-            kd=0.5,
-        ),
+        pid: PIDValues = const.ALIGN_VALUES,
     ):
         sensors = self.get_sensors_towards_direction(direction)
         all_signs = self.get_motors_direction_signs(direction)
@@ -621,13 +573,13 @@ class OmniRobot:
 
         self.claw_mid_angle = self.claw_low_angle - 100
 
-    def line_follow(
+    def line_follower(
         self,
         sensor,
         loop_condition_function,
         speed=60,
         direction: Direction = Direction.FRONT,
-        pid: PIDValues = PIDValues(kp=0.5, ki=0, kd=0),
+        pid: PIDValues = const.LINE_FOLLOWER_VALUES,
     ):
         """
         Segue uma linha com um sensor de cor.
