@@ -115,10 +115,10 @@ def test_path_control(sandy: Robot):
         Button.DOWN: "S",
     }
     sandy.orientation = button_to_direction[pressed]
-    sandy.ev3_print("{}".format(pressed))
+    sandy.ev3_print(pressed)
     map_graph = Graph(map_matrix)
-    initial_position = 5
-    targets = [0, 13, 26]
+    initial_position = 1
+    targets = [26]
     sandy.ev3_print("Press button to start:")
     sandy.wait_button()
     move_to_target(sandy, map_graph, initial_position, targets)
@@ -133,6 +133,32 @@ def test_calibrate_align_pid(robot: Robot):
 def test_passenger_boarding(sandy: Robot):
     sandy.bluetooth.start()
     passenger_info = passenger_boarding(sandy)
+
+
+def sandy_main(sandy: Robot):
+    # inicia a comunicacao bluetooth
+    sandy.bluetooth.start()
+
+    #
+    # localização inicial
+    #
+
+    ## rotina de localização inicial
+
+    ## loop
+
+    #
+    # embarque de passageiro
+    #
+    passenger_boarding(sandy)
+
+    #
+    # calculo de rota e controle de caminho
+    #
+
+    #
+    # retorno para a origem
+    #
 
 
 def main(hostname):

@@ -35,19 +35,24 @@ def passenger_boarding(robot: Robot):
     star_platinum(robot, "PASSENGER INFO")
     vertice = robot.bluetooth.message()
     if len(vertice) == 0:
+        star_platinum(robot, "OPEN")
         robot.pid_walk(5,-50)
         robot.align()
         robot.pid_turn(-90)
         return passenger_boarding(robot)
     star_platinum(robot, "UP")
-    walk_until_non_white(robot)
-    robot.pid_walk(5, -50)
+    pid = PIDControl(const.LINE_FOLLOWER_VALUES)
+    while robot.color_right.color() != Color.RED:
+        robot.line_follower(target, "L", pid, 60)
+    robot.pid_walk(cm = 5, speed= -40)
+    robot.pid_turn(-90)
+    robot.pid_walk(cm = 2, speed= -40)
     robot.align()
-    robot.pid_walk(13.5, -60)
+    robot.pid_walk(cm = 13.5, speed= -60)
     robot.pid_turn(90)
     robot.align()
-    robot.pid_walk(13.5, -60)
-    robot.orientation = "O"
+    robot.pid_walk(cm = 13.5, speed= -60)
+    robot.orientation = "S"
 
     return vertice
 
@@ -184,7 +189,7 @@ def omni_passenger_boarding(omni: OmniRobot):
             initial_back_left_angle=initial_angles[2],
             initial_back_right_angle=initial_angles[3],
         )
-    omni.off_motors()
+    omni.stop()
     t = 0
     i = [0, 0, 0]
     e = [0, 0, 0]
@@ -200,7 +205,7 @@ def omni_passenger_boarding(omni: OmniRobot):
             initial_back_left_angle=initial_angles[2],
             initial_back_right_angle=initial_angles[3],
         )
-    omni.off_motors()
+    omni.stop()
     omni.bluetooth.message("STOP")
 
     final_angle_left = omni.motor_front_left.angle()
@@ -213,7 +218,7 @@ def omni_passenger_boarding(omni: OmniRobot):
     omni.ev3_print("vertice:", vertice)
 
     omni.pid_walk(cm=2, direction=Direction.BACK)
-    omni.off_motors()
+    omni.stop()
     omni.pid_walk(cm=5, direction=Direction.LEFT)
     omni.pid_turn(90)
     omni.align(speed=50)

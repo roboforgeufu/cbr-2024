@@ -9,7 +9,9 @@ from pybricks.parameters import Port, Button
 from core.utils import (
     wait_button_pressed,
     ev3_print,
+    ev3_draw,
     PIDValues,
+    get_hostname
 )
 from core.network import Bluetooth
 from core.decision_color_sensor import DecisionColorSensor
@@ -79,6 +81,7 @@ class OmniRobot:
         # Ev3
         self.ev3 = EV3Brick()
         self.watch = StopWatch()
+        self.name = get_hostname() 
 
         # Rodas
         self.wheel_diameter = wheel_diameter
@@ -179,7 +182,7 @@ class OmniRobot:
             self.motor_back_right,
         ]
 
-    def off_motors(self):
+    def stop(self):
         """Desliga motores de locomoção."""
         motors = self.get_all_motors()
         for motor in motors:
@@ -289,7 +292,7 @@ class OmniRobot:
             )
 
         if off_motors:
-            self.off_motors()
+            self.stop()
         return has_seen_obstacle, abs(motor_angle_average) / abs(degrees)
 
     def loopless_pid_walk(
@@ -458,7 +461,7 @@ class OmniRobot:
                 and all([abs(d) > const.MIN_DEGREES_CURVE_THRESHOLD for d in distances])
             ):
                 break
-        self.off_motors()
+        self.stop()
 
     def wait_button(self, button=Button.CENTER):
         return wait_button_pressed(ev3=self.ev3, button=button)
@@ -487,6 +490,33 @@ class OmniRobot:
             y=y,
             background=background,
             end=end,
+            **kwargs,
+        )
+    
+    def ev3_draw(
+        self,
+        *args,
+        x=0,
+        y=0,
+        background=False,
+        line=0,
+        clear=False,
+        font="Lucida",
+        size=16,
+        bold=False,
+        **kwargs,
+    ):
+        ev3_draw(
+            *args,
+            ev3=self.ev3,
+            x=x,
+            y=y,
+            background=background,
+            line=line,
+            clear=clear,
+            font=font,
+            size=size,
+            bold=bold,
             **kwargs,
         )
 
@@ -554,7 +584,7 @@ class OmniRobot:
                 all([abs(e) <= 15 for e in error]) or speeds_stops > 10
             ):
                 break
-        self.off_motors()
+        self.stop()
 
     def start_claw(
         self, open_angle=None, closed_angle=None, high_angle=None, low_angle=None
@@ -626,7 +656,7 @@ class OmniRobot:
             for motor, sign, motor_speed in zip(all_motors, motor_signs, all_speeds):
                 motor.dc(sign * (motor_speed))
 
-        self.off_motors()
+        self.stop()
 
 
 def two_axis_into_four_motors_speeds(speed_left, speed_right, direction: Direction):

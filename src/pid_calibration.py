@@ -1,10 +1,11 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.parameters import Port, Button  # type: ignore
 from pybricks.ev3devices import ColorSensor  # type: ignore
-from pybricks.tools import wait  # type: ignore
+from pybricks.tools import wait, StopWatch # type: ignore
 from pybricks.hubs import EV3Brick  # type: ignore
 
 from core.robot import Robot
+from core.omni_robot import OmniRobot, Direction
 from core.utils import get_hostname, PIDControl, PIDValues
 from core.decision_color_sensor import DecisionColorSensor
 from core.display import screen, calibration_menu
@@ -14,14 +15,40 @@ from domain.localization import localization_routine
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 from domain.boarding import passenger_boarding, passenger_unboarding
 from domain.path_control import path_control
-from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
-from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
-from decision_trees.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
-from decision_trees.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p4_decision_tree
+from decision_trees.oficial.stitch_ht_nxt_color_v2_4 import stitch_ht_nxt_color_v2_p4_decision_tree
+from decision_trees.oficial.lilo_lego_ev3_color_1 import lilo_lego_ev3_color_p1_decision_tree
+from decision_trees.oficial.lilo_lego_ev3_color_2 import lilo_lego_ev3_color_p2_decision_tree
+from decision_trees.oficial.lilo_lego_ev3_color_3 import lilo_lego_ev3_color_p3_decision_tree
+from decision_trees.oficial.lilo_lego_ev3_color_4 import lilo_lego_ev3_color_p4_decision_tree
+from decision_trees.oficial.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
+from decision_trees.oficial.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p4_decision_tree
 
 import json
 
-robot = Robot(
+robot = None
+showed_data = None
+
+if get_hostname() == "lilo":
+    robot = OmniRobot(
+        motor_front_left=Port.B,
+        motor_front_right=Port.C,
+        motor_back_left=Port.A,
+        motor_back_right=Port.D,
+        color_front_left=DecisionColorSensor(
+            ColorSensor(Port.S3), lilo_lego_ev3_color_p3_decision_tree
+        ),
+        color_front_right=DecisionColorSensor(
+            ColorSensor(Port.S2), lilo_lego_ev3_color_p2_decision_tree
+        ),
+        color_back_left=DecisionColorSensor(
+            ColorSensor(Port.S1), lilo_lego_ev3_color_p1_decision_tree
+        ),
+        color_back_right=DecisionColorSensor(
+            ColorSensor(Port.S4), lilo_lego_ev3_color_p4_decision_tree
+        )
+    )
+elif get_hostname()=="sandy":
+    robot = Robot(
     wheel_diameter=const.WHEEL_DIAMETER,
     wheel_distance=const.WHEEL_DIST,
     motor_r=Port.B,
@@ -48,35 +75,39 @@ def main():
 
         values = [kp, ki, kd]
 
-        screen(showed_data, "RUNNING", selected=None, clear=True, robot=robot)
+        screen(showed_data, "RUNNING", "HOLD TO STOP", selected=None, clear=True, robot=robot)
 
-        while robot.ev3.buttons.pressed() == []:
+        watch = StopWatch() 
+
+        while watch.time() < 5000:
             if selected_function == "align":
                 robot.align(pid = PIDValues(kp, ki, kd))
-            elif selected_function == "walk":
+            elif selected_function == "pid_walk":
                 robot.pid_walk(100, pid = PIDValues(kp, ki, kd))
-            elif selected_function == "turn":
+            elif selected_function == "pid_turn":
                 robot.pid_turn(90, pid = PIDValues(kp, ki, kd))
             elif selected_function == "line_follower":
                 robot.line_follower(50, side = "R", pid = PIDControl(PIDValues(kp, ki, kd)))
 
         robot.stop()
 
-        screen(showed_data, "Save parameters?", selected=None, clear=True, robot=robot)
+        screen(showed_data + ["Save parameters?"], selected=None, robot=robot, clear=True)
+
+        wait(1000)
 
         button = robot.wait_button([Button.UP, Button.DOWN, Button.CENTER, Button.LEFT, Button.RIGHT])
         
         if button == Button.CENTER:
-            screen(showed_data, "Saved!", selected=None, clear=True, robot=robot)
             with open(file_name, "r") as file:
                 data = json.load(file)
             data[robot.name][selected_function] = values
             print(data)
             with open(file_name, "w") as file:
                 json.dump(data, file, indent=4)
+            screen(showed_data + ["Saved!"], selected=None, robot=robot, clear=True)
                 
             robot.wait_button([Button.UP, Button.DOWN, Button.CENTER, Button.LEFT, Button.RIGHT])
         else:
-            screen(showed_data, "Not saved!", selected=None, clear=True, robot=robot)
+            screen(showed_data + ["Not saved!"], selected=None, robot=robot, clear=True)
 
 main()

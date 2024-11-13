@@ -59,11 +59,10 @@ class Robot:
         debug=True,
     ):
 
-        self.name = get_hostname()
-
         # Ev3
         self.ev3 = EV3Brick()
         self.stopwatch = StopWatch()
+        self.name = get_hostname() 
 
         # Rodas
         self.wheel_diameter = wheel_diameter
@@ -379,7 +378,7 @@ class Robot:
     def align(
         self,
         speed=75,
-        pid: PIDValues = PIDValues(kp=1, ki=0.015, kd=1.5),
+        pid: PIDValues = PIDValues(kp=1, ki=0.02, kd=2),
         direction_sign=1,
     ):
         initial_color_left = self.color_left.color()
@@ -448,7 +447,7 @@ class Robot:
             self.motor_l.dc(left_speed)
             self.motor_r.dc(right_speed)
 
-            self.ev3_print(left_error, left_error_i, right_error, right_error_i)
+            # self.ev3_print(left_error, left_error_i, right_error, right_error_i)
             if (
                 has_seen_left
                 and has_seen_right

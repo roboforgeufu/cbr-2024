@@ -38,7 +38,7 @@ LINE_FOLLOWER_VALUES = PIDValues.from_list(const_map[hostname]["line_follower"])
 
 # Dimensões do robô
 WHEEL_DIAMETER = 6.8
-WHEEL_DIST = 17.8
+WHEEL_DIST = 16
 WHEEL_LENGTH = WHEEL_DIAMETER * math.pi
 
 ROBOT_SIZE = 15  # considerando a distância dos sensores de cor da frente até a parte de trás do robô
@@ -63,6 +63,12 @@ OMNI_SIDE_ALING_PERCENTAGE = 0.53
 OBSTACLE_DISTANCE = 150
 
 LINE_FOLLOW_TARGET_REFLECTION = 30
+
+
+CELL_DISTANCE = 25
+CELL_DISTANCE_TO_PARK = 20
+CELL_DISTANCE_TO_BOARDING = 15
+
 
 # Calibração de cor
 MAP_COLOR_CALIBRATION = "HOME"  # OFICIAL, HOME, TEST

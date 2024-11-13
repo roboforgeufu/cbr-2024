@@ -73,6 +73,37 @@ def turn_to_direction(robot: Robot, target_direction):
 
     robot.pid_turn(-90 * turn_times)
     robot.orientation = target_direction
+    return turn_times
+
+
+def future_possible_alignment(robot: Robot, initial_position_idx: int, path: list, directions: list, depth = 5):
+    position = directions[initial_position_idx][0]
+    
+    for index in range(initial_position_idx, initial_position_idx + depth):
+        if directions[index][0] == position:
+            continue
+        
+        print('future alignment', end=' ')
+        print(position in walls_of_vertices[path[index]])
+        
+        return position in walls_of_vertices[path[index]]
+    
+
+def align_side(robot: Robot, side: str):
+    print_str = "Align right" if side == "right" else "Align left"
+    mult = 1 if side == "right" else -1
+    robot.ev3_print(print_str)
+    robot.pid_turn(mult * 90)
+    robot.pid_walk(
+        cm=5,
+        speed=-40,
+    )
+    robot.align(speed=30)
+    robot.pid_walk(
+        (const.CELL_DISTANCE / 2),
+        speed=-50,
+    )
+    robot.pid_turn(mult * (-90))
 
 
 def path_control(robot: Robot, path: list, directions: list):
@@ -80,11 +111,47 @@ def path_control(robot: Robot, path: list, directions: list):
     Rotina pro robô seguir o caminho traçado, seguindo o conjunto de direções determinado.
     """
     position_index = 0
-
+    needs_align = 0
     for idx, (direction, distance) in enumerate(directions):
         robot.ev3_print("Current position:", path[position_index])
-        robot.ev3_print("STEP:", direction, distance)
-        turn_to_direction(robot, direction)
+        robot.ev3_print("Step:", direction, distance)
+
+        # apos alinhar procura por possiveis alinhamentos
+        if needs_align == 0:
+            alignment_found = False
+        # se houver possibilidade de alinhamentos faceis no futuro, nao alinhar
+        if not alignment_found and future_possible_alignment(robot, position_index, path, directions):
+            needs_align = 0
+            alignment_found = True
+
+        # caso a orientacao do robo coincida com uma parede, alinhe
+        if (robot.orientation in walls_of_vertices[path[position_index]]):
+            robot.ev3_print("Align front")
+            robot.stop()
+            robot.align(speed=30)
+            robot.pid_walk(
+                const.ROBOT_SIZE_HALF,
+                speed=-50,
+            )
+            needs_align = 0
+
+        turn_times = turn_to_direction(robot, direction)
+        if turn_times != 0:
+            needs_align += 1
+        
+        # caso a orientacao nao coincida alinha na prox parede disponivel
+        if (needs_align >= 2):
+            if (
+                get_relative_orientation(robot.orientation, 1)
+                in walls_of_vertices[path[position_index]]
+            ):
+                align_side(robot, "right")
+            elif (
+                get_relative_orientation(robot.orientation, -1)
+                in walls_of_vertices[path[position_index]]
+            ):
+                align_side(robot, "left")
+            needs_align = 0
 
         if idx == len(directions) - 1:
             # nao anda a ultima distancia, pra nao entrar no estabelecimento
@@ -99,7 +166,8 @@ def path_control(robot: Robot, path: list, directions: list):
         obstacle_function = (
             lambda: robot.color_left.color() in wall_colors
             or robot.color_right.color() in wall_colors
-            or robot.ultra_feet.distance() < const.OBSTACLE_DISTANCE
+            or (robot.ultra_feet.distance() < const.OBSTACLE_DISTANCE
+            and path[position_index + 1] in possible_obstacles_vertices)
         )
         has_seen_obstacle, walked_perc = robot.pid_walk(
             distance,
@@ -108,27 +176,42 @@ def path_control(robot: Robot, path: list, directions: list):
         )
         while has_seen_obstacle:
             robot.stop()
-            if robot.ultra_feet.distance() < const.OBSTACLE_DISTANCE:
-                robot.ev3_print("obstáculo à frente")
+            if (robot.ultra_feet.distance() < const.OBSTACLE_DISTANCE
+                and path[position_index + 1] in possible_obstacles_vertices):
+                robot.ev3_print("Obstacle")
                 has_seen_obstacle, walked_perc = robot.pid_walk(
                     cm=distance * (1 - walked_perc),
                     off_motors=should_stop,
                     obstacle_function=obstacle_function,
                 )
                 return False, position_index
-            elif robot.color_left.color() in wall_colors:
-                # Alinhamento à esquerda
-                robot.ev3_print("à esquerda")
-                robot.pid_turn(20)
+            elif robot.color_right.color() in wall_colors:
+                # Alinhamento à direita
+                robot.ev3_print("Line right")           
+                # caso tenha uma parede e o robo andou menos que 50% da celula, alinhe
+                if (
+                    (get_relative_orientation(robot.orientation, 1) 
+                     in walls_of_vertices[path[position_index]])
+                    and walked_perc <= 0.5
+                ):
+                    align_side(robot, "right")
+                    needs_align = 0
                 has_seen_obstacle, walked_perc = robot.pid_walk(
                     cm=distance * (1 - walked_perc),
                     off_motors=should_stop,
                     obstacle_function=obstacle_function,
                 )
-            elif robot.color_right.color() in wall_colors:
-                # Alinhamento à direita
-                robot.ev3_print("à direita")
-                robot.pid_turn(-20)
+            elif robot.color_left.color() in wall_colors:
+                # Alinhamento à esquerda
+                robot.ev3_print("Line left")
+                # caso tenha uma parede e o robo andou menos que 50% da celula, alinhe
+                if (
+                    (get_relative_orientation(robot.orientation, -1) 
+                     in walls_of_vertices[path[position_index]])
+                    and walked_perc <= 0.5
+                ):
+                    align_side(robot, "left")
+                    needs_align = 0
                 has_seen_obstacle, walked_perc = robot.pid_walk(
                     cm=distance * (1 - walked_perc),
                     off_motors=should_stop,
@@ -137,13 +220,6 @@ def path_control(robot: Robot, path: list, directions: list):
 
         position_index += 1
 
-        new_position = path[position_index]
-        if robot.orientation in walls_of_vertices[new_position]:
-            # O robô está de frente pra uma parede, aproveita pra alinhar a frente
-            robot.stop()
-            robot.align()
-            robot.pid_walk(const.ROBOT_SIZE_HALF, speed=-60)
-
         if idx == len(path) - 1:
-            robot.off_motors()
+            robot.stop()
             return True, position_index

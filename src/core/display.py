@@ -144,4 +144,6 @@ def calibration_menu(
             enter_pressed = False
         wait(delay)
 
+    print(options[:4], showed_data)
+
     return options[:4], showed_data
