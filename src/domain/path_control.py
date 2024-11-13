@@ -180,7 +180,8 @@ def path_control(robot: Robot, path: list, directions: list):
                 and path[position_index + 1] in possible_obstacles_vertices):
                 robot.ev3_print("Obstacle")
                 has_seen_obstacle, walked_perc = robot.pid_walk(
-                    cm=distance * (1 - walked_perc),
+                    cm=distance * walked_perc,
+                    speed = -60
                     off_motors=should_stop,
                     obstacle_function=obstacle_function,
                 )

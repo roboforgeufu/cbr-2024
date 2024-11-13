@@ -65,45 +65,24 @@ from domain.localization import catch_color_routine, walk_until_non_white
 from core.robot import Robot
 
 
-# def sandy_main(sandy: Robot):
-#     """
-#     Faz o robô andar até detectar uma cor diferente de branco, então armazena a cor detectada.
-#     Ainda não está estruturado como deveria no arquivo localization.py
-#     """
-#     lista = []
+# def test_path_control(sandy: Robot):
+#     sandy.ev3_print("Press initial robot orientation:")
+#     pressed = sandy.wait_button([Button.UP, Button.LEFT, Button.RIGHT, Button.DOWN])
+#     button_to_direction = {
+#         Button.UP: "N",
+#         Button.LEFT: "O",
+#         Button.RIGHT: "L",
+#         Button.DOWN: "S",
+#     }
+#     sandy.orientation = button_to_direction[pressed]
+#     sandy.ev3_print(pressed)
+#     map_graph = Graph(map_matrix)
+#     initial_position = 1
+#     targets = [26]
+#     sandy.ev3_print("Press button to start:")
+#     sandy.wait_button()
+#     move_to_target(sandy, map_graph, initial_position, targets)
 
-#     obstacle_function = lambda: (
-#         sandy.color_left.color() != Color.WHITE
-#         or sandy.color_right.color() != Color.WHITE
-#     )
-
-#     sandy.reset_wheels_angle()
-
-#     has_seen_obstacle, _ = sandy.pid_walk(
-#         30,
-#         obstacle_function=obstacle_function,
-#     )
-
-#     if has_seen_obstacle:
-#         sandy.align()
-    
-#     cor = wall_colors_check(sandy)
-    
-#     lista.append(cor)
-
-#     rotation = sandy.wheels_angle()
-#     distance = sandy.motor_degrees_to_cm(rotation)
-
-#     sandy.pid_walk(cm=distance, speed=-60)
-#     sandy.pid_turn(90)
-
-#     print("Cores detectadas nos quatro lados:", lista)
-
-#     # vertice_inicial = color_lateral_vertices
-#     # TODO: Acessar dicionário
-    
-#     # next_vertice = passenger_boarding()
-    
 
 def junior_main(junior: Robot):
     junior.bluetooth.start()
@@ -133,36 +112,7 @@ def move_to_target(
                 "Obstacle detected at V{}".format(path[current_position_idx + 1])
             )
             current_position = path[current_position_idx]
-
-
-def test_path_control(sandy: Robot):
-    sandy.ev3_print("Press initial robot orientation:")
-    pressed = sandy.wait_button([Button.UP, Button.LEFT, Button.RIGHT, Button.DOWN])
-    button_to_direction = {
-        Button.UP: "N",
-        Button.LEFT: "O",
-        Button.RIGHT: "L",
-        Button.DOWN: "S",
-    }
-    sandy.orientation = button_to_direction[pressed]
-    sandy.ev3_print(pressed)
-    map_graph = Graph(map_matrix)
-    initial_position = 1
-    targets = [26]
-    sandy.ev3_print("Press button to start:")
-    sandy.wait_button()
-    move_to_target(sandy, map_graph, initial_position, targets)
-
-
-def test_calibrate_align_pid(robot: Robot):
-    while True:
-        robot.wait_button()
-        robot.align()
-
-
-def test_passenger_boarding(sandy: Robot):
-    sandy.bluetooth.start()
-    passenger_info = passenger_boarding(sandy)
+    return current_position
 
 
 def sandy_main(sandy: Robot):
@@ -175,21 +125,31 @@ def sandy_main(sandy: Robot):
 
     ## rotina de localização inicial
 
+    map_graph = Graph(map_matrix)
+    origin_vertex = 31
+    localization_vertex = 5
     ## loop    
+    while True:
+        #
+        # embarque de passageiro
+        #
+        targets = passenger_boarding(sandy)
 
-    #
-    # embarque de passageiro
-    #
-    passenger_boarding(sandy)   
+        #
+        # calculo de rota e controle de caminho
+        #
+        current_position = move_to_target(sandy, map_graph, origin_vertex, targets)
+
+        #
+        # desembarque de passageiro
+        #
 
 
-    #
-    # calculo de rota e controle de caminho
-    #
+        #
+        # retorno para a origem
+        #
+        move_to_target(sandy, map_graph, current_position, list(localization_vertex))
 
-    #
-    # retorno para a origem
-    #
 
 def main(hostname):
     if hostname == "sandy":
