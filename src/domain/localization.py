@@ -209,10 +209,11 @@ def blue_routine(robot: Robot):
     ):
         robot.loopless_pid_walk(pid_control, speed=40)
     robot.pid_walk(cm=2, speed=-30)
-    robot.align(speed=30)
-    robot.pid_walk(cm=10, speed=-40)
+    robot.align(40)
+    robot.pid_walk(cm = const.LINE_TO_CELL_CENTER_DISTANCE, speed = -30)
     robot.pid_turn(90)
     robot.align(40)
+
 
     origin_alignment_routine(robot, 90)
     return "V5"  # Verificar se a virada está com o sinal correto
@@ -407,6 +408,7 @@ def red_routine(robot: Robot):
     pid_control.reset()
     robot.reset_wheels_angle()
     # Rotina para quando não identifica o obstáculo
+    robot.reset_wheels_angle()
     while True:
         robot.loopless_pid_walk(pid_control, speed=50)
         # caso encontre o azul passa para a prox rotina
@@ -435,14 +437,14 @@ def red_routine(robot: Robot):
                 if motor == "RIGHT":
                     robot.stop()
                     robot.ev3_print("Corrigindo motor direito")
-                    robot.one_wheel_turn("R", motor_degree_correction)
+                    robot.one_wheel_turn("R", motor_degree_correction*1.1)
                     robot.pid_walk(cm=5, speed=40)
                     pid_control.reset()
                     robot.reset_wheels_angle()
                 else:
                     robot.stop()
                     robot.ev3_print("Corrigindo motor esquerdo")
-                    robot.one_wheel_turn("L", motor_degree_correction)
+                    robot.one_wheel_turn("L", motor_degree_correction*1.1)
                     robot.pid_walk(cm=5, speed=40)
                     pid_control.reset()
                     robot.reset_wheels_angle()
