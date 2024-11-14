@@ -380,7 +380,7 @@ class Robot:
     def align(
         self,
         speed=75,
-        pid: PIDValues = PIDValues(kp=1, ki=0.02, kd=2),
+        pid: PIDValues = const.ALIGN_VALUES,
         direction_sign=1,
     ):
         initial_color_left = self.color_left.color()
