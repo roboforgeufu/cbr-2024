@@ -228,6 +228,21 @@ def stitch_main(stitch: OmniRobot):
         # stitch.ev3_print(stitch.ultra_claw.distance(), stitch.ultra_front.distance())
 
 
+def test_unboarding(robot: OmniRobot):
+    robot.bluetooth.start()
+    
+    wait(100)
+    
+    robot.bluetooth.message("CLAW_CLOSE")
+    robot.bluetooth.message()
+
+    robot.bluetooth.message("CLAW_HIGH")
+    robot.bluetooth.message()
+    
+    omni_passenger_unboarding(robot)
+    
+
+
 def main(hostname):
     if hostname == "lilo":
         lilo_main(
