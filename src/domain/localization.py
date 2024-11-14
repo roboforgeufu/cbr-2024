@@ -413,8 +413,8 @@ def red_routine(robot: Robot):
         if wall_colors_check(
             robot.color_left.color(), robot.color_right.color()
         ) == "BLUE":
-            robot.ev3_print("Embarque")
             robot.stop()
+            robot.ev3_print("Embarque")
             return blue_routine(robot)
         # caso encontre algo diferente de azul
         elif (
@@ -423,10 +423,9 @@ def red_routine(robot: Robot):
             # tentar alinhar com a linha encontrada
             robot.stop()
             robot.reset_wheels_angle()
-            hard_limit_reached, motor_degree_correction, motor = robot.align(hard_limit = 250)
-            robot.ev3_print(motor_degree_correction)
-            # se passar a rotacao do motor passar de um padrao pre estabelecido 
+            hard_limit_reached, motor_degree_correction, motor = robot.align(hard_limit = 200)
 
+            # se passar a rotacao do motor passar de um padrao pre estabelecido 
             if hard_limit_reached:
                 # o robo sabe que eh estabelecimento
                 robot.stop()
@@ -438,11 +437,15 @@ def red_routine(robot: Robot):
                     robot.ev3_print("Corrigindo motor direito")
                     robot.one_wheel_turn("R", motor_degree_correction*1.1)
                     robot.pid_walk(cm=5, speed=40)
+                    pid_control.reset()
+                    robot.reset_wheels_angle()
                 else:
                     robot.stop()
                     robot.ev3_print("Corrigindo motor esquerdo")
                     robot.one_wheel_turn("L", motor_degree_correction*1.1)
                     robot.pid_walk(cm=5, speed=40)
+                    pid_control.reset()
+                    robot.reset_wheels_angle()
             
             else:
                 # embarque ou parque
@@ -456,7 +459,10 @@ def red_routine(robot: Robot):
                     return blue_routine(robot)
                 else:
                     robot.ev3_print("Parque")
+                    robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE, speed=-40)
                     robot.pid_turn(180)
+                    pid_control.reset()
+                    robot.reset_wheels_angle()
                 
 
 
