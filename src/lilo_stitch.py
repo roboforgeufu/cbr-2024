@@ -76,7 +76,7 @@ from domain.boarding import (
     omni_passenger_unboarding,
     omni_manouver_to_get_passenger,
 )
-from domain.omni_localization import localization_routine, forward_avoiding_places
+from domain.omni_localization import localization_routine
 
 
 def lilo_main(lilo: OmniRobot):

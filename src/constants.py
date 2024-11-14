@@ -76,10 +76,7 @@ LINE_TO_CELL_CENTER_DISTANCE = 11
 
 # Calibração de cor
 MAP_COLOR_CALIBRATION = "OFICIAL"  # OFICIAL, HOME, TEST
-<<<<<<< HEAD
-=======
 
->>>>>>> 2ebcdc22bcf0ba62bd04a9ccc5b73332fdc056d0
 
 # Localização Sandy
 SANDY_ORIGIN_VERTEX = 31
