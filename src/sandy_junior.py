@@ -149,7 +149,7 @@ def sandy_main(sandy: Robot):
 
     ### localização inicial ###
     # rotina de localização inicial
-    '''localization_routine(sandy)'''
+    localization_routine(sandy)
 
     ### loop ###
     while True:
@@ -173,17 +173,17 @@ def sandy_main(sandy: Robot):
 
 
 def junior_main(junior: Robot):
-    junior.bluetooth.start()
 
     # Fecha e levanta garra inicialmente
-    junior.motor_open_claw. run_until_stalled(300, Stop.HOLD, 70)
+    junior.motor_open_claw.run_until_stalled(300, Stop.HOLD, 70)
     junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 70)
+    junior.bluetooth.start()
     star_platinum.main(junior)
 
 
 def main(hostname):
     if hostname == "sandy":
-        test_passenger_unboarding(
+        sandy_main(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
@@ -205,8 +205,8 @@ def main(hostname):
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
-                motor_elevate_claw=Port.C,
-                motor_open_claw=Port.B,
+                motor_elevate_claw=Port.D,
+                motor_open_claw=Port.C,
                 color_claw=DecisionColorSensor(
                     ColorSensor(Port.S2), junior_lego_ev3_color_p2_decision_tree
                 ),
