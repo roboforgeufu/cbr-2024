@@ -102,7 +102,11 @@ class Robot:
         self.orientation = None
 
         # Fator de correção de curvas
+<<<<<<< HEAD
+        self.turn_correction = 1
+=======
         self.turn_correction = 1    
+>>>>>>> eb0caf6fcf04716518414dde7ae721eb3447b9ae
 
         # Printa a voltagem e corrente atual da bateria:
         self.ev3_print("Bat. V:", self.ev3.battery.voltage(), "mV")
@@ -382,6 +386,7 @@ class Robot:
         speed=40,
         pid: PIDValues = const.ALIGN_VALUES,
         direction_sign=1,
+        hard_limit = 0,
     ):
         initial_color_left = self.color_left.color()
         initial_reflection_left = self.color_left.rgb()[2]
@@ -456,7 +461,15 @@ class Robot:
                 and abs(left_error) <= 7
                 and abs(right_error) <= 7
             ):
-                break
+                return False, 0, "s"
+
+            motor_difference = self.motor_r.angle() - self.motor_l.angle()
+            if (hard_limit != 0 and abs(motor_difference) >= hard_limit):
+                if motor_difference >= 0:
+                    return True, motor_difference, "RIGHT"
+                else:
+                    return True, motor_difference, "LEFT"
+                
         self.stop()
 
     def line_grabber(self, time, speed=35, multiplier = 0.8):
@@ -482,3 +495,14 @@ class Robot:
             if self.stopwatch.time() > time:
                 self.stop()
                 return self.motor_degrees_to_cm(motor_mean)
+            
+    def one_wheel_turn(self, side, motor_degrees, speed = -40):
+        self.reset_wheels_angle()
+        if side == "R":
+            while abs(self.motor_r.angle()) <= motor_degrees:
+                self.motor_r.dc(speed)
+        else:
+            while abs(self.motor_l.angle()) <= motor_degrees:
+                self.motor_l.dc(speed)
+        self.reset_wheels_angle()
+        self.stop()
