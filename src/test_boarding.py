@@ -32,5 +32,8 @@ robot = Robot(
                 ),
             )
 
-next_path = passenger_boarding(robot)
+# alinhar 
+if robot.color_left.color() == "BLUE" and robot.color_right.color == "BLUE":
+    robot.ev3_print(robot.color_left.color(), robot.color_right.color())
+    next_path = passenger_boarding(robot)
 

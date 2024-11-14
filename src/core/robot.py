@@ -102,7 +102,7 @@ class Robot:
         self.orientation = None
 
         # Fator de correção de curvas
-        self.turn_correction = 0.9
+        self.turn_correction = 1    
 
         # Printa a voltagem e corrente atual da bateria:
         self.ev3_print("Bat. V:", self.ev3.battery.voltage(), "mV")
