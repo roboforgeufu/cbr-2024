@@ -66,7 +66,6 @@ elif const.MAP_COLOR_CALIBRATION == "HOME":
         junior_lego_ev3_color_p2_decision_tree,
     )
 
-from domain.localization import walk_until_non_white
 from core.robot import Robot
 
 
