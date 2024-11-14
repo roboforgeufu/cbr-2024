@@ -30,7 +30,7 @@ def passenger_info(robot: Robot):
 
 
 def lift_claw(robot: Robot, side=1):
-    robot.motor_elevate_claw.run_until_stalled(300 * side, Stop.HOLD, 70)
+    robot.motor_elevate_claw.run_until_stalled(300 * side, Stop.HOLD)
     robot.motor_elevate_claw.hold()
 
 

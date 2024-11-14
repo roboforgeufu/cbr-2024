@@ -40,7 +40,7 @@ from domain.localization import (
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 from domain.path_control import path_control
 from domain.boarding import passenger_unboarding, passenger_boarding
-from domain.localization import localization_routine
+from domain.localization import localization_routine, blue_routine
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 from domain.path_control import path_control
 from domain.boarding import passenger_unboarding, passenger_boarding
@@ -101,8 +101,9 @@ def test_calibrate_align_pid(robot: Robot):
 
 def test_passenger_boarding(sandy: Robot):
     sandy.bluetooth.start()
-    sandy.line_grabber(time = 3000)
-    sandy.ev3_print(passenger_boarding(sandy))
+    blue_routine(sandy)
+    print(passenger_boarding(sandy))
+    # sandy.ev3_print(passenger_boarding(sandy))
 
 
 def test_passenger_unboarding(sandy: Robot):
@@ -110,7 +111,6 @@ def test_passenger_unboarding(sandy: Robot):
     wait(100)
     from domain.star_platinum import star_platinum
     
-    star_platinum(sandy, 'DOWN')
     star_platinum(sandy, 'CLOSE')
     star_platinum(sandy, 'UP')
     
@@ -149,7 +149,7 @@ def sandy_main(sandy: Robot):
 
     ### localização inicial ###
     # rotina de localização inicial
-    localization_routine(sandy)
+    '''localization_routine(sandy)'''
 
     ### loop ###
     while True:
@@ -183,7 +183,7 @@ def junior_main(junior: Robot):
 
 def main(hostname):
     if hostname == "sandy":
-        sandy_main(
+        test_passenger_unboarding(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,

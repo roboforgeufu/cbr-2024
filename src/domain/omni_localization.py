@@ -103,20 +103,16 @@ def omni_all_white_routine(robot: OmniRobot):
     robot.align()
     robot.pid_walk(2, speed=40)
 
-    if (
-        robot.color_front_left.color() == Color.RED
-        and robot.color_front_right.color() == Color.RED
-    ):
+
+    color_seen = wall_colors_check(robot.color_front_left.color(), robot.color_front_right.color())
+    if color_seen == "RED":
+        robot.ev3_print("RED detected")
         return omni_red_routine(robot)
-    if (
-        robot.color_front_left.color() == Color.BLACK
-        and robot.color_front_right.color() == Color.BLACK
-    ):
+    if color_seen == "BLACK":
+        robot.ev3_print("BLACK detected")
         return omni_black_routine(robot)
-    if (
-        robot.color_front_left.color() == Color.BLUE
-        and robot.color_front_right.color() == Color.BLUE
-    ):
+    if color_seen == "BLUE":
+        robot.ev3_print("BLUE detected")
         return omni_blue_routine(robot)
 
 

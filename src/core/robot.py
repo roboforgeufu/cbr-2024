@@ -102,7 +102,11 @@ class Robot:
         self.orientation = None
 
         # Fator de correção de curvas
+<<<<<<< HEAD
         self.turn_correction = 1
+=======
+        self.turn_correction = 1    
+>>>>>>> eb0caf6fcf04716518414dde7ae721eb3447b9ae
 
         # Printa a voltagem e corrente atual da bateria:
         self.ev3_print("Bat. V:", self.ev3.battery.voltage(), "mV")
@@ -379,7 +383,7 @@ class Robot:
 
     def align(
         self,
-        speed=75,
+        speed=40,
         pid: PIDValues = const.ALIGN_VALUES,
         direction_sign=1,
         hard_limit = 0,
