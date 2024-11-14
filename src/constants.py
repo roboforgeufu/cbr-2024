@@ -20,6 +20,9 @@ from core.utils import get_hostname
 from core.utils import PIDValues
 
 
+LOG_TO_FILE = True
+
+
 def load_json_file():
     with open("pid_const.json", "r") as file:
         data = json.load(file)
@@ -35,6 +38,7 @@ PID_WALK_VALUES = PIDValues.from_list(const_map[hostname]["pid_walk"])
 PID_TURN_VALUES = PIDValues.from_list(const_map[hostname]["pid_turn"])
 ALIGN_VALUES = PIDValues.from_list(const_map[hostname]["align"])
 LINE_FOLLOWER_VALUES = PIDValues.from_list(const_map[hostname]["line_follower"])
+LINE_FOLLOWER_AVOIDING_PLACES = PIDValues(kp=1.5, ki=0, kd=1)
 
 # Dimensões do robô
 WHEEL_DIAMETER = 6.7
@@ -70,9 +74,7 @@ CELL_DISTANCE_TO_PARK = 22
 CELL_DISTANCE_TO_BOARDING = 16.5
 LINE_TO_CELL_CENTER_DISTANCE = 11
 
-# Calibração de cor
-MAP_COLOR_CALIBRATION = "OFICIAL    "  # OFICIAL, HOME, TEST
-
+MAP_COLOR_CALIBRATION = "OFICIAL"  # OFICIAL, HOME, TEST
 
 # Localização Sandy
 SANDY_ORIGIN_VERTEX = 31

@@ -1,6 +1,5 @@
 import constants as const
 from core.robot import Robot
-from domain.localization import walk_until_non_white
 
 from pybricks.parameters import Color  # type: ignore
 from domain.star_platinum import star_platinum
@@ -70,20 +69,24 @@ def passenger_unboarding(robot: Robot):
     
     robot.align(speed=35)
     robot.pid_walk(1.5, 30)
-    while robot.color_right.color() != Color.YELLOW or robot.color_left.color() != Color.YELLOW:
-        left_color = robot.color_left.color()
-        right_color = robot.color_right.color()
-
-        robot.pid_walk(12, -30)
-        
-        if left_color == Color.YELLOW:
-            robot.pid_turn(-30)
-        elif right_color == Color.YELLOW:
-            robot.pid_turn(30)
+    
+    if robot.color_right.color() == Color.YELLOW:
+        while robot.color_left.color() != Color.YELLOW:
+            robot.pid_walk(12, -30)
+            robot.pid_turn(-30)    
             
-        robot.pid_walk(7)
-        robot.align(speed=35)
-        robot.pid_walk(1.5, 30)
+            robot.pid_walk(7)
+            robot.align(speed=40)
+            robot.pid_walk(1.5, 35)    
+    
+    elif robot.color_left.color() == Color.YELLOW:
+        while robot.color_right.color() != Color.YELLOW:
+            robot.pid_walk(12, -30)
+            robot.pid_turn(30)    
+            
+            robot.pid_walk(7)
+            robot.align(speed=40)
+            robot.pid_walk(1.5, 35)
     
     robot.pid_walk(15, -35)
     robot.ev3.speaker.beep()
@@ -104,34 +107,41 @@ def omni_passenger_unboarding(omni: OmniRobot):
         omni.pid_turn(180)
         omni.moving_direction_sign = 1
 
-    omni.align()
+    omni.align(pid=PIDValues(kp = 1, ki = 0.0015, kd = 0.45))
+    omni.stop()
 
-    omni.pid_walk(2, speed=30)
-
+    omni.pid_walk(1.5, 35)
+    
+    print(omni.color_front_left.color(), omni.color_front_right.color())
+    
     pid_controls = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
     initial_angles = [motor.angle() for motor in omni.get_all_motors()]
     if omni.color_front_left.color() == Color.YELLOW:
         while omni.color_front_right.color() != Color.YELLOW:
             omni.loopless_pid_walk(
-                pid_controls, 20, direction=Direction.LEFT, initials=initial_angles
+                pid_controls, 40, direction=Direction.LEFT, initials=initial_angles
             )
     elif omni.color_front_right.color() == Color.YELLOW:
         while omni.color_front_left.color() != Color.YELLOW:
             omni.loopless_pid_walk(
-                pid_controls, 20, direction=Direction.RIGHT, initials=initial_angles
+                pid_controls, 40, direction=Direction.RIGHT, initials=initial_angles
             )
+            
 
     omni.align(direction=Direction.BACK)
-    omni.align()
+    omni.pid_walk(20)
 
-    omni.pid_walk(10, 20)
+    omni.ev3.speaker.beep()
+    
+    omni.pid_walk(10, 40)
     omni.bluetooth.message("CLAW_LOW")
     omni.bluetooth.message()
 
     omni.bluetooth.message("CLAW_OPEN")
     omni.bluetooth.message()
 
-    omni.pid_walk(15, 25, direction=Direction.BACK)
+    omni.pid_walk(25, 40, direction=Direction.BACK)
+    omni.stop()
 
 
 def omni_manouver_to_get_passenger(omni: OmniRobot):
