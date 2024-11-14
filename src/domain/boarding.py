@@ -28,6 +28,7 @@ def passenger_boarding(robot: Robot):
         robot.line_follower(target, "L", pid, 60)
     while robot.infra_side.distance() < 30:
         robot.line_follower(target, "L", pid, 60)
+    robot.pid_walk(4, -40)
     robot.pid_turn(-90)
     star_platinum(robot, "DOWN")
     star_platinum(robot, "OPEN")
