@@ -179,7 +179,7 @@ def omni_passenger_boarding(omni: OmniRobot):
     initial_angles = [motor.angle() for motor in omni.get_all_motors()]
     while omni.bluetooth.message(should_wait=False) is None:
         omni.loopless_pid_walk(
-            pid_controls, 20, direction=Direction.BACK, initials=initial_angles
+            pid_controls, 35, direction=Direction.BACK, initials=initial_angles
         )
     omni.stop()
 
@@ -188,7 +188,7 @@ def omni_passenger_boarding(omni: OmniRobot):
     initial_angles = [motor.angle() for motor in omni.get_all_motors()]
     while omni.bluetooth.message(should_wait=False) is not None:
         omni.loopless_pid_walk(
-            pid_controls, 20, direction=Direction.BACK, initials=initial_angles
+            pid_controls, 35, direction=Direction.BACK, initials=initial_angles
         )
 
     omni.stop()
@@ -203,7 +203,7 @@ def omni_passenger_boarding(omni: OmniRobot):
     vertice = boarding_vertices[int(math.floor(walked_cells))]
     omni.ev3_print("vertice:", vertice)
 
-    omni.pid_walk(cm=2, direction=Direction.BACK)
+    omni.pid_walk(cm=3, direction=Direction.FRONT)
     omni.stop()
     omni.pid_walk(cm=5, direction=Direction.LEFT)
     omni.pid_turn(90)

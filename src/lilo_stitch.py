@@ -83,6 +83,10 @@ def lilo_main(lilo: OmniRobot):
     lilo.ev3_print(lilo.bluetooth.start())
     wait(100)
 
+    lilo.bluetooth.message("CLAW_HIGH")
+    lilo.bluetooth.message()
+    
+
     # Inicialização do mapa
     map_graph = Graph(map_matrix)
 
@@ -202,7 +206,7 @@ def test_bt_lilo(lilo: OmniRobot):
 
 
 def stitch_main(stitch: OmniRobot):
-    stitch.start_claw(0, 90, -330, 0)
+    stitch.start_claw(0, 109, -245, 0)
     open_claw(stitch)
     # stitch.start_claw()
     stitch.bluetooth.start()
