@@ -9,14 +9,16 @@ def passenger_info(robot: Robot):
             Color.GREEN: [0, 13, 26],
             Color.BLUE: [4],
             Color.BROWN: [30],
-            Color.WHITE: []
+            Color.WHITE: [],
+            None: []
         },
         "ADULT": {
             Color.GREEN: [17],
             Color.BLUE: [28],
             Color.BROWN: [2],
             Color.RED: [15],
-            Color.WHITE: []
+            Color.WHITE: [],
+            None: []      
         },
     }
     color = robot.color_claw.color()
@@ -28,15 +30,17 @@ def passenger_info(robot: Robot):
 
 
 def lift_claw(robot: Robot, side=1):
-    robot.motor_elevate_claw.run_until_stalled(200 * side, Stop.HOLD, 40)
+    robot.motor_elevate_claw.run_until_stalled(300 * side, Stop.HOLD, 70)
     robot.motor_elevate_claw.hold()
 
 
 def open_claw(robot: Robot, side=1):
-    robot.motor_open_claw.run_until_stalled(100 * side, Stop.HOLD, 50)
+    robot.motor_open_claw.run_until_stalled(300 * side, Stop.HOLD, 80)
+    robot.motor_open_claw.hold()
 
 
 def main(robot: Robot):
+    info = "None"
     while True:
         robot.ev3_print("Waiting request")
         request = robot.bluetooth.message(should_wait=True)
@@ -44,24 +48,32 @@ def main(robot: Robot):
         if request == "UP":
             robot.ev3_print("Executing")
             lift_claw(robot)
+            info = "Done!"
         elif request == "DOWN":
             robot.ev3_print("Executing")
             lift_claw(robot, -1)
+            info = "Done!"
         elif request == "OPEN":
             robot.ev3_print("Executing")
             open_claw(robot, -1)
+            info = "Done!"
         elif request == "CLOSE":
             robot.ev3_print("Executing")
             open_claw(robot)
+            info = "Done!"
         elif request == "PASSENGER INFO":
             info = passenger_info(robot)
-            robot.bluetooth.message(info)
-        robot.ev3_print("Done!")
-        robot.bluetooth.message("Done!")
+            
+        robot.ev3_print(info)
+        robot.bluetooth.message(info)
 
 
 def star_platinum(robot: Robot, order: str):
     robot.ev3_print("Sending request", clear=True)
     robot.ev3_print(order)
     robot.bluetooth.message(order)
-    robot.ev3_print(robot.bluetooth.message(should_wait=True))
+    info = robot.bluetooth.message(should_wait=True)
+    robot.ev3_print(info)
+
+    return info
+

@@ -7,6 +7,8 @@ from pybricks.parameters import Color
 from time import time, sleep
 from core.utils import PIDControl
 
+# TODO tratar obstáculos nas routines
+# TODO refazer tratativa do alinhamento
 
 wall_colors = [Color.BLACK, Color.BLUE, Color.RED, Color.YELLOW, Color.BROWN]
 
@@ -185,59 +187,150 @@ color_lateral_vertices = [
 ]
 
 
+def origin_alignment_routine(sandy: Robot):
+    sandy.pid_turn(60)
+    sandy.reset_wheels_angle()
+    pid = PIDControl(const.PID_WALK_VALUES)
+    while sandy.color_left.color() == Color.WHITE:
+        sandy.loopless_pid_walk(pid)
+    sandy.stop()
+
+
 # Chega de frente no azul e faz a rotina do azul
 def blue_routine(robot: Robot):
-    robot.pid_turn(90)
+    print("Início da rotina do azul")
+    robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE, speed=-40)
+    robot.pid_turn(-90)
     pid_control = PIDControl(const.PID_WALK_VALUES)
     robot.reset_wheels_angle()
     while (
-        robot.color_right.color() != "Color.RED"
-        and robot.color_left.color != "Color.RED"
+        robot.color_right.color() != Color.RED and robot.color_left.color != Color.RED
     ):
-        robot.loopless_pid_walk(pid_control)
-    robot.pid_walk(cm=2, speed=-40)
-    robot.align()
+        if robot.color_right.color() == Color.BLUE:
+            robot.pid_turn(-30)
+            robot.reset_wheels_angle()
+        elif robot.color_right.color() == Color.BLACK:
+            robot.pid_turn(30)
+            robot.reset_wheels_angle()
+        robot.loopless_pid_walk(pid_control, speed=40)
 
-    robot.pid_turn(180)
-    return "V31"  # Verificar se a virada está com o sinal correto
+    "TRATATIVA PARA CASO DE LEITURA DE DUAS CORES NO VÉRTICE 5"
+
+    if robot.color_right.color() == Color.BLUE:
+        robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE, speed=-40)
+        robot.pid_turn(20)
+        robot.reset_wheels_angle()
+        while (
+            robot.color_right.color() != Color.RED
+            and robot.color_left.color != Color.RED
+        ):
+            robot.loopless_pid_walk(pid_control, 40)
+    elif robot.color_left.color() == Color.BLACK:
+        robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE, speed=-40)
+        robot.pid_turn(20)
+        robot.reset_wheels_angle()
+        while (
+            robot.color_right.color() != Color.RED
+            and robot.color_left.color != Color.RED
+        ):
+            robot.loopless_pid_walk(pid_control, 40)
+
+    "TRATATIVA DE ALINHAMENTO SIMPLES"
+
+    robot.pid_walk(cm=2, speed=-30)
+    while robot.color_left.color() != Color.RED:
+        robot.motor_l.dc(30)
+    while robot.color_right.color() != Color.RED:
+        robot.motor_r.dc(30)
+    robot.stop()
+
+    robot.pid_walk(5, -30)
+    robot.align(speed=30)
+    robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE, speed=-40)
+    robot.pid_turn(90)
+    robot.pid_walk(5, -40)
+    robot.align(40)
+
+    origin_alignment_routine(robot)
+    return "V5"  # Verificar se a virada está com o sinal correto
 
 
 def black_routine(robot: Robot):
     robot.pid_turn(180)
-    pid_control = const.PID_WALK_VALUES
+    pid_control = PIDControl(const.PID_WALK_VALUES)
 
-    while (
-        robot.color_left.color() == "Color.WHITE"
-        or robot.color_right.color() == "Color.WHITE"
-    ):
-        if (
-            robot.color_left.color() in (Color.BLACK, Color.YELLOW)
-            and robot.color_right.color() == Color.WHITE
-        ):
-            # Curva à direita
-            robot.pid_turn(20)
-        elif (
-            robot.color_right.color() in (Color.BLACK, Color.YELLOW)
-            and robot.color_left.color() == Color.WHITE
-        ):
-            # Curva à esquerda
-            robot.pid_turn(-20)
-        robot.loopless_pid_walk(pid_control)
-    robot.stop()
+    """
+    INÍCIO DA TRATATIVA DE OBSTÁCULO
+    
+    """
+    print("Início da tratativa do preto")
 
-    robot.pid_walk(cm=2, speed=-40)
-    robot.align()
+    if robot.ultra_feet.distance() < 160:  # Anda próximo o suficiente para identificar
+        robot.reset_wheels_angle()
+        robot.pid_walk(cm=30, speed=-50)  # Volta para o vértice anterior
+        # Verificar se está virando à esquerda
+        robot.pid_turn(90)
 
-    return blue_routine(robot)
+        # Anda para frente para acessar a borda diametralmente oposta
+        obstacle_function = lambda: (
+            robot.color_left.color() != Color.WHITE
+            or robot.color_right.color() != Color.WHITE
+        )
 
+        has_seen_obstacle, walked_perc = robot.pid_walk(
+            95,
+            40,
+            obstacle_function=obstacle_function,
+        )
 
-def red_routine(robot: Robot):
-    robot.pid_walk(cm=30, speed=-60)
-    robot.pid_turn(90)
-    pid_control = const.PID_WALK_VALUES
+        if has_seen_obstacle:
+            robot.pid_walk(2, -20)
+            robot.align(speed=30)
+            robot.pid_walk(2, 20)
 
-    # while wall_color_check() == "WHITE":
+        # Pega o valor da borda lida quando interrompeu
+        cor = wall_colors_check(robot.color_left.color(), robot.color_right.color())
+        robot.ev3_print(robot.color_left.color(), robot.color_right.color())
 
+        # Talvez encaixar uma tratativa aqui ainda
+
+        # Verifica se é o vermelho perto e corrige para o longe (se caminhou menos da metade do mapa)
+        if cor == "RED":
+            if walked_perc < 0.5:
+                robot.reset_wheels_angle()
+                robot.pid_walk(150, -40)
+            robot.align()
+            robot.pid_walk(cm=30, speed=-40)  # Anda 30cm para trás para acessar a rua
+            robot.turn(-90)  # Acessa a rua virando para a "direita agora"
+
+        # Seguir reto até o azul (não sei se é necessário tratar o preto de novo)
+        obstacle_function = lambda: (
+            robot.color_left.color() != Color.WHITE
+            or robot.color_right.color() != Color.WHITE
+        )
+
+        has_seen_obstacle, walked_perc = robot.pid_walk(
+            95,
+            40,
+            obstacle_function=obstacle_function,
+        )
+
+        if has_seen_obstacle:
+            robot.pid_walk(2, -20)
+            robot.align(speed=30)
+            robot.pid_walk(2, 20)
+
+        cor = wall_colors_check(robot.color_left.color(), robot.color_right.color())
+        robot.ev3_print(robot.color_left.color(), robot.color_right.color())
+        # Ativa a blue_routine
+        if cor == "BLUE":
+            return blue_routine(robot)
+
+    """
+    FIM DA TRATATIVA, INÍCIO DA ROTINA NORMAL
+    """
+
+    robot.reset_wheels_angle()  # Resetar ângulo para o PID funcionar corretamente
     while (
         robot.color_left.color() == Color.WHITE
         or robot.color_right.color() == Color.WHITE
@@ -256,19 +349,120 @@ def red_routine(robot: Robot):
             # Curva à esquerda
             robot.pid_turn(-20)
             robot.reset_wheels_angle()
-        robot.loopless_pid_walk(pid_control)
+        robot.loopless_pid_walk(pid_control, speed=40)
     robot.stop()
 
-    robot.pid_walk(cm=2, speed=-40)
+    robot.pid_walk(cm=2, speed=-30)
     robot.align()
-    robot.pid_walk(cm=2, speed=40)
+
+    return blue_routine(robot)
+
+
+def red_routine(robot: Robot):
+    robot.pid_walk(cm=30, speed=-50)
+    robot.pid_turn(90)
+    pid_control = PIDControl(const.PID_WALK_VALUES)
+
+    print("Início da tratativa do vermelho")
+
+    """
+    INÍCIO DA TRATATIVA DE OBSTÁCULO
+    
+    """
+    if robot.ultra_feet.distance() < 160:  # Anda próximo o suficiente para identificar
+        print("Obstáculo")
+        robot.reset_wheels_angle()
+        robot.pid_walk(cm=30, speed=-50)  # Volta para o vértice anterior
+        # Verificar se está virando à esquerda
+        robot.pid_turn(90)
+
+        # Anda para frente para acessar a borda diametralmente oposta
+        obstacle_function = lambda: (
+            robot.color_left.color() != Color.WHITE
+            or robot.color_right.color() != Color.WHITE
+        )
+
+        has_seen_obstacle, walked_perc = robot.pid_walk(
+            95,
+            40,
+            obstacle_function=obstacle_function,
+        )
+
+        if has_seen_obstacle:
+            robot.pid_walk(2, -20)
+            robot.align(speed=30)
+            robot.pid_walk(2, 20)
+
+        # Pega o valor da borda lida quando interrompeu
+        cor = wall_colors_check(robot.color_left.color(), robot.color_right.color())
+        robot.ev3_print(robot.color_left.color(), robot.color_right.color())
+
+        # Talvez encaixar uma tratativa aqui ainda
+
+        # Verifica se é o vermelho perto e corrige para o longe (se caminhou menos da metade do mapa)
+        if cor == "RED":
+            if walked_perc < 0.5:
+                robot.reset_wheels_angle()
+                robot.pid_walk(150, -40)
+            robot.align()
+            robot.pid_walk(cm=30, speed=-40)  # Anda 30cm para trás para acessar a rua
+            robot.turn(-90)  # Acessa a rua virando para a "direita agora"
+
+        # Seguir reto até o azul (não sei se é necessário tratar o preto de novo)
+        obstacle_function = lambda: (
+            robot.color_left.color() != Color.WHITE
+            or robot.color_right.color() != Color.WHITE
+        )
+
+        has_seen_obstacle, walked_perc = robot.pid_walk(
+            95,
+            40,
+            obstacle_function=obstacle_function,
+        )
+
+        if has_seen_obstacle:
+            robot.pid_walk(2, -20)
+            robot.align(speed=30)
+            robot.pid_walk(2, 20)
+
+        cor = wall_colors_check(robot.color_left.color(), robot.color_right.color())
+        robot.ev3_print(robot.color_left.color(), robot.color_right.color())
+        print("Fim da tratativa do Red Routine")
+        # Ativa a blue_routine
+        if cor == "BLUE":
+            return blue_routine(robot)
+
+    """
+    FIM DA TRATATIVA, INÍCIO DA ROTINA NORMA
+    """
+
+    # Rotina para quando não identifica o obstáculo
+    robot.reset_wheels_angle()
+    while (
+        robot.color_left.color() != Color.BLUE
+        or robot.color_right.color() != Color.BLUE
+    ):
+        if robot.color_left.color() in (Color.BLACK, Color.YELLOW):
+            robot.pid_turn(20)
+            robot.reset_wheels_angle()
+        elif robot.color_right.color() in (Color.BLACK, Color.YELLOW):
+            robot.pid_turn(-20)
+            robot.reset_wheels_angle()
+        robot.loopless_pid_walk(pid_control, speed=50)
+
+    robot.stop()
+
+    robot.pid_walk(cm=10, speed=-30)
+    robot.align(speed=30)
 
     if wall_colors_check(robot.color_left.color(), robot.color_right.color()) == "BLUE":
+        print("Chamando rotina do vermelho")
         return blue_routine(robot)
     elif (
         wall_colors_check(robot.color_left.color(), robot.color_right.color())
         == "BLACK"
     ):
+        print("Chamando rotina do preto")
         return black_routine(robot)
 
 
@@ -298,7 +492,7 @@ def all_white_routine(robot: Robot):
 
     robot.pid_walk(cm=2, speed=-40)
     robot.align()
-    robot.pid_walk(cm=2, speed=40)
+    robot.pid_walk(cm=2, speed=50)
 
     if robot.color_left.color() == Color.RED and robot.color_right.color() == Color.RED:
         return red_routine(robot)
@@ -357,12 +551,6 @@ def wall_colors_check(left_color, right_color):
     return vertices"""
 
 
-def avoid_obstacle_red_routine(robot: Robot):
-    verify_is_aligned = wall_colors_check(
-        robot.color_left.color(), robot.color_right.color()
-    )
-
-
 def localization_routine(robot: Robot):
     """
     Faz o robô andar até detectar uma cor diferente de branco, então armazena a cor detectada.
@@ -378,23 +566,26 @@ def localization_routine(robot: Robot):
 
         has_seen_obstacle, walked_perc = robot.pid_walk(
             30,
+            40,
             obstacle_function=obstacle_function,
         )
 
         if has_seen_obstacle:
-            robot.pid_walk(2, -30)
-            robot.align()
+            robot.pid_walk(2, -20)
+            robot.align(speed=30)
+            robot.pid_walk(2, 20)
 
-        cor = wall_colors_check(robot)
+        cor = wall_colors_check(robot.color_left.color(), robot.color_right.color())
+        robot.ev3_print(robot.color_left.color(), robot.color_right.color())
+
+        lista.append(cor)
 
         if cor == "BLUE":
             return blue_routine(robot)
         elif cor == "RED":
             return red_routine(robot)
 
-        lista.append(cor)
-
-        robot.pid_walk(cm=30 * walked_perc, speed=-60)
+        robot.pid_walk(cm=30 * walked_perc, speed=-40)
         robot.pid_turn(90)
 
     robot.ev3_print("Cores detectadas nos quatro lados:", lista)
