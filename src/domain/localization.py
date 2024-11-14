@@ -356,9 +356,21 @@ def black_routine(robot: Robot):
 
     return blue_routine(robot)
 
+def color_multicheck(robot: Robot, times = 2, distance = 1, cor = Color.BLUE):
+
+    for i in range(times):
+        if robot.color_left.color() != Color.WHITE:
+            robot.pid_walk(distance, speed = 40)
+            if robot.color_left.color() == cor:
+                return True
+        elif robot.color_right.color() != Color.WHITE:
+            robot.pid_walk(distance, speed = -40)
+            if robot.color_right.color() == cor:
+                return True
+    return False
 
 def red_routine(robot: Robot):
-    robot.pid_walk(cm=30, speed=-50)
+    robot.pid_walk(cm=35, speed=-50)
     robot.pid_turn(90)
     pid_control = PIDControl(const.PID_WALK_VALUES)
 
@@ -408,6 +420,7 @@ def red_routine(robot: Robot):
 
         # Seguir reto até o azul (não sei se é necessário tratar o preto de novo)
         obstacle_function = lambda: (
+
             robot.color_left.color() != Color.WHITE
             or robot.color_right.color() != Color.WHITE
         )
@@ -430,18 +443,27 @@ def red_routine(robot: Robot):
             return blue_routine(robot)
         
     """
-    FIM DA TRATATIVA, INÍCIO DA ROTINA NORMA
+    FIM DA TRATATIVA, INÍCIO DA ROTINA NORMAL
     """
         
     # Rotina para quando não identifica o obstáculo
     robot.reset_wheels_angle()
-    while robot.color_left.color() != Color.BLUE or robot.color_right.color() != Color.BLUE:
-        if robot.color_left.color() in (Color.BLACK, Color.YELLOW):
-            robot.pid_turn(20)
-            robot.reset_wheels_angle()
-        elif robot.color_right.color() in (Color.BLACK, Color.YELLOW):
-            robot.pid_turn(-20)
-            robot.reset_wheels_angle()
+    is_blue = False
+    while True:
+        if robot.color_left.color() != Color.WHITE:
+            is_blue = color_multicheck(robot)
+            if not is_blue:
+                robot.pid_turn(20)
+                robot.reset_wheels_angle()
+            else:
+                break
+        elif robot.color_right.color() != Color.WHITE:
+            is_blue = color_multicheck(robot)
+            if not is_blue:
+                robot.pid_turn(-20)
+                robot.reset_wheels_angle()
+            else:
+                break
         robot.loopless_pid_walk(pid_control, speed=50)
     
     robot.stop()
@@ -449,9 +471,10 @@ def red_routine(robot: Robot):
     robot.pid_walk(cm=10, speed=-30)
     robot.align(speed=30)
 
+    print(robot.color_left.color(), robot.color_right.color(), wall_colors_check(robot.color_left.color(), robot.color_right.color()))
 
-    if wall_colors_check(robot.color_left.color(), robot.color_right.color()) == "BLUE":
-        print("Chamando rotina do vermelho")
+    if wall_colors_check(robot.color_left.color(), robot.color_right.color()) != "BLACK":
+        print("Chamando rotina do azul")
         return blue_routine(robot)
     elif wall_colors_check(robot.color_left.color(), robot.color_right.color()) == "BLACK":
         print("Chamando rotina do preto")
@@ -556,7 +579,7 @@ def localization_routine(robot: Robot):
         )
 
         has_seen_obstacle, walked_perc = robot.pid_walk(
-            30, 40,
+            25, 40,
             obstacle_function=obstacle_function,
         )
 
