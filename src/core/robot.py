@@ -170,6 +170,8 @@ class Robot:
             True, 1
         """
         degrees = self.cm_to_motor_degrees(cm)
+        if degrees == 0:
+            return
 
         motor_angle_average = 0
         initial_left_angle = self.motor_l.angle()
@@ -456,3 +458,27 @@ class Robot:
             ):
                 break
         self.stop()
+
+    def line_grabber(self, time, speed=35, multiplier = 0.8):
+        color_reads = []
+        num_reads = 10
+        wrong_read_perc = 0.5
+        color_count_perc = 0.5
+        self.stopwatch.reset() 
+        self.reset_wheels_angle()
+
+        while True:
+            color_reads.append(self.color_left.color())
+            if len(color_reads) == num_reads:
+                color_count_perc = color_reads.count(Color.BLUE) / num_reads
+                wrong_read_perc = 1 - color_count_perc
+                color_reads.clear()
+
+            self.motor_l.dc(speed * color_count_perc * multiplier)
+            self.motor_r.dc(speed * wrong_read_perc * multiplier)
+
+            motor_mean = (self.motor_l.angle() + self.motor_r.angle()) / 2
+
+            if self.stopwatch.time() > time:
+                self.stop()
+                return self.motor_degrees_to_cm(motor_mean)

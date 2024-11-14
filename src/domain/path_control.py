@@ -76,10 +76,12 @@ def turn_to_direction(robot: Robot, target_direction):
     return turn_times
 
 
-def future_possible_alignment(robot: Robot, initial_position_idx: int, path: list, directions: list, depth = 5):
+def future_possible_alignment(initial_position_idx: int, path: list, directions: list, depth = 5):
     position = directions[initial_position_idx][0]
     
     for index in range(initial_position_idx, initial_position_idx + depth):
+        if index >= len(path) - 1:  
+            return False
         if directions[index][0] == position:
             continue
         
@@ -120,7 +122,7 @@ def path_control(robot: Robot, path: list, directions: list):
         if needs_align == 0:
             alignment_found = False
         # se houver possibilidade de alinhamentos faceis no futuro, nao alinhar
-        if not alignment_found and future_possible_alignment(robot, position_index, path, directions):
+        if not alignment_found and future_possible_alignment(position_index, path, directions):
             needs_align = 0
             alignment_found = True
 
@@ -155,7 +157,7 @@ def path_control(robot: Robot, path: list, directions: list):
 
         if idx == len(directions) - 1:
             # nao anda a ultima distancia, pra nao entrar no estabelecimento
-            break
+            return True, position_index
 
         # Confere se a próxima movimentação é na mesma direção que a atual.
         should_stop = True
@@ -181,7 +183,7 @@ def path_control(robot: Robot, path: list, directions: list):
                 robot.ev3_print("Obstacle")
                 has_seen_obstacle, walked_perc = robot.pid_walk(
                     cm=distance * walked_perc,
-                    speed = -60
+                    speed = -60,
                     off_motors=should_stop,
                     obstacle_function=obstacle_function,
                 )
@@ -220,7 +222,3 @@ def path_control(robot: Robot, path: list, directions: list):
                 )
 
         position_index += 1
-
-        if idx == len(path) - 1:
-            robot.stop()
-            return True, position_index
