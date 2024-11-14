@@ -379,7 +379,7 @@ class Robot:
 
     def align(
         self,
-        speed=75,
+        speed=40,
         pid: PIDValues = const.ALIGN_VALUES,
         direction_sign=1,
     ):

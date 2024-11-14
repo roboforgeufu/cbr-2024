@@ -71,20 +71,24 @@ def passenger_unboarding(robot: Robot):
     
     robot.align(speed=35)
     robot.pid_walk(1.5, 30)
-    while robot.color_right.color() != Color.YELLOW or robot.color_left.color() != Color.YELLOW:
-        left_color = robot.color_left.color()
-        right_color = robot.color_right.color()
-
-        robot.pid_walk(12, -30)
-        
-        if left_color == Color.YELLOW:
-            robot.pid_turn(-30)
-        elif right_color == Color.YELLOW:
-            robot.pid_turn(30)
+    
+    if robot.color_right.color() == Color.YELLOW:
+        while robot.color_left.color() != Color.YELLOW:
+            robot.pid_walk(12, -30)
+            robot.pid_turn(-30)    
             
-        robot.pid_walk(7)
-        robot.align(speed=35)
-        robot.pid_walk(1.5, 30)
+            robot.pid_walk(7)
+            robot.align(speed=40)
+            robot.pid_walk(1.5, 35)    
+    
+    elif robot.color_left.color() == Color.YELLOW:
+        while robot.color_right.color() != Color.YELLOW:
+            robot.pid_walk(12, -30)
+            robot.pid_turn(30)    
+            
+            robot.pid_walk(7)
+            robot.align(speed=40)
+            robot.pid_walk(1.5, 35)
     
     robot.pid_walk(15, -35)
     robot.ev3.speaker.beep()
@@ -177,7 +181,7 @@ def omni_passenger_boarding(omni: OmniRobot):
     initial_angles = [motor.angle() for motor in omni.get_all_motors()]
     while omni.bluetooth.message(should_wait=False) is None:
         omni.loopless_pid_walk(
-            pid_controls, 20, direction=Direction.BACK, initials=initial_angles
+            pid_controls, 35, direction=Direction.BACK, initials=initial_angles
         )
     omni.stop()
 
@@ -186,7 +190,7 @@ def omni_passenger_boarding(omni: OmniRobot):
     initial_angles = [motor.angle() for motor in omni.get_all_motors()]
     while omni.bluetooth.message(should_wait=False) is not None:
         omni.loopless_pid_walk(
-            pid_controls, 20, direction=Direction.BACK, initials=initial_angles
+            pid_controls, 35, direction=Direction.BACK, initials=initial_angles
         )
 
     omni.stop()
@@ -201,7 +205,7 @@ def omni_passenger_boarding(omni: OmniRobot):
     vertice = boarding_vertices[int(math.floor(walked_cells))]
     omni.ev3_print("vertice:", vertice)
 
-    omni.pid_walk(cm=2, direction=Direction.BACK)
+    omni.pid_walk(cm=3, direction=Direction.FRONT)
     omni.stop()
     omni.pid_walk(cm=5, direction=Direction.LEFT)
     omni.pid_turn(90)
