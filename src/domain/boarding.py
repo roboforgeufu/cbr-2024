@@ -75,8 +75,8 @@ def passenger_unboarding(robot: Robot):
     
     if robot.color_right.color() == Color.YELLOW:
         print("Direito no amarelo")
-        while robot.color_left.color() != Color.YELLOW:
-            robot.pid_walk(12, -30)
+        while robot.color_left.color() != Color.YELLOW: 
+            robot.pid_walk(12, 30)
             robot.pid_turn(-30)    
             
             robot.pid_walk(7)

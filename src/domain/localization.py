@@ -210,6 +210,7 @@ def blue_routine(robot: Robot):
         robot.loopless_pid_walk(pid_control, speed=40)
     robot.pid_walk(cm=2, speed=-30)
     robot.align(speed=30)
+    robot.pid_walk(cm=10, speed=-40)
     robot.pid_turn(90)
     robot.align(40)
 
@@ -331,7 +332,7 @@ def color_multicheck(robot: Robot, times = 1, distance = 2, cor = Color.BLUE):
     return False
 
 def red_routine(robot: Robot):
-    robot.pid_walk(cm=30, speed=-50)
+    robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE + const.CELL_DISTANCE, speed=-50)
     robot.pid_turn(90)
 
     # """
@@ -403,6 +404,8 @@ def red_routine(robot: Robot):
     # """
 
     pid_control = PIDControl(const.PID_WALK_VALUES)
+    pid_control.reset()
+    robot.reset_wheels_angle()
     # Rotina para quando não identifica o obstáculo
     while True:
         robot.loopless_pid_walk(pid_control, speed=50)
@@ -448,6 +451,8 @@ def red_routine(robot: Robot):
                 # embarque ou parque
                 robot.stop()
                 robot.pid_walk(cm=3, speed=40)
+                pid_control.reset()
+                robot.reset_wheels_angle()
                 if wall_colors_check(
                     robot.color_left.color(), robot.color_right.color()
                 ) == "BLUE":
