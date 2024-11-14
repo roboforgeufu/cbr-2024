@@ -8,12 +8,6 @@ from time import time, sleep
 from core.utils import PIDControl
 
 
-# TODO testar a rotina de ler os 30cm para os 3 lados
-# TODO pensar em uma rotina para quando houver obstáculo
-# TODO completar a lógica com as quebras apenas no vermelho e azul
-# TODO criar rotinas para o preto e amarelo
-
-
 wall_colors = [Color.BLACK, Color.BLUE, Color.RED, Color.YELLOW, Color.BROWN]
 
 color_lateral_vertices = [
@@ -320,10 +314,8 @@ def all_white_routine(robot: Robot):
         return blue_routine(robot)
 
 
-def walk_until_non_white(robot: Robot, speed=60):
-    """
-    Faz o robô andar uma distância de 30 cm ou até que os sensores detectem algo diferente de branco.
-    """
+"""def walk_until_non_white(robot: Robot, speed=60):
+    
     print(robot.color_right.color())
 
     stop_condition = lambda: (
@@ -337,6 +329,7 @@ def walk_until_non_white(robot: Robot, speed=60):
         off_motors=True,
         obstacle_function=stop_condition,
     )
+"""
 
 
 def wall_colors_check(left_color, right_color):
@@ -351,7 +344,7 @@ def wall_colors_check(left_color, right_color):
     return "WHITE"
 
 
-def interprets_list(lista):
+"""def interprets_list(lista):
     vertices = []
     for i in range(len(color_lateral_vertices)):
         vertice_id, combinacoes = (
@@ -361,7 +354,13 @@ def interprets_list(lista):
         for item in combinacoes:
             if lista == item and "V" + str(vertice_id[0]) not in vertices:
                 vertices.append("V" + str(vertice_id[0]))
-    return vertices
+    return vertices"""
+
+
+def avoid_obstacle_red_routine(robot: Robot):
+    verify_is_aligned = wall_colors_check(
+        robot.color_left.color(), robot.color_right.color()
+    )
 
 
 def localization_routine(robot: Robot):

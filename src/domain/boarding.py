@@ -1,6 +1,5 @@
 import constants as const
 from core.robot import Robot
-from domain.localization import walk_until_non_white
 
 from pybricks.parameters import Color  # type: ignore
 from domain.star_platinum import star_platinum
