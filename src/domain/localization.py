@@ -355,6 +355,7 @@ def color_multicheck(robot: Robot, times = 1, distance = 2, cor = Color.BLUE):
                 return True
     return False
 
+
 def red_routine(robot: Robot):
     print("Início da red routine")
     robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE + const.CELL_DISTANCE, speed=-50)
@@ -616,16 +617,17 @@ def walk_until_non_white(robot: Robot, speed=60):
 
 
 def wall_colors_check(left_color, right_color):
+    color_str = "WHITE"
     print("Ativou wall colors check")
     if Color.YELLOW in (left_color, right_color):
-        return "YELLOW"
+        color_str = "YELLOW"
     if Color.BLACK in (left_color, right_color):
-        return "BLACK"
+        color_str = "BLACK"
     if Color.RED in (left_color, right_color):
-        return "RED"
+        color_str = "RED"
     if Color.BLUE in (left_color, right_color):
-        return "BLUE"
-    return "WHITE"
+        color_str = "BLUE"
+    return color_str
 
 
 """def interprets_list(lista):
