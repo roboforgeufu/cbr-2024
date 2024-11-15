@@ -127,6 +127,13 @@ def test_passenger_boarding(sandy: Robot):
 
 def test_passenger_unboarding(sandy: Robot):
     sandy.bluetooth.start()
+    wait(100)
+    
+    star_platinum.star_platinum(sandy, 'DOWN')
+    star_platinum.star_platinum(sandy, 'OPEN')
+    
+    star_platinum.star_platinum(sandy, 'CLOSE')
+    star_platinum.star_platinum(sandy, 'UP')
     
     passenger_unboarding(sandy)
 
