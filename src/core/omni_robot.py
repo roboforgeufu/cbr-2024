@@ -533,7 +533,7 @@ class OmniRobot:
     ):
         if open_angle is None:
             self.claw_open_angle = self.motor_claw_gripper.run_until_stalled(
-                speed=-300, duty_limit=40
+                speed=-300, duty_limit=35
             )
             self.ev3_print("Open angle:", self.claw_open_angle)
         else:
@@ -541,7 +541,7 @@ class OmniRobot:
 
         if closed_angle is None:
             self.claw_closed_angle = self.motor_claw_gripper.run_until_stalled(
-                speed=300, duty_limit=40
+                speed=300, duty_limit=45
             )
             self.ev3_print("Closed angle:", self.claw_closed_angle)
         else:
@@ -549,7 +549,7 @@ class OmniRobot:
 
         if high_angle is None:
             self.claw_high_angle = self.motor_claw_lift.run_until_stalled(
-                speed=-300, duty_limit=60
+                speed=-300, duty_limit=35
             )
             self.ev3_print("High_angle:", self.claw_high_angle)
         else:
@@ -563,7 +563,7 @@ class OmniRobot:
         else:
             self.claw_low_angle = low_angle
 
-        self.claw_mid_angle = self.claw_low_angle - 120
+        self.claw_mid_angle = self.claw_low_angle - 135
 
     def line_follower(
         self,

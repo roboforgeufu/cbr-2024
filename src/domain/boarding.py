@@ -157,10 +157,10 @@ def omni_manouver_to_get_passenger(omni: OmniRobot):
 
 
 def omni_passenger_boarding(omni: OmniRobot):
-    omni.bluetooth.message("CLAW_MID")
+    omni.bluetooth.message("CLAW_OPEN")
     omni.bluetooth.message()
 
-    omni.bluetooth.message("CLAW_OPEN")
+    omni.bluetooth.message("CLAW_MID")
     omni.bluetooth.message()
 
     omni.align(direction=Direction.RIGHT, speed=50)

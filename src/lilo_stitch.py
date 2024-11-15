@@ -217,8 +217,7 @@ def test_bt_lilo(lilo: OmniRobot):
 
 
 def stitch_main(stitch: OmniRobot):
-    stitch.start_claw(10, 109, None, 10)
-    open_claw(stitch)
+    stitch.start_claw(0, 100, -340, 0)
     # stitch.start_claw()
     stitch.bluetooth.start()
 
