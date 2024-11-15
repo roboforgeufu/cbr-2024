@@ -172,7 +172,17 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
                     needs_align = 0
                     robot.pid_walk(cm=const.ROBOT_SIZE_HALF, direction=relative_right)
                 else:
-                    robot.pid_turn(20)
+                    robot.line_follower(
+                        sensor_left,
+                        speed=45,
+                        loop_condition_function=lambda: sensor_left.color()
+                        != Color.WHITE
+                        and sensor_right.color() == Color.WHITE,
+                        pid=const.LINE_FOLLOWER_AVOIDING_PLACES,
+                        error_function=lambda: sensor_left.rgb()[2]
+                        - const.OMNI_LINE_FOLLOWER_BLUE_TARGET,
+                        side="L",
+                    )
                     needs_align += 1
 
                 has_seen_obstacle, walked_perc = robot.pid_walk(
@@ -199,7 +209,17 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
                     needs_align = 0
                     robot.pid_walk(cm=const.ROBOT_SIZE_HALF, direction=relative_left)
                 else:
-                    robot.pid_turn(-20)
+                    robot.line_follower(
+                        sensor_right,
+                        speed=45,
+                        loop_condition_function=lambda: sensor_right.color()
+                        != Color.WHITE
+                        and sensor_left.color() == Color.WHITE,
+                        pid=const.LINE_FOLLOWER_AVOIDING_PLACES,
+                        error_function=lambda: sensor_right.rgb()[2]
+                        - const.OMNI_LINE_FOLLOWER_BLUE_TARGET,
+                        side="R",
+                    )
                     needs_align += 1
 
                 has_seen_obstacle, walked_perc = robot.pid_walk(

@@ -213,10 +213,9 @@ class Robot:
         novos parâmetros (prev_elapsed_time, i_share, prev_error) devidamente
         inicializados a cada iteração.
         """
-        correction = pid_control.compute(
-            lambda: (self.motor_r.angle() - initial_right_angle)
-            - (self.motor_l.angle() - initial_left_angle)
-        )
+        error_function = lambda: (self.motor_r.angle() - initial_right_angle) - (self.motor_l.angle() - initial_left_angle)
+        
+        correction = pid_control.compute(error_function)
         self.motor_r.dc(speed - correction)
         self.motor_l.dc(speed + correction)
 
