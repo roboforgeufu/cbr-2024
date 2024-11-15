@@ -411,17 +411,20 @@ def red_routine(robot: Robot):
     robot.reset_wheels_angle()
     while True:
         robot.loopless_pid_walk(pid_control, speed=50)
+        print("Ativou a loopless pid walk")
         # caso encontre o azul passa para a prox rotina
         if wall_colors_check(
             robot.color_left.color(), robot.color_right.color()
         ) == "BLUE":
+            print("Viu azul")
             robot.stop()
             robot.ev3_print("Embarque")
             return blue_routine(robot)
         # caso encontre algo diferente de azul
-        elif (
+        elif wall_colors_check(
             robot.color_left.color(), robot.color_right.color()
         ) not in ("BLUE", "WHITE"):
+            print("Outras bordas")
             # tentar alinhar com a linha encontrada
             robot.stop()
             robot.reset_wheels_angle()

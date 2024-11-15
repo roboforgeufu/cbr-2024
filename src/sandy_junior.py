@@ -70,8 +70,27 @@ from core.robot import Robot
 
 
 def test_sandy_main(sandy: Robot):
-    localization_routine(sandy)
-    # next_vertice = passenger_boarding()
+    ### loop ###
+    map_graph = Graph(map_matrix)
+    sandy.orientation = "S"
+    while True:
+        ### embarque de passageiro ###
+        # embarca o passageiro e retorna o(s) vertice(s) de destino
+        targets = passenger_boarding(sandy)
+
+        ### calculo de rota e controle de caminho ###
+        # calculo de rota e movimento até o destino
+        current_position = move_to_target(sandy, map_graph, const.SANDY_ORIGIN_VERTEX, targets)
+
+        ### desembarque de passageiro ###
+        # desembarque do passageiro
+        passenger_unboarding(sandy)
+
+        ### retorno para a origem ###
+        # movimentação de retorno à origem
+        move_to_target(sandy, map_graph, current_position, const.SANDY_BOARDING_VERTEX)
+        # rotina de alinhamento na zona de embarque
+        origin_alignment_routine(sandy)
 
 
 def test_path_control(sandy: Robot):
