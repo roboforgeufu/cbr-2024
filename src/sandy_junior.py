@@ -170,8 +170,9 @@ def sandy_main(sandy: Robot):
 def junior_main(junior: Robot):
 
     # Fecha e levanta garra inicialmente
-    junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 70)
     junior.motor_open_claw.run_until_stalled(-300, Stop.HOLD, 70)
+    wait(300)
+    junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 70)
     junior.bluetooth.start()
     star_platinum.main(junior)
 
