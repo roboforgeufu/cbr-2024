@@ -81,6 +81,7 @@ else:
     LINE_TO_CELL_CENTER_DISTANCE = 5
 
 
+
 # Localização Sandy
 SANDY_ORIGIN_VERTEX = 31
 SANDY_BOARDING_VERTEX = [6]

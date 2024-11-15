@@ -76,7 +76,7 @@ from domain.boarding import (
     omni_passenger_unboarding,
     omni_manouver_to_get_passenger,
 )
-from domain.omni_localization import localization_routine, forward_avoiding_places
+from domain.omni_localization import localization_routine
 
 
 testing_targets = [0, 13, 26, 2, 15, 28, 4, 17, 30]

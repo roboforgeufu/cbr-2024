@@ -6,15 +6,77 @@ from pybricks.parameters import Button, Color, Port, Stop  # type: ignore
 from pybricks.iodevices import Ev3devSensor  # type: ignore
 
 from pybricks.tools import DataLog, wait  # type: ignore
+import constants as const
 
-from decision_trees.sandy_lego_ev3_color_3 import sandy_lego_ev3_color_p3_decision_tree
-from decision_trees.sandy_lego_ev3_color_4 import sandy_lego_ev3_color_p4_decision_tree
-from decision_trees.lilo_lego_ev3_color_1 import lilo_lego_ev3_color_p1_decision_tree
-from decision_trees.lilo_lego_ev3_color_2 import lilo_lego_ev3_color_p2_decision_tree
-from decision_trees.lilo_lego_ev3_color_3 import lilo_lego_ev3_color_p3_decision_tree
-from decision_trees.lilo_lego_ev3_color_4 import lilo_lego_ev3_color_p4_decision_tree
-from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
+if const.MAP_COLOR_CALIBRATION == "OFICIAL":
+    from decision_trees.oficial.sandy_lego_ev3_color_3 import (
+        sandy_lego_ev3_color_p3_decision_tree,
+    )
+    from decision_trees.oficial.sandy_lego_ev3_color_4 import (
+        sandy_lego_ev3_color_p4_decision_tree,
+    )
+    from decision_trees.oficial.junior_lego_ev3_color_2 import (
+        junior_lego_ev3_color_p2_decision_tree,
+    )
+elif const.MAP_COLOR_CALIBRATION == "HOME":
+    from decision_trees.home.sandy_lego_ev3_color_3 import (
+        sandy_lego_ev3_color_p3_decision_tree,
+    )
+    from decision_trees.home.sandy_lego_ev3_color_4 import (
+        sandy_lego_ev3_color_p4_decision_tree,
+    )
+    from decision_trees.home.junior_lego_ev3_color_2 import (
+        junior_lego_ev3_color_p2_decision_tree,
+    )
 
+if const.MAP_COLOR_CALIBRATION == "OFICIAL":
+    from decision_trees.oficial.lilo_lego_ev3_color_1 import (
+        lilo_lego_ev3_color_p1_decision_tree,
+    )
+    from decision_trees.oficial.lilo_lego_ev3_color_2 import (
+        lilo_lego_ev3_color_p2_decision_tree,
+    )
+    from decision_trees.oficial.lilo_lego_ev3_color_3 import (
+        lilo_lego_ev3_color_p3_decision_tree,
+    )
+    from decision_trees.oficial.lilo_lego_ev3_color_4 import (
+        lilo_lego_ev3_color_p4_decision_tree,
+    )
+    from decision_trees.oficial.stitch_ht_nxt_color_v2_4 import (
+        stitch_ht_nxt_color_v2_p4_decision_tree,
+    )
+elif const.MAP_COLOR_CALIBRATION == "HOME":
+    from decision_trees.home.lilo_lego_ev3_color_1 import (
+        lilo_lego_ev3_color_p1_decision_tree,
+    )
+    from decision_trees.home.lilo_lego_ev3_color_2 import (
+        lilo_lego_ev3_color_p2_decision_tree,
+    )
+    from decision_trees.home.lilo_lego_ev3_color_3 import (
+        lilo_lego_ev3_color_p3_decision_tree,
+    )
+    from decision_trees.home.lilo_lego_ev3_color_4 import (
+        lilo_lego_ev3_color_p4_decision_tree,
+    )
+    from decision_trees.home.stitch_ht_nxt_color_v2_4 import (
+        stitch_ht_nxt_color_v2_p4_decision_tree,
+    )
+elif const.MAP_COLOR_CALIBRATION == "TEST":
+    from decision_trees.test.lilo_lego_ev3_color_1 import (
+        lilo_lego_ev3_color_p1_decision_tree,
+    )
+    from decision_trees.test.lilo_lego_ev3_color_2 import (
+        lilo_lego_ev3_color_p2_decision_tree,
+    )
+    from decision_trees.test.lilo_lego_ev3_color_3 import (
+        lilo_lego_ev3_color_p3_decision_tree,
+    )
+    from decision_trees.test.lilo_lego_ev3_color_4 import (
+        lilo_lego_ev3_color_p4_decision_tree,
+    )
+    from decision_trees.test.stitch_ht_nxt_color_v2_4 import (
+        stitch_ht_nxt_color_v2_p4_decision_tree,
+    )
 
 from core.utils import ev3_print, get_hostname
 
@@ -25,7 +87,7 @@ brick_name_to_sensors_and_functions = {
         ("S3", ColorSensor, Port.S3, lilo_lego_ev3_color_p3_decision_tree),
         ("S4", ColorSensor, Port.S4, lilo_lego_ev3_color_p4_decision_tree),
     ],
-    "stitch": ["S4", Ev3devSensor, Port.S4, ht_nxt_color_v2_p2_decision_tree],
+    "stitch": ["S4", Ev3devSensor, Port.S4, stitch_ht_nxt_color_v2_p4_decision_tree],
     "sandy": [
         ("S3", ColorSensor, Port.S3, sandy_lego_ev3_color_p3_decision_tree),
         ("S4", ColorSensor, Port.S4, sandy_lego_ev3_color_p4_decision_tree),

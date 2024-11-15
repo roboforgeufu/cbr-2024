@@ -102,7 +102,7 @@ class Robot:
         self.orientation = None
 
         # Fator de correção de curvas
-        self.turn_correction = 0.9
+        self.turn_correction = 1    
 
         # Printa a voltagem e corrente atual da bateria:
         self.ev3_print("Bat. V:", self.ev3.battery.voltage(), "mV")
@@ -213,10 +213,9 @@ class Robot:
         novos parâmetros (prev_elapsed_time, i_share, prev_error) devidamente
         inicializados a cada iteração.
         """
-        correction = pid_control.compute(
-            lambda: (self.motor_r.angle() - initial_right_angle)
-            - (self.motor_l.angle() - initial_left_angle)
-        )
+        error_function = lambda: (self.motor_r.angle() - initial_right_angle) - (self.motor_l.angle() - initial_left_angle)
+        
+        correction = pid_control.compute(error_function)
         self.motor_r.dc(speed - correction)
         self.motor_l.dc(speed + correction)
 
@@ -382,6 +381,7 @@ class Robot:
         speed=40,
         pid: PIDValues = const.ALIGN_VALUES,
         direction_sign=1,
+        hard_limit = 0,
     ):
         initial_color_left = self.color_left.color()
         initial_reflection_left = self.color_left.rgb()[2]
@@ -456,10 +456,18 @@ class Robot:
                 and abs(left_error) <= 7
                 and abs(right_error) <= 7
             ):
-                break
+                return False, 0, "s"
+
+            motor_difference = self.motor_r.angle() - self.motor_l.angle()
+            if (hard_limit != 0 and abs(motor_difference) >= hard_limit):
+                if motor_difference >= 0:
+                    return True, motor_difference, "RIGHT"
+                else:
+                    return True, motor_difference, "LEFT"
+                
         self.stop()
 
-    def line_grabber(self, time, speed=35, multiplier = 0.8):
+    def line_grabber(self, side, time = 3000, speed=30, multiplier = 1):
         color_reads = []
         num_reads = 10
         wrong_read_perc = 0.5
@@ -467,12 +475,17 @@ class Robot:
         self.stopwatch.reset() 
         self.reset_wheels_angle()
 
+        sensor = self.color_right if side == "R" else self.color_left
+
         while True:
-            color_reads.append(self.color_left.color())
+            color_reads.append(sensor.color())
             if len(color_reads) == num_reads:
-                color_count_perc = color_reads.count(Color.BLUE) / num_reads
-                wrong_read_perc = 1 - color_count_perc
+                wrong_read_perc = color_reads.count(Color.WHITE) / num_reads
+                color_count_perc = 1 - wrong_read_perc
                 color_reads.clear()
+
+                wrong_read_perc = color_count_perc if side == "R" else wrong_read_perc
+                color_count_perc = wrong_read_perc if side == "R" else color_count_perc
 
             self.motor_l.dc(speed * color_count_perc * multiplier)
             self.motor_r.dc(speed * wrong_read_perc * multiplier)
@@ -482,3 +495,14 @@ class Robot:
             if self.stopwatch.time() > time:
                 self.stop()
                 return self.motor_degrees_to_cm(motor_mean)
+            
+    def one_wheel_turn(self, side, motor_degrees, speed = -40):
+        self.reset_wheels_angle()
+        if side == "R":
+            while abs(self.motor_r.angle()) <= motor_degrees:
+                self.motor_r.dc(speed)
+        else:
+            while abs(self.motor_l.angle()) <= motor_degrees:
+                self.motor_l.dc(speed)
+        self.reset_wheels_angle()
+        self.stop()

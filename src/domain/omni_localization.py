@@ -16,8 +16,8 @@ def forward_avoiding_places(robot: OmniRobot, direction=Direction.FRONT, speed=4
     pid = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
     robot.reset_wheels_angle()
     while (
-        left_sensor.color() not in wall_colors
-        or right_sensor.color() not in wall_colors
+        robot.color_back_left.color() != Color.RED
+        and robot.color_back_right.color() != Color.RED
     ):
         # robot.ev3_print(left_sensor.color(), right_sensor.color())
         if (
@@ -93,9 +93,31 @@ def omni_red_routine(robot: OmniRobot):
     robot.pid_walk(35, speed=40, direction=Direction.BACK)
     robot.pid_turn(90)
 
-    forward_avoiding_places(robot)
+    pid = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
+    robot.reset_wheels_angle()
+    while (
+        robot.color_front_left.color() not in wall_colors
+        or robot.color_front_right.color() not in wall_colors
+    ):
+        robot.ev3_print(robot.color_front_left.color(), robot.color_front_right.color())
+        if (
+            robot.color_front_left.color() in (Color.BLACK, Color.YELLOW)
+            and robot.color_front_right.color() == Color.WHITE
+        ):
+            # Curva à direita
+            robot.pid_turn(20)
+            robot.reset_wheels_angle()
+        elif (
+            robot.color_front_right.color() in (Color.BLACK, Color.YELLOW)
+            and robot.color_front_left.color() == Color.WHITE
+        ):
+            # Curva à esquerda
+            robot.pid_turn(-20)
+            robot.reset_wheels_angle()
+        robot.loopless_pid_walk(pid)
+    robot.off_motors()
 
-    robot.pid_walk(3, speed=40, direction=Direction.BACK)
+    robot.pid_walk(2, speed=40, direction=Direction.BACK)
     robot.align()
     robot.pid_walk(const.DIST_COLOR_AFTER_ALIGN, speed=30)
 
@@ -113,10 +135,30 @@ def omni_red_routine(robot: OmniRobot):
 
 def omni_all_white_routine(robot: OmniRobot):
     robot.ev3_print("White routine")
+    pid = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
+    robot.reset_wheels_angle()
+    while (
+        robot.color_front_left.color() not in wall_colors
+        or robot.color_front_right.color() not in wall_colors
+    ):
+        if (
+            robot.color_front_left.color() in (Color.BLACK, Color.YELLOW)
+            and robot.color_front_right.color() == Color.WHITE
+        ):
+            # Curva à direita
+            robot.pid_turn(20)
+            robot.reset_wheels_angle()
+        elif (
+            robot.color_front_left.color() in (Color.BLACK, Color.YELLOW)
+            and robot.color_front_right.color() == Color.WHITE
+        ):
+            # Curva à esquerda
+            robot.pid_turn(-20)
+            robot.reset_wheels_angle()
+        robot.loopless_pid_walk(pid)
+    robot.off_motors()
 
-    forward_avoiding_places(robot)
-
-    robot.pid_walk(3, speed=40, direction=Direction.BACK)
+    robot.pid_walk(2, speed=40, direction=Direction.BACK)
     robot.align()
     robot.pid_walk(const.DIST_COLOR_AFTER_ALIGN, speed=40)
 
@@ -140,8 +182,30 @@ def omni_black_routine(robot: OmniRobot):
     robot.pid_turn(180)
     robot.align(direction=Direction.BACK)
 
-    forward_avoiding_places(robot)
-    robot.pid_walk(3, speed=40, direction=Direction.BACK)
+    pid = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
+    robot.reset_wheels_angle()
+    while (
+        robot.color_front_left.color() not in wall_colors
+        or robot.color_front_right.color() not in wall_colors
+    ):
+        if (
+            robot.color_front_left.color() in (Color.BLACK, Color.YELLOW)
+            and robot.color_front_right.color() == Color.WHITE
+        ):
+            # Curva à direita
+            robot.pid_turn(20)
+            robot.reset_wheels_angle()
+        elif (
+            robot.color_front_right.color() in (Color.BLACK, Color.YELLOW)
+            and robot.color_front_left.color() == Color.WHITE
+        ):
+            # Curva à esquerda
+            robot.pid_turn(-20)
+            robot.reset_wheels_angle()
+        robot.loopless_pid_walk(pid)
+    robot.off_motors()
+
+    robot.pid_walk(2, speed=40, direction=Direction.BACK)
     robot.align()
 
     return omni_blue_routine(robot)
@@ -156,28 +220,23 @@ def localization_routine(robot: OmniRobot):
     robot.bluetooth.message()
     for n in range(4):
         robot.ev3_print("Checkpoint", n + 1)
-
-        def obstacle_function():
-            # robot.ev3_print(
-            #     robot.color_front_left.color(), robot.color_front_right.color()
-            # )
-            return (
-                robot.color_front_left.color() in wall_colors
-                or robot.color_front_right.color() in wall_colors
-            )
+        obstacle_function = lambda: (
+            robot.color_front_left.color() in wall_colors
+            or robot.color_front_right.color() in wall_colors
+            or (robot.bluetooth.message(should_wait=False) or 2550)
+            < const.OBSTACLE_DISTANCE
+        )
 
         SEARCHING_DISTANCE = 25
         has_seen_obstacle, walked_percentage = robot.pid_walk(
             SEARCHING_DISTANCE, obstacle_function=obstacle_function
         )
         robot.ev3_print("Walked percentage:", walked_percentage)
-        robot.stop()
 
         if has_seen_obstacle:
             robot.ev3_print("Obstacle detected!")
 
-            # Linha a frente
-            robot.pid_walk(3, speed=30, direction=Direction.BACK)
+            robot.pid_walk(2, speed=30, direction=Direction.BACK)
             robot.align(speed=30)
             robot.pid_walk(const.DIST_COLOR_AFTER_ALIGN, speed=30)
 
@@ -187,10 +246,8 @@ def localization_routine(robot: OmniRobot):
         robot.ev3_print("Color detected:", color_str)
 
         if color_str == "BLUE":
-            robot.bluetooth.message("STOP")
             return omni_blue_routine(robot)
         elif color_str == "RED":
-            robot.bluetooth.message("STOP")
             return omni_red_routine(robot)
 
         colors_checkpoints_list.append(color_str)
@@ -205,7 +262,6 @@ def localization_routine(robot: OmniRobot):
         # robot.wait_button()
         robot.reset_wheels_angle()
         robot.pid_turn(90)
-        # robot.wait_button()
 
     robot.bluetooth.message("STOP")
 

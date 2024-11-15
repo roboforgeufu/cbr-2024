@@ -40,7 +40,7 @@ from domain.localization import (
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 from domain.path_control import path_control
 from domain.boarding import passenger_unboarding, passenger_boarding
-from domain.localization import localization_routine
+from domain.localization import localization_routine, blue_routine
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 from domain.path_control import path_control
 from domain.boarding import passenger_unboarding, passenger_boarding
@@ -70,8 +70,27 @@ from core.robot import Robot
 
 
 def test_sandy_main(sandy: Robot):
-    localization_routine(sandy)
-    # next_vertice = passenger_boarding()
+    ### loop ###
+    map_graph = Graph(map_matrix)
+    sandy.orientation = "S"
+    while True:
+        ### embarque de passageiro ###
+        # embarca o passageiro e retorna o(s) vertice(s) de destino
+        targets = passenger_boarding(sandy)
+
+        ### calculo de rota e controle de caminho ###
+        # calculo de rota e movimento até o destino
+        current_position = move_to_target(sandy, map_graph, const.SANDY_ORIGIN_VERTEX, targets)
+
+        ### desembarque de passageiro ###
+        # desembarque do passageiro
+        passenger_unboarding(sandy)
+
+        ### retorno para a origem ###
+        # movimentação de retorno à origem
+        move_to_target(sandy, map_graph, current_position, const.SANDY_BOARDING_VERTEX)
+        # rotina de alinhamento na zona de embarque
+        origin_alignment_routine(sandy)
 
 
 def test_path_control(sandy: Robot):
@@ -101,18 +120,20 @@ def test_calibrate_align_pid(robot: Robot):
 
 def test_passenger_boarding(sandy: Robot):
     sandy.bluetooth.start()
-    sandy.line_grabber(time = 3000)
-    sandy.ev3_print(passenger_boarding(sandy))
+    blue_routine(sandy)
+    print(passenger_boarding(sandy))
+    # sandy.ev3_print(passenger_boarding(sandy))
 
 
 def test_passenger_unboarding(sandy: Robot):
     sandy.bluetooth.start()
     wait(100)
-    from domain.star_platinum import star_platinum
     
-    star_platinum(sandy, 'DOWN')
-    star_platinum(sandy, 'CLOSE')
-    star_platinum(sandy, 'UP')
+    star_platinum.star_platinum(sandy, 'DOWN')
+    star_platinum.star_platinum(sandy, 'OPEN')
+    
+    star_platinum.star_platinum(sandy, 'CLOSE')
+    star_platinum.star_platinum(sandy, 'UP')
     
     passenger_unboarding(sandy)
 
@@ -173,11 +194,11 @@ def sandy_main(sandy: Robot):
 
 
 def junior_main(junior: Robot):
-    junior.bluetooth.start()
 
     # Fecha e levanta garra inicialmente
-    junior.motor_open_claw. run_until_stalled(300, Stop.HOLD, 70)
     junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 70)
+    junior.motor_open_claw.run_until_stalled(-300, Stop.HOLD, 70)
+    junior.bluetooth.start()
     star_platinum.main(junior)
 
 
@@ -205,8 +226,8 @@ def main(hostname):
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
-                motor_elevate_claw=Port.C,
-                motor_open_claw=Port.B,
+                motor_elevate_claw=Port.D,
+                motor_open_claw=Port.C,
                 color_claw=DecisionColorSensor(
                     ColorSensor(Port.S2), junior_lego_ev3_color_p2_decision_tree
                 ),
