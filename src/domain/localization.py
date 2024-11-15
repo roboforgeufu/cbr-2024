@@ -357,18 +357,20 @@ def black_routine(robot: Robot):
 
     return blue_routine(robot)
 
-def color_multicheck(robot: Robot, times = 2, distance = 1, cor = Color.BLUE):
+
+def color_multicheck(robot: Robot, times=2, distance=1, cor=Color.BLUE):
 
     for i in range(times):
         if robot.color_left.color() != Color.WHITE:
-            robot.pid_walk(distance, speed = 40)
+            robot.pid_walk(distance, speed=40)
             if robot.color_left.color() == cor:
                 return True
         elif robot.color_right.color() != Color.WHITE:
-            robot.pid_walk(distance, speed = -40)
+            robot.pid_walk(distance, speed=-40)
             if robot.color_right.color() == cor:
                 return True
     return False
+
 
 def red_routine(robot: Robot):
     robot.pid_walk(cm=35, speed=-50)
@@ -422,7 +424,6 @@ def red_routine(robot: Robot):
 
         # Seguir reto até o azul (não sei se é necessário tratar o preto de novo)
         obstacle_function = lambda: (
-
             robot.color_left.color() != Color.WHITE
             or robot.color_right.color() != Color.WHITE
         )
@@ -474,9 +475,16 @@ def red_routine(robot: Robot):
     robot.pid_walk(cm=10, speed=-30)
     robot.align(speed=30)
 
-    print(robot.color_left.color(), robot.color_right.color(), wall_colors_check(robot.color_left.color(), robot.color_right.color()))
+    print(
+        robot.color_left.color(),
+        robot.color_right.color(),
+        wall_colors_check(robot.color_left.color(), robot.color_right.color()),
+    )
 
-    if wall_colors_check(robot.color_left.color(), robot.color_right.color()) != "BLACK":
+    if (
+        wall_colors_check(robot.color_left.color(), robot.color_right.color())
+        != "BLACK"
+    ):
         print("Chamando rotina do azul")
         return blue_routine(robot)
     elif (
@@ -548,15 +556,16 @@ def all_white_routine(robot: Robot):
 
 
 def wall_colors_check(left_color, right_color):
+    color_str = "WHITE"
     if Color.YELLOW in (left_color, right_color):
-        return "YELLOW"
+        color_str = "YELLOW"
     if Color.BLACK in (left_color, right_color):
-        return "BLACK"
+        color_str = "BLACK"
     if Color.RED in (left_color, right_color):
-        return "RED"
+        color_str = "RED"
     if Color.BLUE in (left_color, right_color):
-        return "BLUE"
-    return "WHITE"
+        color_str = "BLUE"
+    return color_str
 
 
 """def interprets_list(lista):
@@ -586,7 +595,8 @@ def localization_routine(robot: Robot):
         )
 
         has_seen_obstacle, walked_perc = robot.pid_walk(
-            25, 40,
+            25,
+            40,
             obstacle_function=obstacle_function,
         )
 

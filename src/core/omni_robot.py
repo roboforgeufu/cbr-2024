@@ -549,7 +549,7 @@ class OmniRobot:
 
         if high_angle is None:
             self.claw_high_angle = self.motor_claw_lift.run_until_stalled(
-                speed=-300, duty_limit=30
+                speed=-300, duty_limit=60
             )
             self.ev3_print("High_angle:", self.claw_high_angle)
         else:
@@ -563,7 +563,7 @@ class OmniRobot:
         else:
             self.claw_low_angle = low_angle
 
-        self.claw_mid_angle = self.claw_low_angle - 100
+        self.claw_mid_angle = self.claw_low_angle - 120
 
     def line_follower(
         self,

@@ -79,13 +79,16 @@ from domain.boarding import (
 from domain.omni_localization import localization_routine, forward_avoiding_places
 
 
+testing_targets = [0, 13, 26, 2, 15, 28, 4, 17, 30]
+
+
 def lilo_main(lilo: OmniRobot):
+
     lilo.ev3_print(lilo.bluetooth.start())
     wait(100)
 
     lilo.bluetooth.message("CLAW_HIGH")
     lilo.bluetooth.message()
-    
 
     # Inicialização do mapa
     map_graph = Graph(map_matrix)
@@ -94,19 +97,26 @@ def lilo_main(lilo: OmniRobot):
     # Localização inicial
     #
     localization_routine(lilo)
-    lilo.orientation = "N"  # TODO: deixar na lógica de localização
+
+    n = 0
 
     while True:
         #
         # Coleta de passageiros
         #
         passenger_info, boarding_position = omni_passenger_boarding(lilo)
+        lilo.orientation = "N"  # TODO: deixar na lógica de localização
         lilo.ev3_print("P.i.:", passenger_info)
 
         #
         # Pathfinding e movimentação (obstáculos)
         #
         target = get_target_for_passenger(*passenger_info)
+
+        # TODO: REMOVER!!!!!!!!!!!!!!
+        # target = [testing_targets[n]]
+        # !!!!!!!!!!!!!!!!!!!!!!!!!
+
         delivered_position = move_from_position_to_targets(
             lilo, map_graph, boarding_position[0], target
         )
@@ -123,6 +133,7 @@ def lilo_main(lilo: OmniRobot):
             lilo, map_graph, delivered_position, [boarding_position[1]]
         )
         omni_manouver_to_get_passenger(lilo)
+        n += 1
 
 
 def move_from_position_to_targets(
@@ -206,7 +217,7 @@ def test_bt_lilo(lilo: OmniRobot):
 
 
 def stitch_main(stitch: OmniRobot):
-    stitch.start_claw(0, 109, -245, 0)
+    stitch.start_claw(10, 109, None, 10)
     open_claw(stitch)
     # stitch.start_claw()
     stitch.bluetooth.start()
@@ -239,17 +250,16 @@ def stitch_main(stitch: OmniRobot):
 
 def test_unboarding(robot: OmniRobot):
     robot.bluetooth.start()
-    
+
     wait(100)
-    
+
     robot.bluetooth.message("CLAW_CLOSE")
     robot.bluetooth.message()
 
     robot.bluetooth.message("CLAW_HIGH")
     robot.bluetooth.message()
-    
+
     omni_passenger_unboarding(robot)
-    
 
 
 def main(hostname):
