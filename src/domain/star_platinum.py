@@ -34,7 +34,7 @@ def lift_claw(robot: Robot, side=1):
 
 
 def open_claw(robot: Robot, side=1):
-    robot.motor_open_claw.run_until_stalled(500 * side, Stop.HOLD)
+    robot.motor_open_claw.run_until_stalled(200 * side, Stop.HOLD)
 
 
 def main(robot: Robot):
