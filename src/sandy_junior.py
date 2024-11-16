@@ -70,9 +70,17 @@ from core.robot import Robot
 
 
 def test_sandy_main(sandy: Robot):
-    ### loop ###
+    ### inicialização ###
+    # inicia a comunicacao bluetooth
+    sandy.bluetooth.start()
+    # cria o mapa do desafio 
     map_graph = Graph(map_matrix)
-    sandy.orientation = "S"
+
+    ### localização inicial ###
+    # rotina de localização inicial
+    localization_routine(sandy)
+
+    ### loop ###
     while True:
         ### embarque de passageiro ###
         # embarca o passageiro e retorna o(s) vertice(s) de destino
@@ -159,7 +167,6 @@ def move_to_target(
         current_position = path[current_position_idx]
     return current_position
 
-
 def sandy_main(sandy: Robot):
 
     ### inicialização ###
@@ -190,22 +197,21 @@ def sandy_main(sandy: Robot):
         # movimentação de retorno à origem
         move_to_target(sandy, map_graph, current_position, const.SANDY_BOARDING_VERTEX)
         # rotina de alinhamento na zona de embarque
-        origin_alignment_routine(sandy)
 
 
 def junior_main(junior: Robot):
 
     # Fecha e levanta garra inicialmente
-    junior.motor_open_claw.run_until_stalled(-300, Stop.HOLD, 70)
+    junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 60)
     wait(300)
-    junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 70)
+    junior.motor_open_claw.run_until_stalled(-300, Stop.HOLD, 40)
     junior.bluetooth.start()
     star_platinum.main(junior)
 
 
 def main(hostname):
     if hostname == "sandy":
-        sandy_main(
+        test_sandy_main(
             Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,

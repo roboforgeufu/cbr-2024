@@ -1,6 +1,7 @@
 from core.robot import Robot
 from pybricks.parameters import Port
 from pybricks.ev3devices import ColorSensor
+from pybricks.tools import wait
 
 import constants as const
 from pybricks.parameters import Color
@@ -188,21 +189,29 @@ color_lateral_vertices = [
 
 
 def origin_alignment_routine(sandy: Robot, angle = 60):
+    # alinhar com o azul
+    sandy.pid_turn(90)
+    print("Gira 90")
+    sandy.align(40)
+    print("Alinhou")
+    # posiciona o sensor em cima da linha para seguir
+    sandy.pid_walk(2, -30)
     print("Ativou origin aligment routine")
     sandy.pid_turn(angle=angle)
     print("Gira: ",angle)
     sandy.reset_wheels_angle()
-    pid = PIDControl(const.PID_WALK_VALUES)
-    while sandy.color_left.color() == Color.WHITE:
-        sandy.loopless_pid_walk(pid)
     sandy.stop()
 
 
 # Chega de frente no azul e faz a rotina do azul
 def blue_routine(robot: Robot):
+    # começa com os sensores em cima do azul
     print(robot.color_left.color(), robot.color_right.color())
-    robot.pid_walk(cm = const.LINE_TO_CELL_CENTER_DISTANCE+5, speed = -40)
+    robot.pid_walk(10, -30)
+    robot.align(40)
+    robot.pid_walk(cm = const.LINE_TO_CELL_CENTER_DISTANCE, speed = -40)
     robot.pid_turn(-90)
+    # indo em direcao ao vermelho
     pid_control = PIDControl(const.PID_WALK_VALUES)
     robot.reset_wheels_angle()
     while ( 
@@ -210,18 +219,14 @@ def blue_routine(robot: Robot):
         and robot.color_left.color != Color.RED
     ):
         robot.loopless_pid_walk(pid_control, speed=40)
+    # alinha com o vermelho
     robot.pid_walk(cm=2, speed=-30)
     print("Andou 2cm")
     robot.align(40)
     print("Alinhou")
     robot.pid_walk(cm = const.LINE_TO_CELL_CENTER_DISTANCE, speed = -30)
-    print("Ativou o pid walk para trás")
-    robot.pid_turn(90)
-    print("Gira 90")
-    robot.align(40)
-    print("Alinhou")
-
     origin_alignment_routine(robot, 90)
+
     return "V5"  # Verificar se a virada está com o sinal correto
 
 
@@ -355,7 +360,7 @@ def color_multicheck(robot: Robot, times = 1, distance = 2, cor = Color.BLUE):
 
 
 def red_routine(robot: Robot):
-    print("Início da red routine")
+    robot.ev3_print("Início da red routine")
     robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE + const.CELL_DISTANCE, speed=-50)
     print("Ativou o pid walk")
     robot.pid_turn(90)
@@ -435,143 +440,152 @@ def red_routine(robot: Robot):
     # Rotina para quando não identifica o obstáculo
     robot.reset_wheels_angle()
     while True:
-        robot.loopless_pid_walk(pid_control, speed=50)
-        print("Ativou a loopless pid walk")
+        robot.loopless_pid_walk(pid_control, speed=60)
         # caso encontre o azul passa para a prox rotina
-        if wall_colors_check(
-            robot.color_left.color(), robot.color_right.color()
-        ) == "BLUE":
-            print("Viu azul")
-            robot.stop()
-            robot.ev3_print("Embarque")
-            return blue_routine(robot)
-        # caso encontre algo diferente de azul
-        elif wall_colors_check(
-            robot.color_left.color(), robot.color_right.color()
-        ) not in ("BLUE", "WHITE"):
-            print("Não leu azul nem branco")
-            # tentar alinhar com a linha encontrada
-            robot.stop()
-            robot.reset_wheels_angle()
-            hard_limit_reached, motor_degree_correction, motor = robot.align(hard_limit = 200)
+        if wall_colors_check(robot.color_left.color(), robot.color_right.color()) != "WHITE":
+            robot.pid_walk(2, 30)
+            if wall_colors_check(
+                robot.color_left.color(), robot.color_right.color()
+            ) == "BLUE":
+                print("Viu azul")
+                robot.stop()
+                robot.ev3_print("Embarque")
+                return blue_routine(robot)
+            # caso encontre algo diferente de azul
+            elif wall_colors_check(
+                robot.color_left.color(), robot.color_right.color()
+            ) not in ("BLUE"):
+                print("Não leu azul nem branco")
+                robot.pid_walk(4, -30)
+                # tentar alinhar com a linha encontrada
+                robot.stop()
+                robot.reset_wheels_angle()
+                hard_limit_reached, motor_degree_correction, motor = robot.align(hard_limit = 200)
 
-            # se passar a rotacao do motor passar de um padrao pre estabelecido 
-            if hard_limit_reached:
-                # o robo sabe que eh estabelecimento
-                robot.stop()
-                robot.ev3_print("Estabelecimento")
-                robot.reset_wheels_angle()
-                # corrige o movimento
-                if motor == "RIGHT":
+                # se passar a rotacao do motor passar de um padrao pre estabelecido 
+                if hard_limit_reached:
+                    # o robo sabe que eh estabelecimento
                     robot.stop()
-                    robot.ev3_print("Corrigindo motor direito")
-                    robot.one_wheel_turn("R", motor_degree_correction*1.1)
-                    robot.pid_walk(cm=5, speed=40)
-                    pid_control.reset()
+                    robot.ev3_print("Estabelecimento")
                     robot.reset_wheels_angle()
+                    # corrige o movimento
+                    if motor == "RIGHT":
+                        robot.stop()
+                        robot.ev3_print("Corrigindo motor direito")
+                        robot.one_wheel_turn("R", motor_degree_correction*1.25)
+                        robot.pid_walk(cm=5, speed=40)
+                        pid_control.reset()
+                        robot.reset_wheels_angle()
+                    else:
+                        robot.stop()
+                        robot.ev3_print("Corrigindo motor esquerdo")
+                        robot.one_wheel_turn("L", motor_degree_correction*1.25)
+                        robot.pid_walk(cm=5, speed=40)
+                        pid_control.reset()
+                        robot.reset_wheels_angle()
+                
                 else:
+                    # embarque ou parque
                     robot.stop()
-                    robot.ev3_print("Corrigindo motor esquerdo")
-                    robot.one_wheel_turn("L", motor_degree_correction*1.1)
-                    robot.pid_walk(cm=5, speed=40)
+                    robot.pid_walk(cm=2, speed=40)
                     pid_control.reset()
                     robot.reset_wheels_angle()
-            
-            else:
-                # embarque ou parque
-                robot.stop()
-                robot.pid_walk(cm=3, speed=40)
-                pid_control.reset()
-                robot.reset_wheels_angle()
-                if wall_colors_check(
-                    robot.color_left.color(), robot.color_right.color()
-                ) == "BLUE":
-                    robot.ev3_print("Embarque")
-                    robot.stop()
-                    return blue_routine(robot)
-                else:
-                    robot.ev3_print("Parque")
-                    robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE, speed=-40)
-                    robot.pid_turn(180)
-                    pid_control.reset()
-                    robot.reset_wheels_angle()
+                    if wall_colors_check(
+                        robot.color_left.color(), robot.color_right.color()
+                    ) == "BLUE":
+                        robot.ev3_print("Embarque")
+                        robot.stop()
+                        return blue_routine(robot)
+                    else:
+                        robot.ev3_print("Parque")
+                        robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE, speed=-40)
+                        robot.pid_turn(180)
+                        pid_control.reset()
+                        robot.reset_wheels_angle()
+
                 
 
 
 def all_white_routine(robot: Robot):
     print("Início da all white routine")
-    pid_control = const.PID_WALK_VALUES
+    pid_control = PIDControl(const.PID_WALK_VALUES)
     robot.reset_wheels_angle()
     while True:
-        robot.loopless_pid_walk(pid_control, speed=50)
+        robot.loopless_pid_walk(pid_control, speed=40)
         # print("Ativou a loopless pid walk")
         # caso encontre o azul passa para a prox rotina
-        if wall_colors_check(
-            robot.color_left.color(), robot.color_right.color()
-        ) == "BLUE":
-            print("Viu azul")
+        if robot.color_left.color() != Color.WHITE or robot.color_right.color() != Color.WHITE:
+            robot.pid_walk(2, -30)
+            robot.align()
+            robot.pid_walk(2,20)
             robot.stop()
-            robot.ev3_print("Embarque")
-            return blue_routine(robot)
-        
-        # caso veja vermelho inicia a respectiva rotina
-        elif wall_colors_check(
-            robot.color_left.color(), robot.color_right.color()
-        ) == "RED":
-            robot.ev3_print("Vermelho")
-            return red_routine(robot)
-        
-        # caso encontre algo diferente de azul e vermelho
-        elif wall_colors_check(
-            robot.color_left.color(), robot.color_right.color()
-        ) not in ("BLUE", "WHITE", "RED"):
-            print("Não leu azul nem branco")
-            # tentar alinhar com a linha encontrada
-            robot.stop()
-            robot.reset_wheels_angle()
-            hard_limit_reached, motor_degree_correction, motor = robot.align(hard_limit = 200)
+            print(robot.color_left.color(), robot.color_right.color())
 
-            # se passar a rotacao do motor passar de um padrao pre estabelecido 
-            if hard_limit_reached:
-                # o robo sabe que eh estabelecimento
+            if wall_colors_check(
+                robot.color_left.color(), robot.color_right.color()
+            ) == "BLUE":
+                print(robot.color_left.color(), robot.color_right.color())
+                print("Viu azul")
                 robot.stop()
-                robot.ev3_print("Estabelecimento")
-                robot.reset_wheels_angle()
-                # corrige o movimento
-                if motor == "RIGHT":
-                    robot.stop()
-                    robot.ev3_print("Corrigindo motor direito")
-                    robot.one_wheel_turn("R", motor_degree_correction*1.1)
-                    robot.pid_walk(cm=5, speed=40)
-                    pid_control.reset()
-                    robot.reset_wheels_angle()
-                else:
-                    robot.stop()
-                    robot.ev3_print("Corrigindo motor esquerdo")
-                    robot.one_wheel_turn("L", motor_degree_correction*1.1)
-                    robot.pid_walk(cm=5, speed=40)
-                    pid_control.reset()
-                    robot.reset_wheels_angle()
+                robot.ev3_print("Embarque")
+                return blue_routine(robot)
             
-            else:
-                # embarque ou parque
+            # caso veja vermelho inicia a respectiva rotina
+            elif wall_colors_check(
+                robot.color_left.color(), robot.color_right.color()
+            ) == "RED":
+                robot.ev3_print("Vermelho")
+                return red_routine(robot)
+            
+            # caso encontre algo diferente de azul e vermelho
+            elif wall_colors_check(
+                robot.color_left.color(), robot.color_right.color()
+            ) not in ("BLUE", "WHITE", "RED"):
+                print("Não leu azul nem branco")
+                # tentar alinhar com a linha encontrada
                 robot.stop()
-                robot.pid_walk(cm=3, speed=40)
-                pid_control.reset()
                 robot.reset_wheels_angle()
-                if wall_colors_check(
-                    robot.color_left.color(), robot.color_right.color()
-                ) == "BLUE":
-                    robot.ev3_print("Embarque")
+                hard_limit_reached, motor_degree_correction, motor = robot.align(hard_limit = 200)
+                # se passar a rotacao do motor passar de um padrao pre estabelecido 
+                if hard_limit_reached:
+                    # o robo sabe que eh estabelecimento
                     robot.stop()
-                    return blue_routine(robot)
+                    robot.ev3_print("Estabelecimento")
+                    robot.reset_wheels_angle()
+                    # corrige o movimento
+                    if motor == "RIGHT":
+                        robot.stop()
+                        robot.ev3_print("Corrigindo motor direito")
+                        robot.one_wheel_turn("R", motor_degree_correction*1.1)
+                        robot.pid_walk(cm=5, speed=40)
+                        pid_control.reset()
+                        robot.reset_wheels_angle()
+                    else:
+                        robot.stop()
+                        robot.ev3_print("Corrigindo motor esquerdo")
+                        robot.one_wheel_turn("L", motor_degree_correction*1.1)
+                        robot.pid_walk(cm=5, speed=40)
+                        pid_control.reset()
+                        robot.reset_wheels_angle()
+                
                 else:
-                    robot.ev3_print("Parque")
-                    robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE, speed=-40)
-                    robot.pid_turn(180)
+                    # embarque ou parque
+                    robot.stop()
+                    robot.pid_walk(cm=5, speed=-40)
                     pid_control.reset()
                     robot.reset_wheels_angle()
-        robot.loopless_pid_walk(pid_control)
+                    if wall_colors_check(
+                        robot.color_left.color(), robot.color_right.color()
+                    ) == "BLUE":
+                        robot.ev3_print("Embarque")
+                        robot.stop()
+                        return blue_routine(robot)
+                    else:
+                        robot.ev3_print("Parque")
+                        robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE, speed=-40)
+                        robot.pid_turn(180)
+                        pid_control.reset()
+                        robot.reset_wheels_angle()
     # robot.stop()
 
     # robot.pid_walk(cm=2, speed=-40)
@@ -616,7 +630,6 @@ def walk_until_non_white(robot: Robot, speed=60):
 
 def wall_colors_check(left_color, right_color):
     color_str = "WHITE"
-    print("Ativou wall colors check")
     if Color.YELLOW in (left_color, right_color):
         color_str = "YELLOW"
     if Color.BLACK in (left_color, right_color):
@@ -649,14 +662,14 @@ def localization_routine(robot: Robot):
     lista = []
 
     for n in range(4):
-        print("{}ª iteração!".format(n))
+        print("{}ª iteração!".format(n+1))
         obstacle_function = lambda: (
             robot.color_left.color() != Color.WHITE
             or robot.color_right.color() != Color.WHITE
         )
 
         has_seen_obstacle, walked_perc = robot.pid_walk(
-            30, 40,
+            20, 40,
             obstacle_function=obstacle_function,
         )
 
@@ -678,7 +691,7 @@ def localization_routine(robot: Robot):
             return red_routine(robot)
 
 
-        robot.pid_walk(cm=30 * walked_perc, speed=-40)
+        robot.pid_walk(cm=20 * walked_perc, speed=-40)
         robot.pid_turn(90)
 
     robot.ev3_print("Cores detectadas nos quatro lados:", lista)

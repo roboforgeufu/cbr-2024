@@ -112,6 +112,7 @@ def path_control(robot: Robot, path: list, directions: list):
     """
     Rotina pro robô seguir o caminho traçado, seguindo o conjunto de direções determinado.
     """
+    # inicia o idx da lista como 0 e a necessidade de alinhar
     position_index = 0
     needs_align = 0
     for idx, (direction, distance) in enumerate(directions):
@@ -141,19 +142,19 @@ def path_control(robot: Robot, path: list, directions: list):
         if turn_times != 0:
             needs_align += 1
         
-        # caso a orientacao nao coincida alinha na prox parede disponivel
-        if (needs_align >= 2):
-            if (
-                get_relative_orientation(robot.orientation, 1)
-                in walls_of_vertices[path[position_index]]
-            ):
-                align_side(robot, "right")
-            elif (
-                get_relative_orientation(robot.orientation, -1)
-                in walls_of_vertices[path[position_index]]
-            ):
-                align_side(robot, "left")
-            needs_align = 0
+        # # caso a orientacao nao coincida alinha na prox parede disponivel
+        # if (needs_align >= 2):
+        #     if (
+        #         get_relative_orientation(robot.orientation, 1)
+        #         in walls_of_vertices[path[position_index]]
+        #     ):
+        #         align_side(robot, "right")
+        #     elif (
+        #         get_relative_orientation(robot.orientation, -1)
+        #         in walls_of_vertices[path[position_index]]
+        #     ):
+        #         align_side(robot, "left")
+        #     needs_align = 0
 
         if idx == len(directions) - 1:
             # nao anda a ultima distancia, pra nao entrar no estabelecimento
@@ -165,6 +166,7 @@ def path_control(robot: Robot, path: list, directions: list):
             # Caso seja, o robô não desliga os motores entre as movimentações.
             should_stop = False
 
+        # procura obstaculos no caminho e trtar bater com um sensor em estabelecimento
         obstacle_function = (
             lambda: robot.color_left.color() in wall_colors
             or robot.color_right.color() in wall_colors
@@ -173,9 +175,11 @@ def path_control(robot: Robot, path: list, directions: list):
         )
         has_seen_obstacle, walked_perc = robot.pid_walk(
             distance,
+            40,
             off_motors=should_stop,
             obstacle_function=obstacle_function,
         )
+        # caso veja um obstaculo volta a porcentagem do ultimo movimento e recalcula a rota
         while has_seen_obstacle:
             robot.stop()
             if (robot.ultra_feet.distance() < const.OBSTACLE_DISTANCE
@@ -188,37 +192,28 @@ def path_control(robot: Robot, path: list, directions: list):
                     obstacle_function=obstacle_function,
                 )
                 return False, position_index
+            # bateu com o sensor direito em um estabelecimento
             elif robot.color_right.color() in wall_colors:
-                # Alinhamento à direita
-                robot.ev3_print("Line right")           
-                # caso tenha uma parede e o robo andou menos que 50% da celula, alinhe
-                if (
-                    (get_relative_orientation(robot.orientation, 1) 
-                     in walls_of_vertices[path[position_index]])
-                    and walked_perc <= 0.5
-                ):
-                    align_side(robot, "right")
-                    needs_align = 0
-                has_seen_obstacle, walked_perc = robot.pid_walk(
-                    cm=distance * (1 - walked_perc),
-                    off_motors=should_stop,
-                    obstacle_function=obstacle_function,
+                # caso veja estabelecimento com o sensor direito segue a linha até ver branco 
+                robot.line_follower(
+                    sensor = robot.color_right,
+                    speed = 40,
+                    loop_condition_function = lambda: robot.color_right.color()
+                    != Color.WHITE
+                    and robot.color_left.color() == Color.WHITE,
+                    error_function=lambda: robot.color_right.rgb()[2],
+                    side="R",
                 )
             elif robot.color_left.color() in wall_colors:
-                # Alinhamento à esquerda
-                robot.ev3_print("Line left")
-                # caso tenha uma parede e o robo andou menos que 50% da celula, alinhe
-                if (
-                    (get_relative_orientation(robot.orientation, -1) 
-                     in walls_of_vertices[path[position_index]])
-                    and walked_perc <= 0.5
-                ):
-                    align_side(robot, "left")
-                    needs_align = 0
-                has_seen_obstacle, walked_perc = robot.pid_walk(
-                    cm=distance * (1 - walked_perc),
-                    off_motors=should_stop,
-                    obstacle_function=obstacle_function,
+                # caso veja estabelecimento com o sensor esquerdo segue a linha até ver branco 
+                robot.line_follower(
+                    sensor = robot.color_left,
+                    speed = 40,
+                    loop_condition_function = lambda: robot.color_left.color()
+                    != Color.WHITE
+                    and robot.color_right.color() == Color.WHITE,
+                    error_function=lambda: robot.color_left.rgb()[2],
+                    side="L",
                 )
 
         position_index += 1

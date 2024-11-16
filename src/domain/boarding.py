@@ -25,45 +25,67 @@ def passenger_boarding(robot: Robot):
     robot.reset_wheels_angle()
     pid = PIDControl(const.LINE_FOLLOWER_VALUES)
     target = 20
-    while robot.infra_side.distance() >= 30:
-        robot.line_follower(target, "L", pid, 60)
-    while robot.infra_side.distance() < 30:
-        robot.line_follower(target, "L", pid, 60)
-    robot.pid_walk(4, -40)
+    # procura um cilindro
+    robot.line_follower(
+        sensor = robot.color_left,
+        loop_condition_function= lambda: robot.infra_side.distance() >= 40,
+        speed = 40,
+        side = "L",
+    )
+    # passa do cilindro
+    robot.line_follower(
+        sensor = robot.color_left,
+        loop_condition_function= lambda: robot.infra_side.distance() >= 40,
+        speed = 40,
+        side = "L",
+    )
+    # corrige a distancia do cilindro
+    robot.pid_walk(10, 40)
+    # aponta para o cilindro
     robot.pid_turn(-90)
+    star_platinum(robot, "CLOSE")
     star_platinum(robot, "DOWN")
     star_platinum(robot, "OPEN")
     robot.align(30)
-    robot.pid_walk(8, 40)
+    robot.pid_walk(7, 40)
+    # pega o cilindro e define as informações
     star_platinum(robot, "CLOSE")
     vertice = star_platinum(robot, "PASSENGER INFO")
+    # tratativa de leitura da cor branca e nenhum cilindro
     if len(vertice) == 0:
-        star_platinum(robot, "OPEN")
         star_platinum(robot, "UP")
-        star_platinum(robot, "CLOSE")
+        star_platinum(robot, "OPEN")
         robot.pid_walk(10, -40)
-        robot.align(speed=40)
+        robot.align(speed=30)
         robot.pid_turn(90)
         return passenger_boarding(robot)
+    # pega o cilindro
     star_platinum(robot, "UP")
     robot.pid_walk(10, -40)
-    robot.align(speed=40)
-    # robot.pid_walk(4,-30)
+    robot.align(speed=30)
+    # Alinha de novo
+    robot.pid_walk(2,-30)
     robot.pid_turn(90)
 
-    pid = PIDControl(const.LINE_FOLLOWER_VALUES)
-    while robot.color_right.color() != Color.RED:
-        robot.line_follower(target, "L", pid, 60)
-    robot.pid_walk(cm=5, speed=-40)
-    robot.pid_turn(90)
-    robot.pid_walk(cm=2, speed=-40)
-    robot.align()
-    robot.pid_walk(cm=13.5, speed=-60)
+    # segue a linha até V31
+    robot.line_follower(
+        sensor = robot.color_left,
+        loop_condition_function= lambda: robot.color_right.color() != Color.RED,
+        speed = 40,
+        side = "L",
+    )
+    # alinha com o azul
+    robot.pid_walk(10, -30)
     robot.pid_turn(-90)
-    robot.align()
-    robot.pid_walk(cm=13.5, speed=-60)
+    robot.pid_walk(5, -30)
+    robot.align(speed=30)
+    robot.pid_walk(cm = const.LINE_TO_CELL_CENTER_DISTANCE, speed = -30)
+    # alinha com o vermelho
+    robot.pid_turn(90)
+    robot.align(speed=30)
+    robot.pid_walk(cm = const.LINE_TO_CELL_CENTER_DISTANCE, speed = -30)
     robot.orientation = "S"
-
+    
     return vertice
 
 

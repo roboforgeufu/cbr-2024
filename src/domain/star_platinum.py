@@ -33,8 +33,8 @@ def lift_claw(robot: Robot, side=1):
     robot.motor_elevate_claw.run_until_stalled(300 * side, Stop.HOLD, duty_limit = 60)
 
 
-def open_claw(robot: Robot, side=1):
-    robot.motor_open_claw.run_until_stalled(200 * side, Stop.HOLD)
+def open_claw(robot: Robot, side=1, duty = 40):
+    robot.motor_open_claw.run_until_stalled(200 * side, Stop.HOLD, duty)
 
 
 def main(robot: Robot):
@@ -57,7 +57,7 @@ def main(robot: Robot):
             info = "Done!"
         elif request == "CLOSE":
             robot.ev3_print("Executing")
-            open_claw(robot)
+            open_claw(robot, duty = 70)
             info = "Done!"
         elif request == "PASSENGER INFO":
             info = passenger_info(robot)
