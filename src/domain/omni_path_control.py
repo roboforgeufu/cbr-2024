@@ -80,7 +80,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
             needs_align = 0
             robot.pid_walk(
                 const.ROBOT_SIZE_HALF,
-                speed=60,
+                speed=40,
                 direction=omni_direction,
                 off_motors=False,
             )
@@ -117,6 +117,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
             off_motors=should_stop,
             obstacle_function=obstacle_function,
             direction=omni_direction,
+            speed=40,
         )
         while has_seen_obstacle:
             robot.stop()
@@ -135,6 +136,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
                 robot.ev3_print("à frente:", walked_perc)
                 robot.pid_walk(
                     distance * walked_perc,
+                    speed=40,
                     direction=Direction.get_relative_direction(omni_direction, 4),
                 )
                 return (False, position_index)
@@ -224,6 +226,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
 
                 has_seen_obstacle, walked_perc = robot.pid_walk(
                     cm=distance * (1 - walked_perc),
+                    speed=40,
                     off_motors=should_stop,
                     obstacle_function=obstacle_function,
                     direction=omni_direction,

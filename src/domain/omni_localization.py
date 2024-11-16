@@ -9,15 +9,47 @@ from core.utils import PIDControl
 import constants as const
 
 
-def forward_avoiding_places(robot: OmniRobot, direction=Direction.FRONT, speed=45):
+def forward_avoiding_places(
+    robot: OmniRobot,
+    direction=Direction.FRONT,
+    speed=45,
+    check_obstacle=False,
+    max_distance=None,
+    should_stop_transmission=True,
+):
+    """
+    Vai pra frente desviando de estabelecimentos. Caso check_obstacle seja True, o robô para ao ver um obstáculo, e retorna True.
+
+    O parâmetro max_distance é opcional e serve para definir uma distância máxima que o robô deve andar.
+    """
+
     robot.ev3_print("Forward avoiding places")
     left_sensor, right_sensor = robot.get_sensors_towards_direction(direction)
 
+    if direction == Direction.FRONT:
+        robot.bluetooth.message("ULTRA_FRONT")
+    else:
+        robot.bluetooth.message("ULTRA_BACK")
+
+    seeing_obstacle = (
+        lambda: check_obstacle
+        and (robot.bluetooth.message(should_wait=False) or 2550)
+        < const.OBSTACLE_DISTANCE
+    )
+
     pid = [PIDControl(const.PID_WALK_VALUES) for _ in range(3)]
-    robot.reset_wheels_angle()
+    initials = [motor.angle() for motor in robot.get_all_motors()]
     while (
-        left_sensor.color() not in wall_colors
-        or right_sensor.color() not in wall_colors
+        (
+            left_sensor.color() not in wall_colors
+            or right_sensor.color() not in wall_colors
+        )
+        and not seeing_obstacle()
+        and (
+            max_distance is None
+            or abs(robot.motor_front_left.angle() - initials[0])
+            < robot.cm_to_motor_degrees(max_distance)
+        )
     ):
         # robot.ev3_print(left_sensor.color(), right_sensor.color())
         if (
@@ -25,8 +57,6 @@ def forward_avoiding_places(robot: OmniRobot, direction=Direction.FRONT, speed=4
             and right_sensor.color() not in wall_colors
         ):
             # Ajuste à direita
-            initial_angle = robot.motor_front_left.angle()
-            # MAX_ANGLE = robot.cm_to_motor_degrees(2)
             robot.line_follower(
                 left_sensor,
                 speed=speed,
@@ -38,20 +68,15 @@ def forward_avoiding_places(robot: OmniRobot, direction=Direction.FRONT, speed=4
                 side="L",
             )
             robot.stop()
-            robot.reset_wheels_angle()
+            initials = [motor.angle() for motor in robot.get_all_motors()]
             if right_sensor.color() in wall_colors:
                 break
-            # else:
-            #     robot.ev3_print("MAX ANGLE CASE")
-            #     robot.wait_button()
 
         elif (
             right_sensor.color() in wall_colors
             and left_sensor.color() not in wall_colors
         ):
             # Ajuste à esquerda
-            initial_angle = robot.motor_front_right.angle()
-            # MAX_ANGLE = robot.cm_to_motor_degrees(2)
             robot.line_follower(
                 right_sensor,
                 speed=speed,
@@ -64,16 +89,44 @@ def forward_avoiding_places(robot: OmniRobot, direction=Direction.FRONT, speed=4
                 side="R",
             )
             robot.stop()
-            robot.reset_wheels_angle()
+            initials = [motor.angle() for motor in robot.get_all_motors()]
             if left_sensor.color() in wall_colors:
                 break
-            # else:
-            #     robot.ev3_print("MAX ANGLE CASE")
-            #     robot.wait_button()
 
-        robot.loopless_pid_walk(pid, direction=direction, vel=speed)
+        robot.loopless_pid_walk(pid, direction=direction, vel=speed, initials=initials)
     robot.stop()
-    robot.ev3_print("End of forward avoiding places")
+    has_seen_obstacle = seeing_obstacle()
+    if has_seen_obstacle:
+        distance = (robot.bluetooth.message()) / 10
+        robot.pid_walk(
+            abs(const.OBSTACLE_ALIGN_DISTANCE - distance),
+            speed=40,
+            direction=(
+                Direction.BACK
+                if const.OBSTACLE_ALIGN_DISTANCE - distance > 0
+                else Direction.FRONT
+            ),
+        )
+        robot.ev3.speaker.beep()
+        if Color.BLUE in [left_sensor.color(), right_sensor.color()]:
+            has_seen_obstacle = False
+            robot.ev3.speaker.beep(100)
+
+        # Ré de volta
+        robot.pid_walk(
+            abs(const.OBSTACLE_ALIGN_DISTANCE - distance),
+            speed=40,
+            direction=(
+                Direction.BACK
+                if const.OBSTACLE_ALIGN_DISTANCE - distance <= 0
+                else Direction.FRONT
+            ),
+        )
+
+    if should_stop_transmission:
+        robot.bluetooth.message("STOP")
+    robot.ev3_print("Seen obst:", has_seen_obstacle)
+    return has_seen_obstacle
 
 
 def omni_blue_routine(robot: OmniRobot):
@@ -89,11 +142,39 @@ def omni_blue_routine(robot: OmniRobot):
 
 
 def omni_red_routine(robot: OmniRobot):
+
     robot.ev3_print("Red routine")
     robot.pid_walk(35, speed=40, direction=Direction.BACK)
     robot.pid_turn(90)
 
-    forward_avoiding_places(robot)
+    turn_sign = 1
+    has_seen_obstacle = forward_avoiding_places(
+        robot, check_obstacle=True, should_stop_transmission=False
+    )
+    while has_seen_obstacle:
+        distance = (robot.bluetooth.message()) / 10
+        robot.ev3_print("ultra:", distance)
+
+        # Correção pra "trocar de rua"
+        robot.pid_walk(20 - distance, speed=40, direction=Direction.BACK)
+        robot.pid_turn(90 * turn_sign)
+        turn_sign *= -1
+
+        has_seen_obstacle = forward_avoiding_places(
+            robot,
+            check_obstacle=True,
+            max_distance=60,
+            should_stop_transmission=False,
+        )
+        if has_seen_obstacle:
+            turn_sign *= -1
+            continue
+
+        robot.pid_turn(90 * turn_sign)
+        has_seen_obstacle = forward_avoiding_places(
+            robot, check_obstacle=True, should_stop_transmission=False
+        )
+    robot.bluetooth.message("STOP")
 
     robot.pid_walk(3, speed=40, direction=Direction.BACK)
     robot.align()
@@ -109,12 +190,26 @@ def omni_red_routine(robot: OmniRobot):
     elif color == "BLACK":
         robot.ev3_print("BLACK detected")
         return omni_black_routine(robot)
+    elif color == "RED":
+        robot.ev3_print("RED detected")
+        return omni_red_routine(robot)
 
 
 def omni_all_white_routine(robot: OmniRobot):
     robot.ev3_print("White routine")
 
-    forward_avoiding_places(robot)
+    # Detectar obstáculo e virar à esquerda
+    while True:
+        has_seen_obstacle = forward_avoiding_places(
+            robot, check_obstacle=True, should_stop_transmission=False
+        )
+        if has_seen_obstacle:
+            distance = (robot.bluetooth.message()) / 10
+            robot.pid_walk(20 - distance, speed=40, direction=Direction.BACK)
+            robot.pid_turn(-90)
+        else:
+            break
+    robot.bluetooth.message("STOP")
 
     robot.pid_walk(3, speed=40, direction=Direction.BACK)
     robot.align()
@@ -140,7 +235,31 @@ def omni_black_routine(robot: OmniRobot):
     robot.pid_turn(180)
     robot.align(direction=Direction.BACK)
 
-    forward_avoiding_places(robot)
+    turn_sign = 1
+    has_seen_obstacle = forward_avoiding_places(
+        robot, check_obstacle=True, should_stop_transmission=False
+    )
+    while has_seen_obstacle:
+        distance = (robot.bluetooth.message()) / 10
+
+        # Correção pra "trocar de rua"
+        robot.pid_walk(20 - distance, speed=40, direction=Direction.BACK)
+        robot.pid_turn(90 * turn_sign)
+        turn_sign *= -1
+
+        has_seen_obstacle = forward_avoiding_places(
+            robot, check_obstacle=True, max_distance=60
+        )
+        if has_seen_obstacle:
+            turn_sign *= -1
+            continue
+
+        robot.pid_turn(90 * turn_sign)
+        has_seen_obstacle = forward_avoiding_places(
+            robot, check_obstacle=True, should_stop_transmission=False
+        )
+    robot.bluetooth.message("STOP")
+
     robot.pid_walk(3, speed=40, direction=Direction.BACK)
     robot.align()
 

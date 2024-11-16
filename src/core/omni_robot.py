@@ -9,7 +9,7 @@ from pybricks.parameters import Port, Button
 from core.utils import wait_button_pressed, ev3_print, ev3_draw, PIDValues, get_hostname
 from core.network import Bluetooth
 from core.decision_color_sensor import DecisionColorSensor
-from pybricks.ev3devices import Motor, UltrasonicSensor
+from pybricks.ev3devices import Motor, UltrasonicSensor, InfraredSensor
 from pybricks.tools import wait
 
 from core.utils import PIDControl
@@ -66,7 +66,7 @@ class OmniRobot:
         color_back_left: DecisionColorSensor = None,
         color_back_right: DecisionColorSensor = None,
         color_side: DecisionColorSensor = None,
-        ultra_claw: Port = None,
+        infra_claw: Port = None,
         ultra_back: Port = None,
         ultra_front: Port = None,
         server_name: str = None,
@@ -107,8 +107,8 @@ class OmniRobot:
             self.color_back_left = color_back_left
         if color_back_right is not None:
             self.color_back_right = color_back_right
-        if ultra_claw is not None:
-            self.ultra_claw = UltrasonicSensor(ultra_claw)
+        if infra_claw is not None:
+            self.infra_claw = InfraredSensor(infra_claw)
         if ultra_back is not None:
             self.ultra_back = UltrasonicSensor(ultra_back)
         if ultra_front is not None:
@@ -233,7 +233,7 @@ class OmniRobot:
     def pid_walk(
         self,
         cm,
-        speed=60,
+        speed=40,
         obstacle_function=None,
         off_motors=True,
         direction: Direction = Direction.FRONT,
@@ -549,7 +549,7 @@ class OmniRobot:
 
         if high_angle is None:
             self.claw_high_angle = self.motor_claw_lift.run_until_stalled(
-                speed=-300, duty_limit=35
+                speed=-300, duty_limit=20
             )
             self.ev3_print("High_angle:", self.claw_high_angle)
         else:
@@ -557,13 +557,13 @@ class OmniRobot:
 
         if low_angle is None:
             self.claw_low_angle = self.motor_claw_lift.run_until_stalled(
-                speed=300, duty_limit=30
+                speed=300, duty_limit=15
             )
             self.ev3_print("Low angle:", self.claw_low_angle)
         else:
             self.claw_low_angle = low_angle
 
-        self.claw_mid_angle = self.claw_low_angle - 135
+        self.claw_mid_angle = self.claw_low_angle - 60
 
     def line_follower(
         self,

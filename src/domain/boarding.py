@@ -135,7 +135,7 @@ def omni_passenger_unboarding(omni: OmniRobot):
             )
 
     omni.align(direction=Direction.BACK)
-    omni.pid_walk(25, 40)
+    omni.pid_walk(20, 40)
 
     omni.ev3.speaker.beep()
 
@@ -145,7 +145,7 @@ def omni_passenger_unboarding(omni: OmniRobot):
     omni.bluetooth.message("CLAW_OPEN")
     omni.bluetooth.message()
 
-    omni.pid_walk(25, 40, direction=Direction.BACK)
+    omni.pid_walk(20, 40, direction=Direction.BACK)
     omni.stop()
 
 
@@ -154,6 +154,9 @@ def omni_manouver_to_get_passenger(omni: OmniRobot):
         omni.pid_turn(90)
     else:
         omni.pid_turn(-90)
+
+    omni.align(Direction.BACK, speed=40)
+    omni.pid_walk(const.ROBOT_SIZE_HALF, speed=40, direction=Direction.FRONT)
 
 
 def omni_passenger_boarding(omni: OmniRobot):
@@ -235,11 +238,10 @@ def omni_passenger_boarding(omni: OmniRobot):
     omni.bluetooth.message("STOP")
     distance_front = sum(distances) / len(distances)
 
-    omni.ev3_print("P. DIST.:", distance_front, distances)
-
     adult_or_child = (
-        "ADULT" if passenger_color == Color.RED or distance_front < 100 else "CHILD"
+        "ADULT" if passenger_color == Color.RED or distance_front < 5 else "CHILD"
     )
+    omni.ev3_print(adult_or_child, ":", distance_front, distances)
 
     omni.pid_walk(cm=8, direction=Direction.BACK)
     omni.pid_turn(-90)
