@@ -178,7 +178,7 @@ def path_control(robot: Robot, path: list, directions: list):
             and path[position_index + 1] in possible_obstacles_vertices
             and not ignore_obstacles)
         )
-        has_seen_obstacle, walked_perc = robot.pid_walk(
+        has_seen_obstacle, walked_perc, sensor = robot.pid_walk(
             distance,
             const.ROBOT_SPEED,
             off_motors=should_stop,
@@ -188,12 +188,11 @@ def path_control(robot: Robot, path: list, directions: list):
             walked_perc = 0.1
         # caso veja um obstaculo volta a porcentagem do ultimo movimento e recalcula a rota
         while has_seen_obstacle:
-            robot.stop()
             if (robot.ultra_feet.distance() < const.OBSTACLE_DISTANCE
                 and path[position_index + 1] in possible_obstacles_vertices
                 and not ignore_obstacles):
                 robot.ev3_print("Obstacle")
-                has_seen_obstacle, walked_perc = robot.pid_walk(
+                has_seen_obstacle, walked_perc, _ = robot.pid_walk(
                     cm=distance * walked_perc,
                     speed = -const.ROBOT_SPEED,
                     off_motors=should_stop,
@@ -201,12 +200,16 @@ def path_control(robot: Robot, path: list, directions: list):
                 )
                 return False, position_index
             # bateu com o sensor direito em um estabelecimento
-            elif robot.color_right.color() != Color.WHITE:
-                print("Turn 10")
-                robot.pid_turn(-20)
-            elif robot.color_left.color() != Color.WHITE:
-                print("Turn 10")
-                robot.pid_turn(20)
+        if sensor == "L":
+            print("Turn 20")
+            robot.pid_walk(3, -30)
+            robot.pid_turn(-20)
+            robot.pid_walk(3, 30)
+        elif sensor == "R":
+            print("Turn 20")
+            robot.pid_walk(3, -30)
+            robot.pid_turn(20)
+            robot.pid_walk(3, 30)
                 
                         
             # elif robot.color_right.color() in wall_colors:

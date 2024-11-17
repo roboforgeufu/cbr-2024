@@ -159,6 +159,7 @@ class Robot:
         pid: PIDValues = const.PID_WALK_VALUES,
         obstacle_function=None,
         off_motors=True,
+        sensor_read = False
     ):
         """
         Anda em linha reta com controle PID entre os motores.
@@ -172,7 +173,7 @@ class Robot:
         degrees = self.cm_to_motor_degrees(cm)
         if degrees == 0:
             return
-
+        sensor = None
         motor_angle_average = 0
         initial_left_angle = self.motor_l.angle()
         initial_right_angle = self.motor_r.angle()
@@ -198,7 +199,12 @@ class Robot:
 
         if off_motors:
             self.stop()
-        return has_seen_obstacle, abs(motor_angle_average) / abs(degrees)
+        if sensor_read:
+            if self.color_left.color() != Color.WHITE:
+                sensor = "L"
+            elif self.color_right.color() != Color.WHITE:
+                sensor = "R"
+        return has_seen_obstacle, abs(motor_angle_average) / abs(degrees), sensor
 
     def loopless_pid_walk(
         self,

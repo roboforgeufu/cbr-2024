@@ -187,13 +187,14 @@ color_lateral_vertices = [
     ],
 ]
 
-
 def localization_routine(robot: Robot):
     """
     Faz o robô andar até detectar uma cor diferente de branco, então armazena a cor detectada.
     Ainda não está estruturado como deveria no arquivo localization.py
     """
     lista = []
+    street_obstacle = False
+    street_side = 1
     # checa as cores das 4 direções inciais do robo
     for n in range(4):
         print("{}ª iteração!".format(n+1))
@@ -203,7 +204,7 @@ def localization_routine(robot: Robot):
             robot.color_right.color()) != "WHITE"
             or robot.ultra_feet.distance() < const.SANDY_OBSTACLE_DISTANCE
         )
-        has_seen_obstacle, walked_perc = robot.pid_walk(
+        has_seen_obstacle, walked_perc, _ = robot.pid_walk(
             cm = 20, 
             speed = const.ROBOT_SPEED,
             obstacle_function=obstacle_function,
@@ -229,7 +230,7 @@ def localization_routine(robot: Robot):
             return blue_routine(robot)
         elif cor == "RED":
             robot.ev3_print("Starting red routine")
-            return red_routine(robot)
+            return red_routine(robot, street_obstacle, street_side)
         
         robot.pid_walk(cm=20 * walked_perc, speed=-const.ROBOT_SPEED)
         robot.ev3_print(robot.color_left.color(), robot.color_right.color(), wall_colors_check(robot.color_left.color(), robot.color_right.color()))
@@ -239,10 +240,10 @@ def localization_routine(robot: Robot):
 
     robot.ev3_print("Cores detectadas nos quatro lados:", lista)
     robot.pid_turn(lista.index("WHITE") * 90)
-    return all_white_routine(robot)
+    return all_white_routine(robot, street_obstacle, street_side)
 
 
-def all_white_routine(robot: Robot):
+def all_white_routine(robot: Robot, street_obstacle, street_side):
     pid_control = PIDControl(const.PID_WALK_VALUES)
     pid_control.reset()
     robot.reset_wheels_angle()
@@ -293,7 +294,6 @@ def all_white_routine(robot: Robot):
                     robot.stop()
                     robot.ev3_print("Vermelho")
                     return red_routine(robot)
-                
                 else:
                     # caso encontre algo diferente de azul
                     # parque
@@ -301,6 +301,9 @@ def all_white_routine(robot: Robot):
                     robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE, speed=-40)
                     robot.pid_turn(90)
                     robot.pid_turn(90)
+                    if street_obstacle:
+                        robot.pid_walk(cm = const.CELL_DISTANCE, speed=const.ROBOT_SPEED)
+                        robot.pid_turn(90 * street_side)
                     pid_control.reset()
                     robot.reset_wheels_angle()
         elif robot.ultra_feet.distance() <= const.SANDY_OBSTACLE_DISTANCE:
@@ -313,7 +316,7 @@ def all_white_routine(robot: Robot):
             
 
 
-def red_routine(robot: Robot):
+def red_routine(robot: Robot, street_obstacle, street_side):
     robot.ev3_print("Início da red routine")
     robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE + const.CELL_DISTANCE, speed=-40)
     print("Ativou o pid walk")
@@ -328,8 +331,9 @@ def red_routine(robot: Robot):
     pid_control.reset()
     robot.reset_wheels_angle()
     # Rotina para quando não identifica o obstáculo
+    street_side = 1
     while True:
-        robot.loopless_pid_walk(pid_control, speed=60)
+        robot.loopless_pid_walk(pid_control, speed=const.ROBOT_SPEED)
         if wall_colors_check(robot.color_left.color(), robot.color_right.color()) != "WHITE":
             robot.reset_wheels_angle()
             robot.pid_walk(2, -30)
@@ -345,15 +349,14 @@ def red_routine(robot: Robot):
                     if motor == "RIGHT":
                         robot.stop()
                         robot.ev3_print("Corrigindo motor direito")
-                        robot.one_wheel_turn("R", motor_degree_correction*1.25)
+                        robot.one_wheel_turn("R", motor_degree_correction*1.30)
                         robot.pid_walk(cm=5, speed=40)
                         pid_control.reset()
                         robot.reset_wheels_angle()
                     else:
                         robot.stop()
                         robot.ev3_print("Corrigindo motor esquerdo")
-                        motor_degree_correction *= -1
-                        robot.one_wheel_turn("L", motor_degree_correction*1.25)
+                        robot.one_wheel_turn("L", -motor_degree_correction*1.30)
                         robot.pid_walk(cm=5, speed=40)
                         pid_control.reset()
                         robot.reset_wheels_angle()
@@ -373,16 +376,38 @@ def red_routine(robot: Robot):
                     # parque
                     print("Não leu azul nem branco")
                     robot.ev3_print("Parque")
-                    robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE, speed=-60)
-                    robot.pid_turn(180)
+                    robot.pid_walk(cm=const.LINE_TO_CELL_CENTER_DISTANCE, speed=-const.ROBOT_SPEED)
+                    robot.pid_turn(90)
+                    robot.pid_turn(90)
                     pid_control.reset()
                     robot.reset_wheels_angle()
+                    street_side *= -1
+
         elif robot.ultra_feet.distance() <= const.SANDY_OBSTACLE_DISTANCE:
-            robot.pid_walk(const.OBSTACLE_DISTANCE_TO_CELL, -60)
-            robot.pid_turn(90)
-            robot.pid_walk(const.CELL_DISTANCE * 2)
-            robot.pid_turn(-90)
+            print("Obstacle")
+            # Volta ao ver o obstáculo
+            robot.pid_walk(const.OBSTACLE_DISTANCE_TO_CELL + 6, -const.ROBOT_SPEED)
+            # Curva pra cima
+            robot.pid_turn(90 * street_side)
+            # Atravessa para a outra rua, a menos que veja outro obstáculo
+            obstacle_function = lambda: (
+            robot.ultra_feet.distance() < const.SANDY_OBSTACLE_DISTANCE
+            )
+            has_seen_obstacle, walked_perc, _ = robot.pid_walk(
+            cm = const.CELL_DISTANCE * 2, 
+            speed = const.ROBOT_SPEED,
+            obstacle_function=obstacle_function,
+            )
+            if has_seen_obstacle:
+                # Volta em direção ao parque
+                robot.pid_walk(const.CELL_DISTANCE * 2 * walked_perc, -const.ROBOT_SPEED)
+                robot.pid_turn(90 * street_side)
+                street_side *= -1
+                street_obstacle = True
+                return all_white_routine(robot, street_obstacle, street_side)
+            
             robot.reset_wheels_angle()
+            street_side *= -1
 
 
 def blue_routine(robot: Robot):
@@ -405,13 +430,18 @@ def blue_routine(robot: Robot):
             robot.pid_turn(-20)
             robot.ev3_print(wall_colors_check(robot.color_left.color(), robot.color_right.color()))
             robot.reset_wheels_angle()
+        if wall_colors_check(robot.color_left.color(), robot.color_right.color()) =="BLACK":
+            robot.pid_walk(5, -40)
+            robot.pid_turn(20)
+            robot.ev3_print(wall_colors_check(robot.color_left.color(), robot.color_right.color()))
+            robot.reset_wheels_angle()
+
     # alinha com o vermelho
-    robot.pid_walk(cm=2, speed=-30)
+    robot.pid_walk(cm=3, speed=-30)
     print("Andou 2cm")
-    robot.align(40)
+    robot.align(30)
     print("Alinhou")
-    robot.pid_walk(cm = const.LINE_TO_CELL_CENTER_DISTANCE, speed = -30)
-    robot.pid_walk(cm = 6, speed = -30)
+    robot.pid_walk(cm = const.LINE_TO_CELL_CENTER_DISTANCE-5, speed = -30)
     origin_alignment_routine(robot)
 
     return "V5"  # Verificar se a virada está com o sinal correto
@@ -420,12 +450,12 @@ def blue_routine(robot: Robot):
 def origin_alignment_routine(sandy: Robot):
     # alinhar com o azul
     sandy.pid_turn(90)
-    sandy.align(40)
+    sandy.align(30)
     print("Alinhou")
     # posiciona o sensor em cima da linha para seguir
     sandy.pid_walk(2, -30)
     sandy.pid_turn(90)
-    sandy.pid_walk(12, -30)
+    sandy.pid_walk(6, -30)
     sandy.reset_wheels_angle()
     sandy.stop()
 
