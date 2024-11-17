@@ -199,8 +199,8 @@ def localization_routine(robot: Robot):
         print("{}ª iteração!".format(n+1))
         cor = "WHITE"
         obstacle_function = lambda: (
-            robot.color_left.color() != Color.WHITE
-            or robot.color_right.color() != Color.WHITE
+            wall_colors_check(robot.color_left.color(),
+            robot.color_right.color()) != "WHITE"
             or robot.ultra_feet.distance() < const.SANDY_OBSTACLE_DISTANCE
         )
         has_seen_obstacle, walked_perc = robot.pid_walk(
@@ -219,23 +219,21 @@ def localization_routine(robot: Robot):
             # guarda a cor lida
             cor = wall_colors_check(robot.color_left.color(), robot.color_right.color())
         
-    
         elif has_seen_obstacle and robot.ultra_feet.distance() < const.SANDY_OBSTACLE_DISTANCE:
             robot.ev3_print("Obstacle", robot.ultra_feet.distance())
             robot.ev3.speaker.beep()
             cor = "BLACK"
-            lista.append(cor)
-           
+
         if cor == "BLUE":
             robot.ev3_print("Starting blue routine")
             return blue_routine(robot)
         elif cor == "RED":
             robot.ev3_print("Starting red routine")
             return red_routine(robot)
-        else:
-            robot.ev3_print(robot.color_left.color(), robot.color_right.color())
-            robot.pid_walk(cm=20 * walked_perc, speed=-const.ROBOT_SPEED)
-            robot.pid_turn(90)
+        
+        robot.pid_walk(cm=20 * walked_perc, speed=-const.ROBOT_SPEED)
+        robot.ev3_print(robot.color_left.color(), robot.color_right.color(), wall_colors_check(robot.color_left.color(), robot.color_right.color()))
+        robot.pid_turn(90)
 
         lista.append(cor)
 
