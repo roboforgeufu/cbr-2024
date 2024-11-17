@@ -30,11 +30,11 @@ def passenger_info(robot: Robot):
 
 
 def lift_claw(robot: Robot, side=1):
-    robot.motor_elevate_claw.run_until_stalled(300 * side, Stop.HOLD, duty_limit = 60)
+    robot.motor_elevate_claw.run_until_stalled(300 * side, Stop.HOLD, duty_limit = 100)
 
 
-def open_claw(robot: Robot, side=1, duty = 40):
-    robot.motor_open_claw.run_until_stalled(200 * side, Stop.HOLD, duty)
+def open_claw(robot: Robot, side=1, duty = 40, stop = Stop.COAST):
+    robot.motor_open_claw.run_until_stalled(200 * side, stop, duty)
 
 
 def main(robot: Robot):
@@ -57,10 +57,11 @@ def main(robot: Robot):
             info = "Done!"
         elif request == "CLOSE":
             robot.ev3_print("Executing")
-            open_claw(robot, duty = 70)
+            open_claw(robot, duty = 80, stop=Stop.HOLD)
             info = "Done!"
         elif request == "PASSENGER INFO":
             info = passenger_info(robot)
+            robot.ev3_print(info)
             
         robot.ev3_print(info)
         robot.bluetooth.message(info)

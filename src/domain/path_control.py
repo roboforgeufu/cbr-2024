@@ -115,6 +115,10 @@ def path_control(robot: Robot, path: list, directions: list):
     # inicia o idx da lista como 0 e a necessidade de alinhar
     position_index = 0
     needs_align = 0
+    ignore_obstacles = False
+    if robot.ultra_feet.distance() < const.OBSTACLE_DISTANCE:
+        robot.ev3_print("Obstructed sensor!")
+        ignore_obstacles = True
     for idx, (direction, distance) in enumerate(directions):
         robot.ev3_print("Current position:", path[position_index])
         robot.ev3_print("Step:", direction, distance)
@@ -171,49 +175,61 @@ def path_control(robot: Robot, path: list, directions: list):
             lambda: robot.color_left.color() in wall_colors
             or robot.color_right.color() in wall_colors
             or (robot.ultra_feet.distance() < const.OBSTACLE_DISTANCE
-            and path[position_index + 1] in possible_obstacles_vertices)
+            and path[position_index + 1] in possible_obstacles_vertices
+            and not ignore_obstacles)
         )
         has_seen_obstacle, walked_perc = robot.pid_walk(
             distance,
-            40,
+            const.ROBOT_SPEED,
             off_motors=should_stop,
             obstacle_function=obstacle_function,
         )
+        if walked_perc == None:
+            walked_perc = 0.1
         # caso veja um obstaculo volta a porcentagem do ultimo movimento e recalcula a rota
         while has_seen_obstacle:
             robot.stop()
             if (robot.ultra_feet.distance() < const.OBSTACLE_DISTANCE
-                and path[position_index + 1] in possible_obstacles_vertices):
+                and path[position_index + 1] in possible_obstacles_vertices
+                and not ignore_obstacles):
                 robot.ev3_print("Obstacle")
                 has_seen_obstacle, walked_perc = robot.pid_walk(
                     cm=distance * walked_perc,
-                    speed = -60,
+                    speed = -const.ROBOT_SPEED,
                     off_motors=should_stop,
                     obstacle_function=obstacle_function,
                 )
                 return False, position_index
             # bateu com o sensor direito em um estabelecimento
-            elif robot.color_right.color() in wall_colors:
-                # caso veja estabelecimento com o sensor direito segue a linha até ver branco 
-                robot.line_follower(
-                    sensor = robot.color_right,
-                    speed = 40,
-                    loop_condition_function = lambda: robot.color_right.color()
-                    != Color.WHITE
-                    and robot.color_left.color() == Color.WHITE,
-                    error_function=lambda: robot.color_right.rgb()[2],
-                    side="R",
-                )
-            elif robot.color_left.color() in wall_colors:
-                # caso veja estabelecimento com o sensor esquerdo segue a linha até ver branco 
-                robot.line_follower(
-                    sensor = robot.color_left,
-                    speed = 40,
-                    loop_condition_function = lambda: robot.color_left.color()
-                    != Color.WHITE
-                    and robot.color_right.color() == Color.WHITE,
-                    error_function=lambda: robot.color_left.rgb()[2],
-                    side="L",
-                )
+            elif robot.color_right.color() != Color.WHITE:
+                print("Turn 10")
+                robot.pid_turn(-20)
+            elif robot.color_left.color() != Color.WHITE:
+                print("Turn 10")
+                robot.pid_turn(20)
+                
+                        
+            # elif robot.color_right.color() in wall_colors:
+            #     # caso veja estabelecimento com o sensor direito segue a linha até ver branco 
+            #     robot.line_follower(
+            #         sensor = robot.color_right,
+            #         speed = 40,
+            #         loop_condition_function = lambda: robot.color_right.color()
+            #         != Color.WHITE
+            #         and robot.color_left.color() == Color.WHITE,
+            #         error_function=lambda: robot.color_right.rgb()[2],
+            #         side="R",
+            #     )
+            # elif robot.color_left.color() in wall_colors:
+            #     # caso veja estabelecimento com o sensor esquerdo segue a linha até ver branco 
+            #     robot.line_follower(
+            #         sensor = robot.color_left,
+            #         speed = 40,
+            #         loop_condition_function = lambda: robot.color_left.color()
+            #         != Color.WHITE
+            #         and robot.color_right.color() == Color.WHITE,
+            #         error_function=lambda: robot.color_left.rgb()[2],
+            #         side="L",
+            #     )
 
         position_index += 1

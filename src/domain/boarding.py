@@ -23,8 +23,6 @@ def passenger_boarding(robot: Robot):
     # backwards_distance = robot.line_grabber(time = 3000)
     # robot.pid_walk(cm = backwards_distance, speed =-40)
     robot.reset_wheels_angle()
-    pid = PIDControl(const.LINE_FOLLOWER_VALUES)
-    target = 20
     # procura um cilindro
     robot.line_follower(
         sensor = robot.color_left,
@@ -35,28 +33,29 @@ def passenger_boarding(robot: Robot):
     # passa do cilindro
     robot.line_follower(
         sensor = robot.color_left,
-        loop_condition_function= lambda: robot.infra_side.distance() >= 40,
+        loop_condition_function= lambda: robot.infra_side.distance() <= 40,
         speed = 40,
         side = "L",
     )
-    # corrige a distancia do cilindro
-    robot.pid_walk(10, 40)
     # aponta para o cilindro
     robot.pid_turn(-90)
+    robot.pid_walk(3, -30)
     star_platinum(robot, "CLOSE")
     star_platinum(robot, "DOWN")
     star_platinum(robot, "OPEN")
     robot.align(30)
-    robot.pid_walk(7, 40)
+    robot.pid_walk(6, 40)
     # pega o cilindro e define as informações
     star_platinum(robot, "CLOSE")
     vertice = star_platinum(robot, "PASSENGER INFO")
     # tratativa de leitura da cor branca e nenhum cilindro
     if len(vertice) == 0:
-        star_platinum(robot, "UP")
         star_platinum(robot, "OPEN")
         robot.pid_walk(10, -40)
+        star_platinum(robot, "CLOSE")
+        star_platinum(robot, "UP")
         robot.align(speed=30)
+        robot.pid_walk(2,-30)
         robot.pid_turn(90)
         return passenger_boarding(robot)
     # pega o cilindro
@@ -75,13 +74,12 @@ def passenger_boarding(robot: Robot):
         side = "L",
     )
     # alinha com o azul
-    robot.pid_walk(10, -30)
-    robot.pid_turn(-90)
-    robot.pid_walk(5, -30)
+    robot.pid_walk(6, -30) 
+    robot.pid_turn(90)
     robot.align(speed=30)
     robot.pid_walk(cm = const.LINE_TO_CELL_CENTER_DISTANCE, speed = -30)
     # alinha com o vermelho
-    robot.pid_turn(90)
+    robot.pid_turn(-90)
     robot.align(speed=30)
     robot.pid_walk(cm = const.LINE_TO_CELL_CENTER_DISTANCE, speed = -30)
     robot.orientation = "S"
@@ -120,9 +118,9 @@ def passenger_unboarding(robot: Robot):
             robot.pid_walk(2, 35)
 
     robot.pid_walk(15, -35)
-    robot.ev3.speaker.beep()
-    robot.pid_walk(21, 35)
     star_platinum(robot, "DOWN")
+    robot.ev3.speaker.beep()
+    robot.pid_walk(cm = 21, speed = 25)
     star_platinum(robot, "OPEN")
 
     robot.pid_walk(15, -40)
@@ -280,3 +278,11 @@ def omni_passenger_boarding(omni: OmniRobot):
     omni.pid_walk(cm=3)
 
     return ((adult_or_child, passenger_color), boarding_vertices[0])
+
+def back_to_origin_routine(sandy: Robot):
+    star_platinum(sandy, "CLOSE")
+    star_platinum(sandy, "UP")
+    star_platinum(sandy, "OPEN")
+    sandy.align(speed = 40)
+    sandy.pid_walk(cm = 2, speed = -30)
+    sandy.pid_turn(angle = 90)
