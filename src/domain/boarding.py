@@ -20,6 +20,8 @@ def passenger_boarding(robot: Robot):
 
     Retorna uma tupla como ("CHILD", Color.BLUE) ou ("ADULT", Color.GREEN)
     """
+    robot.ev3_print("Passenger boarding")
+
     # backwards_distance = robot.line_grabber(time = 3000)
     # robot.pid_walk(cm = backwards_distance, speed =-40)
     robot.reset_wheels_angle()
@@ -92,7 +94,7 @@ def passenger_unboarding(robot: Robot):
     Rotina de desembarque de passageiro
     """
 
-    print("entrou")
+    robot.ev3_print("Entrou no vértice")
 
     robot.align(speed=30, pid=PIDValues(kp=0.8, ki=0.005, kd=1))
     robot.pid_walk(1.75, 40)
