@@ -116,7 +116,7 @@ def omni_passenger_unboarding(omni: OmniRobot):
         omni.pid_turn(180)
         omni.moving_direction_sign = 1
 
-    omni.align(pid=PIDValues(kp=1, ki=0.0015, kd=0.45))
+    omni.align()
     omni.stop()
 
     omni.pid_walk(1.5, 35)
@@ -147,6 +147,8 @@ def omni_passenger_unboarding(omni: OmniRobot):
 
     omni.pid_walk(20, 40, direction=Direction.BACK)
     omni.stop()
+    omni.bluetooth.message("CLAW_HIGH")
+    omni.bluetooth.message()
 
 
 def omni_manouver_to_get_passenger(omni: OmniRobot):

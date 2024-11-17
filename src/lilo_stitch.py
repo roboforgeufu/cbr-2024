@@ -231,14 +231,19 @@ def stitch_main(stitch: OmniRobot):
             transmit_signal(stitch, stitch.color_side.color)
         elif request == "CLAW_LOW":
             lower_claw(stitch)
+            stitch.ev3_print("Claw low")
         elif request == "CLAW_HIGH":
             raise_claw(stitch)
+            stitch.ev3_print("Claw high")
         elif request == "CLAW_MID":
             mid_claw(stitch)
+            stitch.ev3_print("Claw mid")
         elif request == "CLAW_OPEN":
             open_claw(stitch)
+            stitch.ev3_print("Claw open")
         elif request == "CLAW_CLOSE":
             close_claw(stitch)
+            stitch.ev3_print("Claw closed")
         stitch.bluetooth.message(None, force_send=True)
         stitch.ev3_print("Request finished")
         # stitch.ev3_print(stitch.ultra_claw.distance(), stitch.ultra_front.distance())

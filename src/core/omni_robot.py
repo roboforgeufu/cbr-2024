@@ -563,7 +563,7 @@ class OmniRobot:
         else:
             self.claw_low_angle = low_angle
 
-        self.claw_mid_angle = self.claw_low_angle - 60
+        self.claw_mid_angle = self.claw_low_angle - const.STITCH_CLAW_MID_TO_LOW_DIFF
 
     def line_follower(
         self,

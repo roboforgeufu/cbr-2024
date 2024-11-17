@@ -80,7 +80,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
             needs_align = 0
             robot.pid_walk(
                 const.ROBOT_SIZE_HALF,
-                speed=40,
+                speed=const.LILO_FORWARD_SPEED,
                 direction=omni_direction,
                 off_motors=False,
             )
@@ -117,7 +117,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
             off_motors=should_stop,
             obstacle_function=obstacle_function,
             direction=omni_direction,
-            speed=40,
+            speed=const.LILO_FORWARD_SPEED,
         )
         while has_seen_obstacle:
             robot.stop()
@@ -136,7 +136,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
                 robot.ev3_print("à frente:", walked_perc)
                 robot.pid_walk(
                     distance * walked_perc,
-                    speed=40,
+                    speed=const.LILO_FORWARD_SPEED,
                     direction=Direction.get_relative_direction(omni_direction, 4),
                 )
                 return (False, position_index)
@@ -147,15 +147,13 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
                 # Os dois sensores leram parede; apenas continua
                 robot.ev3_print("BOTH SIDES")
                 robot.ev3.speaker.beep(100)
+                oposite_direction = Direction.get_relative_direction(omni_direction, 4)
                 if walked_perc >= 0.8:
-                    oposite_direction = Direction.get_relative_direction(
-                        omni_direction, 4
-                    )
                     robot.pid_walk(2, direction=oposite_direction)
                     has_seen_obstacle = False
                 else:
                     robot.ev3_print("Walked perc:", walked_perc)
-                    robot.wait_button()
+                    robot.pid_walk(cm=3, direction=oposite_direction)
             elif sensor_left.color() in wall_colors:
                 # Desvio à esquerda
                 robot.ev3_print("à esquerda:", walked_perc)

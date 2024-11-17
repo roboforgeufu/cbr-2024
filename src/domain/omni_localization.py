@@ -12,7 +12,7 @@ import constants as const
 def forward_avoiding_places(
     robot: OmniRobot,
     direction=Direction.FRONT,
-    speed=45,
+    speed=const.LILO_FORWARD_SPEED,
     check_obstacle=False,
     max_distance=None,
     should_stop_transmission=True,
@@ -144,7 +144,11 @@ def omni_blue_routine(robot: OmniRobot):
 def omni_red_routine(robot: OmniRobot):
 
     robot.ev3_print("Red routine")
-    robot.pid_walk(35, speed=40, direction=Direction.BACK)
+    robot.pid_walk(
+        const.CELL_DISTANCE + const.LINE_TO_CELL_CENTER_DISTANCE,
+        speed=const.LILO_FORWARD_SPEED,
+        direction=Direction.BACK,
+    )
     robot.pid_turn(90)
 
     turn_sign = 1
@@ -178,7 +182,7 @@ def omni_red_routine(robot: OmniRobot):
 
     robot.pid_walk(3, speed=40, direction=Direction.BACK)
     robot.align()
-    robot.pid_walk(const.DIST_COLOR_AFTER_ALIGN, speed=30)
+    robot.pid_walk(const.DIST_COLOR_AFTER_ALIGN, speed=const.SPEED_COLOR_AFTER_ALIGN)
 
     color = wall_colors_check(
         robot.color_front_left.color(), robot.color_front_right.color()
@@ -201,7 +205,10 @@ def omni_all_white_routine(robot: OmniRobot):
     # Detectar obstáculo e virar à esquerda
     while True:
         has_seen_obstacle = forward_avoiding_places(
-            robot, check_obstacle=True, should_stop_transmission=False
+            robot,
+            check_obstacle=True,
+            should_stop_transmission=False,
+            speed=const.LILO_FORWARD_SPEED,
         )
         if has_seen_obstacle:
             distance = (robot.bluetooth.message()) / 10
@@ -213,7 +220,7 @@ def omni_all_white_routine(robot: OmniRobot):
 
     robot.pid_walk(3, speed=40, direction=Direction.BACK)
     robot.align()
-    robot.pid_walk(const.DIST_COLOR_AFTER_ALIGN, speed=40)
+    robot.pid_walk(const.DIST_COLOR_AFTER_ALIGN, speed=const.SPEED_COLOR_AFTER_ALIGN)
 
     color_seen = wall_colors_check(
         robot.color_front_left.color(), robot.color_front_right.color()
@@ -287,7 +294,9 @@ def localization_routine(robot: OmniRobot):
 
         SEARCHING_DISTANCE = 25
         has_seen_obstacle, walked_percentage = robot.pid_walk(
-            SEARCHING_DISTANCE, obstacle_function=obstacle_function
+            SEARCHING_DISTANCE,
+            obstacle_function=obstacle_function,
+            speed=const.LILO_FORWARD_SPEED,
         )
         robot.ev3_print("Walked percentage:", walked_percentage)
         robot.stop()
@@ -298,7 +307,9 @@ def localization_routine(robot: OmniRobot):
             # Linha a frente
             robot.pid_walk(3, speed=30, direction=Direction.BACK)
             robot.align(speed=30)
-            robot.pid_walk(const.DIST_COLOR_AFTER_ALIGN, speed=30)
+            robot.pid_walk(
+                const.DIST_COLOR_AFTER_ALIGN, speed=const.SPEED_COLOR_AFTER_ALIGN
+            )
 
         color_str = wall_colors_check(
             robot.color_front_left.color(), robot.color_front_right.color()
