@@ -28,8 +28,13 @@ def forward_avoiding_places(
 
     if direction == Direction.FRONT:
         robot.bluetooth.message("ULTRA_FRONT")
+        speed_sign = 1
     else:
         robot.bluetooth.message("ULTRA_BACK")
+        speed_sign = -1
+
+    relative_right = Direction.get_relative_direction(direction, 2)
+    relative_left = Direction.get_relative_direction(direction, -2)
 
     seeing_obstacle = (
         lambda: check_obstacle
@@ -59,7 +64,7 @@ def forward_avoiding_places(
             # Ajuste à direita
             robot.line_follower(
                 left_sensor,
-                speed=speed,
+                speed=speed * speed_sign,
                 loop_condition_function=lambda: left_sensor.color() != Color.WHITE
                 and right_sensor.color() == Color.WHITE,
                 pid=const.LINE_FOLLOWER_AVOIDING_PLACES,
@@ -72,6 +77,9 @@ def forward_avoiding_places(
             if right_sensor.color() in wall_colors:
                 break
 
+            robot.pid_walk(cm=const.ROBOT_SIZE_HALF, direction=relative_right)
+            initials = [motor.angle() for motor in robot.get_all_motors()]
+
         elif (
             right_sensor.color() in wall_colors
             and left_sensor.color() not in wall_colors
@@ -79,7 +87,7 @@ def forward_avoiding_places(
             # Ajuste à esquerda
             robot.line_follower(
                 right_sensor,
-                speed=speed,
+                speed=speed * speed_sign,
                 loop_condition_function=lambda: right_sensor.color() != Color.WHITE
                 and left_sensor.color() == Color.WHITE,
                 # and abs(robot.motor_front_right.angle() - initial_angle) < MAX_ANGLE,
@@ -93,35 +101,41 @@ def forward_avoiding_places(
             if left_sensor.color() in wall_colors:
                 break
 
+            robot.pid_walk(cm=const.ROBOT_SIZE_HALF, direction=relative_left)
+            initials = [motor.angle() for motor in robot.get_all_motors()]
+
         robot.loopless_pid_walk(pid, direction=direction, vel=speed, initials=initials)
     robot.stop()
     has_seen_obstacle = seeing_obstacle()
     if has_seen_obstacle:
         distance = (robot.bluetooth.message()) / 10
-        robot.pid_walk(
-            abs(const.OBSTACLE_ALIGN_DISTANCE - distance),
-            speed=40,
-            direction=(
-                Direction.BACK
-                if const.OBSTACLE_ALIGN_DISTANCE - distance > 0
-                else Direction.FRONT
-            ),
-        )
-        robot.ev3.speaker.beep()
-        if Color.BLUE in [left_sensor.color(), right_sensor.color()]:
+        if distance > const.OBSTACLE_DISTANCE:
             has_seen_obstacle = False
-            robot.ev3.speaker.beep(100)
+        else:
+            robot.pid_walk(
+                abs(const.OBSTACLE_ALIGN_DISTANCE - distance),
+                speed=40,
+                direction=(
+                    Direction.BACK
+                    if const.OBSTACLE_ALIGN_DISTANCE - distance > 0
+                    else Direction.FRONT
+                ),
+            )
+            robot.ev3.speaker.beep()
+            if Color.BLUE in [left_sensor.color(), right_sensor.color()]:
+                has_seen_obstacle = False
+                robot.ev3.speaker.beep(100)
 
-        # Ré de volta
-        robot.pid_walk(
-            abs(const.OBSTACLE_ALIGN_DISTANCE - distance),
-            speed=40,
-            direction=(
-                Direction.BACK
-                if const.OBSTACLE_ALIGN_DISTANCE - distance <= 0
-                else Direction.FRONT
-            ),
-        )
+            # Ré de volta
+            robot.pid_walk(
+                abs(const.OBSTACLE_ALIGN_DISTANCE - distance),
+                speed=40,
+                direction=(
+                    Direction.BACK
+                    if const.OBSTACLE_ALIGN_DISTANCE - distance <= 0
+                    else Direction.FRONT
+                ),
+            )
 
     if should_stop_transmission:
         robot.bluetooth.message("STOP")
@@ -193,7 +207,7 @@ def omni_red_routine(robot: OmniRobot):
         return omni_blue_routine(robot)
     elif color == "BLACK":
         robot.ev3_print("BLACK detected")
-        return omni_black_routine(robot)
+        return omni_black_routine(robot, from_red_routine=True)
     elif color == "RED":
         robot.ev3_print("RED detected")
         return omni_red_routine(robot)
@@ -236,18 +250,18 @@ def omni_all_white_routine(robot: OmniRobot):
         return omni_blue_routine(robot)
 
 
-def omni_black_routine(robot: OmniRobot):
+def omni_black_routine(robot: OmniRobot, from_red_routine=False):
     robot.pid_walk(5, speed=40, direction=Direction.BACK)
     robot.ev3_print("Black routine")
     robot.pid_turn(180)
     robot.align(direction=Direction.BACK)
 
-    turn_sign = 1
+    turn_sign = 1 if from_red_routine else -1
     has_seen_obstacle = forward_avoiding_places(
         robot, check_obstacle=True, should_stop_transmission=False
     )
     while has_seen_obstacle:
-        distance = (robot.bluetooth.message()) / 10
+        distance = (robot.bluetooth.message()) / 10  # TODO
 
         # Correção pra "trocar de rua"
         robot.pid_walk(20 - distance, speed=40, direction=Direction.BACK)
@@ -255,7 +269,7 @@ def omni_black_routine(robot: OmniRobot):
         turn_sign *= -1
 
         has_seen_obstacle = forward_avoiding_places(
-            robot, check_obstacle=True, max_distance=60
+            robot, check_obstacle=True, max_distance=60, should_stop_transmission=False
         )
         if has_seen_obstacle:
             turn_sign *= -1

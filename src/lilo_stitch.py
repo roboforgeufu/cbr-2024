@@ -76,7 +76,7 @@ from domain.boarding import (
     omni_passenger_unboarding,
     omni_manouver_to_get_passenger,
 )
-from domain.omni_localization import localization_routine
+from domain.omni_localization import localization_routine, forward_avoiding_places
 
 
 testing_targets = [0, 13, 26, 2, 15, 28, 4, 17, 30]
@@ -106,6 +106,7 @@ def lilo_main(lilo: OmniRobot):
         #
         passenger_info, boarding_position = omni_passenger_boarding(lilo)
         lilo.orientation = "N"  # TODO: deixar na lógica de localização
+        lilo.moving_direction_sign = 1
         lilo.ev3_print("Age:", passenger_info[0])
         lilo.ev3_print("Col:", passenger_info[1])
 
@@ -215,7 +216,7 @@ def test_bt_lilo(lilo: OmniRobot):
 
 
 def stitch_main(stitch: OmniRobot):
-    stitch.start_claw(0, 78, -220, 0)
+    stitch.start_claw(0, 78, -300, 0)
     stitch.bluetooth.start()
 
     while True:

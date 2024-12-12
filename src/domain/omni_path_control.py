@@ -61,6 +61,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
         robot.ev3_print("Current position:", path[position_index])
         robot.ev3_print("STEP:", direction)
         robot.ev3_print("Needs align:", needs_align)
+
         turn_times = omni_turn_to_direction(robot, direction)
 
         if turn_times != 0:
@@ -78,12 +79,15 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
             robot.stop()
             robot.align(Direction.get_relative_direction(omni_direction, 4))
             needs_align = 0
+
+            robot.ev3.speaker.beep()
             robot.pid_walk(
-                const.ROBOT_SIZE_HALF,
+                const.LINE_TO_CELL_CENTER_DISTANCE,
                 speed=const.LILO_FORWARD_SPEED,
                 direction=omni_direction,
                 off_motors=False,
             )
+            robot.ev3.speaker.beep()
 
         if idx == len(directions) - 1:
             # nao anda a ultima distancia, pra nao entrar no estabelecimento
@@ -112,6 +116,11 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
             )
         )
 
+        # robot.stop()
+        # robot.ev3_print("Distance:", distance)
+        # robot.wait_button()
+
+        # robot.ev3.speaker.beep(100)
         has_seen_obstacle, walked_perc = robot.pid_walk(
             distance,
             off_motors=should_stop,
@@ -119,6 +128,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
             direction=omni_direction,
             speed=const.LILO_FORWARD_SPEED,
         )
+        # robot.ev3.speaker.beep(100)
         while has_seen_obstacle:
             robot.stop()
             robot.ev3_print("Obs.:", sensor_left.color(), sensor_right.color())
@@ -129,7 +139,8 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
             if (
                 position_index + 1 < len(path)
                 and path[position_index + 1] in possible_obstacles_vertices
-                and robot.bluetooth.message(should_wait=False) <= obstacle_distance
+                and (robot.bluetooth.message(should_wait=False) or 2550)
+                <= obstacle_distance
             ):
                 # Obstáculo à frente
                 robot.bluetooth.message("STOP")

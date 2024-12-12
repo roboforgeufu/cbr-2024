@@ -70,7 +70,7 @@ class OmniRobot:
         ultra_back: Port = None,
         ultra_front: Port = None,
         server_name: str = None,
-        turn_correction=1.35,
+        turn_correction=const.LILO_TURN_CORRECTION,
         debug=True,
     ):
 
@@ -357,16 +357,14 @@ class OmniRobot:
         i_share = [0, 0, 0, 0]
         prev_elapsed_time = self.watch.time()
         while True:
-            current_angle = [
-                self.motor_front_left.angle(),
-                self.motor_front_right.angle(),
-                self.motor_back_left.angle(),
-                self.motor_back_right.angle(),
+            errors = [
+                self.motor_front_left.angle() - target_angle[0],
+                self.motor_front_right.angle() - target_angle[1],
+                self.motor_back_left.angle() - target_angle[2],
+                self.motor_back_right.angle() - target_angle[3],
             ]
 
-            errors = [c - t for c, t in zip(current_angle, target_angle)]
-
-            for i in range(len(i_share)):
+            for i in range(4):
                 if errors[i] < 30:
                     i_share[i] += errors[i]
 
