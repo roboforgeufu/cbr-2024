@@ -39,7 +39,7 @@ from domain.localization import (
 )
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 from domain.path_control import path_control
-from domain.boarding import passenger_unboarding, passenger_boarding
+from domain.boarding import passenger_unboarding, passenger_boarding, back_to_origin_routine
 from domain.localization import localization_routine, blue_routine
 from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
 from domain.path_control import path_control
@@ -70,27 +70,7 @@ from core.robot import Robot
 
 
 def test_sandy_main(sandy: Robot):
-    ### loop ###
-    map_graph = Graph(map_matrix)
-    sandy.orientation = "S"
-    while True:
-        ### embarque de passageiro ###
-        # embarca o passageiro e retorna o(s) vertice(s) de destino
-        targets = passenger_boarding(sandy)
-
-        ### calculo de rota e controle de caminho ###
-        # calculo de rota e movimento até o destino
-        current_position = move_to_target(sandy, map_graph, const.SANDY_ORIGIN_VERTEX, targets)
-
-        ### desembarque de passageiro ###
-        # desembarque do passageiro
-        passenger_unboarding(sandy)
-
-        ### retorno para a origem ###
-        # movimentação de retorno à origem
-        move_to_target(sandy, map_graph, current_position, const.SANDY_BOARDING_VERTEX)
-        # rotina de alinhamento na zona de embarque
-        origin_alignment_routine(sandy)
+    ...
 
 
 def test_path_control(sandy: Robot):
@@ -110,6 +90,13 @@ def test_path_control(sandy: Robot):
     sandy.ev3_print("Press button to start:")
     sandy.wait_button()
     move_to_target(sandy, map_graph, initial_position, targets)
+
+def test_lombada(sandy: Robot):
+    pid = PIDControl(const.PID_WALK_VALUES)
+    while wall_colors_check(sandy.color_left.color(), sandy.color_right.color()) == "WHITE":
+        sandy.loopless_pid_walk(pid, 45)
+        print(sandy.color_left.color(), sandy.color_right.color(), wall_colors_check(sandy.color_left.color(), sandy.color_right.color()))
+    sandy.stop()
 
 
 def test_calibrate_align_pid(robot: Robot):
@@ -159,7 +146,6 @@ def move_to_target(
         current_position = path[current_position_idx]
     return current_position
 
-
 def sandy_main(sandy: Robot):
 
     ### inicialização ###
@@ -190,15 +176,17 @@ def sandy_main(sandy: Robot):
         # movimentação de retorno à origem
         move_to_target(sandy, map_graph, current_position, const.SANDY_BOARDING_VERTEX)
         # rotina de alinhamento na zona de embarque
-        origin_alignment_routine(sandy)
+        back_to_origin_routine(sandy)
 
 
 def junior_main(junior: Robot):
 
     # Fecha e levanta garra inicialmente
-    junior.motor_open_claw.run_until_stalled(-300, Stop.HOLD, 70)
-    wait(300)
-    junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 70)
+    junior.motor_open_claw.run_until_stalled(300, Stop.COAST, 40)
+    wait(500)
+    junior.motor_elevate_claw.run_until_stalled(300, Stop.HOLD, 100)
+    wait(500)
+    junior.motor_open_claw.run_until_stalled(-300, Stop.COAST, 40)
     junior.bluetooth.start()
     star_platinum.main(junior)
 

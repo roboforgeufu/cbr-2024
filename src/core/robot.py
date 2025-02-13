@@ -159,6 +159,7 @@ class Robot:
         pid: PIDValues = const.PID_WALK_VALUES,
         obstacle_function=None,
         off_motors=True,
+        sensor_read = False
     ):
         """
         Anda em linha reta com controle PID entre os motores.
@@ -172,7 +173,7 @@ class Robot:
         degrees = self.cm_to_motor_degrees(cm)
         if degrees == 0:
             return
-
+        sensor = None
         motor_angle_average = 0
         initial_left_angle = self.motor_l.angle()
         initial_right_angle = self.motor_r.angle()
@@ -198,7 +199,12 @@ class Robot:
 
         if off_motors:
             self.stop()
-        return has_seen_obstacle, abs(motor_angle_average) / abs(degrees)
+        if sensor_read:
+            if self.color_left.color() != Color.WHITE:
+                sensor = "L"
+            elif self.color_right.color() != Color.WHITE:
+                sensor = "R"
+        return has_seen_obstacle, abs(motor_angle_average) / abs(degrees), sensor
 
     def loopless_pid_walk(
         self,
@@ -309,21 +315,48 @@ class Robot:
         self.stop()
         # self.ev3_print(n, "| END:", self.motor_l.angle(), self.motor_r.angle())
 
-    def line_follower(self, target: int, side: str, pid: PIDControl, speed: int = 50):
-        pid = PIDControl(const.LINE_FOLLOWER_VALUES)
-        if side == "R":
-            sensor = self.color_right
-            side = 1
-        elif side == "L":
-            sensor = self.color_left
-            side = -1
-        else:
-            raise ValueError("Apenas 'R' ou 'L'")
+    def line_follower(
+            self,
+            sensor,
+            loop_condition_function,
+            speed=60,
+            pid: PIDValues = const.LINE_FOLLOWER_VALUES,
+            side: str = "R",
+            error_function=None,
+        ):
+            """
+            Segue uma linha com um sensor de cor.
+            """
+            if side == "R":
+                side = 1
+            elif side == "L":
+                side = -1
+            else:
+                raise ValueError("Apenas 'R' ou 'L'")
 
-        correction = pid.compute(lambda: sensor.reflection() - target)
+            if error_function is None:
+                error_function = (
+                    lambda: sensor.reflection() - const.SANDY_LINE_FOLLOW_TARGET_REFLECTION
+                )
 
-        self.motor_l.dc(speed + correction * side)
-        self.motor_r.dc(speed - correction * side)
+            error = 0
+            error_i = 0
+            prev_error = 0
+            d_error = 0
+
+            while loop_condition_function():
+                error = error_function()
+                error_i += error
+                d_error = error - prev_error
+                prev_error = error
+
+                pid_correction = pid.kp * error + pid.ki * error_i + pid.kd * d_error
+
+                # self.ev3_print(error, pid_correction, [speed, speed])
+                self.motor_l.dc(speed + pid_correction * side)
+                self.motor_r.dc(speed - pid_correction * side)
+
+            self.stop()
 
     def wait_button(self, button=Button.CENTER, beep=600):
         return wait_button_pressed(ev3=self.ev3, button=button, beep=beep)

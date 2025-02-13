@@ -114,8 +114,13 @@ def path_control(robot: Robot, path: list, directions: list):
     """
     Rotina pro robô seguir o caminho traçado, seguindo o conjunto de direções determinado.
     """
+    # inicia o idx da lista como 0 e a necessidade de alinhar
     position_index = 0
     needs_align = 0
+    ignore_obstacles = False
+    if robot.ultra_feet.distance() < const.OBSTACLE_DISTANCE:
+        robot.ev3_print("Obstructed sensor!")
+        ignore_obstacles = True
     for idx, (direction, distance) in enumerate(directions):
         robot.ev3_print("Current position:", path[position_index])
         robot.ev3_print("Step:", direction, distance)
@@ -145,19 +150,19 @@ def path_control(robot: Robot, path: list, directions: list):
         if turn_times != 0:
             needs_align += 1
 
-        # caso a orientacao nao coincida alinha na prox parede disponivel
-        if needs_align >= 2:
-            if (
-                get_relative_orientation(robot.orientation, 1)
-                in walls_of_vertices[path[position_index]]
-            ):
-                align_side(robot, "right")
-            elif (
-                get_relative_orientation(robot.orientation, -1)
-                in walls_of_vertices[path[position_index]]
-            ):
-                align_side(robot, "left")
-            needs_align = 0
+        # # caso a orientacao nao coincida alinha na prox parede disponivel
+        # if (needs_align >= 2):
+        #     if (
+        #         get_relative_orientation(robot.orientation, 1)
+        #         in walls_of_vertices[path[position_index]]
+        #     ):
+        #         align_side(robot, "right")
+        #     elif (
+        #         get_relative_orientation(robot.orientation, -1)
+        #         in walls_of_vertices[path[position_index]]
+        #     ):
+        #         align_side(robot, "left")
+        #     needs_align = 0
 
         if idx == len(directions) - 1:
             # nao anda a ultima distancia, pra nao entrar no estabelecimento
@@ -169,6 +174,7 @@ def path_control(robot: Robot, path: list, directions: list):
             # Caso seja, o robô não desliga os motores entre as movimentações.
             should_stop = False
 
+        # procura obstaculos no caminho e trtar bater com um sensor em estabelecimento
         obstacle_function = (
             lambda: robot.color_left.color() in wall_colors
             or robot.color_right.color() in wall_colors
@@ -177,11 +183,15 @@ def path_control(robot: Robot, path: list, directions: list):
                 and path[position_index + 1] in possible_obstacles_vertices
             )
         )
-        has_seen_obstacle, walked_perc = robot.pid_walk(
+        has_seen_obstacle, walked_perc, sensor = robot.pid_walk(
             distance,
+            const.ROBOT_SPEED,
             off_motors=should_stop,
             obstacle_function=obstacle_function,
         )
+        if walked_perc == None:
+            walked_perc = 0.1
+        # caso veja um obstaculo volta a porcentagem do ultimo movimento e recalcula a rota
         while has_seen_obstacle:
             robot.stop()
             if (
@@ -189,7 +199,7 @@ def path_control(robot: Robot, path: list, directions: list):
                 and path[position_index + 1] in possible_obstacles_vertices
             ):
                 robot.ev3_print("Obstacle")
-                has_seen_obstacle, walked_perc = robot.pid_walk(
+                has_seen_obstacle, walked_perc, _ = robot.pid_walk(
                     cm=distance * walked_perc,
                     speed=-60,
                     off_motors=should_stop,
