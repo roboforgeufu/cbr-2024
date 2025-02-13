@@ -1,18 +1,7 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.hubs import EV3Brick  # type: ignore
-from pybricks.ev3devices import (
-    Motor,
-    TouchSensor,
-    ColorSensor,  # type: ignore
-    InfraredSensor,
-    UltrasonicSensor,
-    GyroSensor,
-)
 from pybricks.messaging import BluetoothMailboxClient, BluetoothMailboxServer, TextMailbox  # type: ignore
-from pybricks.parameters import Port, Stop, Direction, Button, Color  # type: ignore
-from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
-from pybricks.robotics import DriveBase  # type: ignore
-from pybricks.media.ev3dev import SoundFile, ImageFile  # type: ignore
+from pybricks.tools import wait # type: ignore
 
 import socket
 
@@ -69,7 +58,7 @@ class Wifi:
         # Encerra conexão com o computador
         message = "end"
         self.client.send(message.encode())
-        client.close()
+        self.client.close()
         wait(500)
 
 
@@ -79,10 +68,11 @@ class Bluetooth:
     # Conexão bluetooth EV3 com EV3
     #
 
-    def __init__(self, is_server=False, ev3=EV3Brick):
+    def __init__(self, ev3: EV3Brick, server_name="sandy"):
 
         self.ev3 = ev3
-        self.is_server = is_server
+        self.is_server = get_hostname() == server_name
+        self.server_name = server_name
 
         if self.is_server:
             self.bluetooth = BluetoothMailboxServer()
@@ -99,11 +89,12 @@ class Bluetooth:
 
         else:
             # Inicia o cliente
-            self.bluetooth.connect("ev3server")
+            self.bluetooth.connect(self.server_name)
             return "CLIENT START!"
 
     def message(
-        self, message=None, channel="Main",delay=0):  # Envia ou recebe uma mensagem (no canal principal por padrão)
+        self, message=None, channel="Main", delay=0
+    ):  # Envia ou recebe uma mensagem (no canal principal por padrão)
 
         # Método de comunicação do Ev3 que envia ou recebe apenas strings
         mbox = TextMailbox(channel, self.bluetooth)
@@ -120,7 +111,9 @@ class Bluetooth:
 
             # Se não tiver mensagem como argumento, retorna uma mensagem recebida e o assunto (canal)
             mbox.wait()
-            recv_message = decoder(mbox.read()) # Decodifica string personalizado em mensagem
+            recv_message = decoder(
+                mbox.read()
+            )  # Decodifica string personalizado em mensagem
             return recv_message
 
     def end(self):
