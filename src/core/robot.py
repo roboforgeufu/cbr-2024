@@ -1,9 +1,9 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.hubs import EV3Brick  # type: ignore
-from pybricks.ev3devices import ( # type: ignore
+from pybricks.ev3devices import (  # type: ignore
     Motor,
     TouchSensor,
-    ColorSensor,  
+    ColorSensor,
     InfraredSensor,
     UltrasonicSensor,
     GyroSensor,
@@ -12,10 +12,10 @@ from pybricks.parameters import Port, Stop, Direction, Button, Color  # type: ig
 from pybricks.tools import wait, StopWatch, DataLog  # type: ignore
 from pybricks.robotics import DriveBase  # type: ignore
 from pybricks.media.ev3dev import SoundFile, ImageFile, Font  # type: ignore
-from core.utils import ev3_print, wait_button_pressed
+from core.utils import ev3_print, ev3_draw, wait_button_pressed, get_hostname
 from core.decision_color_sensor import DecisionColorSensor
-from pybricks.parameters import Button # type: ignore
-from core.utils import PIDValues
+from pybricks.parameters import Button  # type: ignore
+from core.utils import PIDValues, PIDControl
 from core.network import Bluetooth
 import constants as const
 
@@ -26,7 +26,7 @@ import math
 Módulo central pra controle do Robô.
 
 Devem estar nesse módulo:
-    - Classe 'Robot' e 'OmniRobot', com métodos e atributos para controle geral no robô
+    - Classe 'Robot', com métodos e atributos para controle geral no robô
     - Estruturas de dados auxiliares aplicáveis a "qualquer" tipo de robô
 
 Não devem estar nesse módulo:
@@ -39,13 +39,12 @@ Não devem estar nesse módulo:
 
 
 class Robot:
-
-    # Classe que representa um robô genérico
+    """Classe que representa um robô de 2 rodas"""
 
     def __init__(
         self,
-        wheel_diameter = None,
-        wheel_distance = None,
+        wheel_diameter=None,
+        wheel_distance=None,
         motor_r: Port = None,
         motor_l: Port = None,
         motor_elevate_claw: Port = None,
@@ -62,8 +61,8 @@ class Robot:
 
         # Ev3
         self.ev3 = EV3Brick()
-
         self.stopwatch = StopWatch()
+        self.name = get_hostname()
 
         # Rodas
         self.wheel_diameter = wheel_diameter
@@ -103,7 +102,7 @@ class Robot:
         self.orientation = None
 
         # Fator de correção de curvas
-        self.turn_correction = 0.9
+        self.turn_correction = 1
 
         # Printa a voltagem e corrente atual da bateria:
         self.ev3_print("Bat. V:", self.ev3.battery.voltage(), "mV")
@@ -129,13 +128,12 @@ class Robot:
         """Grau nas rodas (motores) do robô -> Distância em centímetros"""
         return degrees * ((math.pi * self.wheel_diameter) / 360)
 
-    def set_wheels_angle(self, angle):
-
-        # Zera o ângulo das rodas
+    def reset_wheels_angle(self, angle=0):
+        """Reseta o ângulo das rodas"""
         self.motor_r.reset_angle(angle)
         self.motor_l.reset_angle(angle)
 
-    def off_motors(self):
+    def stop(self):
         """Desliga motores de locomoção."""
         self.motor_l.dc(0)
         self.motor_r.dc(0)
@@ -147,42 +145,21 @@ class Robot:
     def wheels_angle(self):
 
         # Retorna a média do ângulo das duas rodas
-        return (self.motor_l.angle() + self.motor_l.angle()) / 2
+        return (self.motor_r.angle() + self.motor_l.angle()) / 2
 
     def abs_wheels_angle(self):
 
         # Retorna a média do módulo do ângulo das duas rodas
         return (abs(self.motor_r.angle()) + abs(self.motor_l.angle())) / 2
 
-    def walk(self, dc=100, angle=None, pid=False):
-        # TODO: passar valor em centímetros
-
-        # Movimenta o robô
-        if pid:
-            pass
-
-        else:
-            if angle != None:
-                self.set_wheels_angle(0)
-                while abs(angle) >= self.abs_wheels_angle():
-                    self.motor_r.dc(dc)
-                    self.motor_l.dc(dc)
-                self.off_motors()
-            else:
-                self.motor_r.dc(dc)
-                self.motor_l.dc(dc)
-
     def pid_walk(
         self,
         cm,
         speed=60,
-        pid: PIDValues = PIDValues(
-            kp=3,
-            ki=0.2,
-            kd=8,
-        ),
+        pid: PIDValues = const.PID_WALK_VALUES,
         obstacle_function=None,
         off_motors=True,
+        sensor_read=False,
     ):
         """
         Anda em linha reta com controle PID entre os motores.
@@ -194,14 +171,13 @@ class Robot:
             True, 1
         """
         degrees = self.cm_to_motor_degrees(cm)
-
-        elapsed_time = 0
-        i_share = 0
-        error = 0
+        if degrees == 0:
+            return
+        sensor = None
         motor_angle_average = 0
         initial_left_angle = self.motor_l.angle()
         initial_right_angle = self.motor_r.angle()
-        self.stopwatch.reset()
+        pid_c = PIDControl(pid)
 
         has_seen_obstacle = False
         while abs(motor_angle_average) < abs(degrees):
@@ -214,31 +190,26 @@ class Robot:
                 + (self.motor_r.angle() - initial_right_angle)
             ) / 2
 
-            elapsed_time, i_share, error = self.loopless_pid_walk(
-                elapsed_time,
-                i_share,
-                error,
-                vel=speed,
-                pid=pid,
+            self.loopless_pid_walk(
+                pid_control=pid_c,
+                speed=speed,
                 initial_left_angle=initial_left_angle,
                 initial_right_angle=initial_right_angle,
             )
 
         if off_motors:
-            self.off_motors()
-        return has_seen_obstacle, abs(motor_angle_average) / abs(degrees)
+            self.stop()
+        if sensor_read:
+            if self.color_left.color() != Color.WHITE:
+                sensor = "L"
+            elif self.color_right.color() != Color.WHITE:
+                sensor = "R"
+        return has_seen_obstacle, abs(motor_angle_average) / abs(degrees), sensor
 
     def loopless_pid_walk(
         self,
-        prev_elapsed_time=0,
-        i_share=0,
-        prev_error=0,
-        vel=60,
-        pid: PIDValues = PIDValues(
-            kp=3,
-            ki=0.2,
-            kd=8,
-        ),
+        pid_control: PIDControl,
+        speed=60,
         initial_left_angle=0,
         initial_right_angle=0,
     ):
@@ -248,62 +219,20 @@ class Robot:
         novos parâmetros (prev_elapsed_time, i_share, prev_error) devidamente
         inicializados a cada iteração.
         """
-        error = (self.motor_r.angle() - initial_right_angle) - (
+        error_function = lambda: (self.motor_r.angle() - initial_right_angle) - (
             self.motor_l.angle() - initial_left_angle
         )
-        p_share = error * pid.kp
 
-        if abs(error) < 3:
-            i_share = i_share + (error * pid.ki)
+        correction = pid_control.compute(error_function)
+        self.motor_r.dc(speed - correction)
+        self.motor_l.dc(speed + correction)
 
-        wait(1)
-        elapsed_time = self.stopwatch.time()
-
-        d_share = ((error - prev_error) * pid.kd) / (elapsed_time - prev_elapsed_time)
-
-        pid_correction = p_share + i_share + d_share
-        self.motor_r.dc(vel - pid_correction)
-        self.motor_l.dc(vel + pid_correction)
-
-        return (elapsed_time, i_share, error)
-
-    def turn(self, angle, pid=False, dc=100):
-
-        # Gira o robô em graus
-        self.set_wheels_angle(0)
-
-        motor_degrees = self.real_angle_to_motor_degrees(angle)
-        error = self.abs_wheels_angle()
-
-        if pid:
-            # Curva usando PID
-            side = angle / abs(angle)
-            pass
-
-        else:
-            # Curva normal
-            while error < motor_degrees:
-                error = self.abs_wheels_angle()
-                self.motor_r.run(dc)
-                self.motor_l.run(-dc)
-
-    def pid_turn(
-        self,
-        angle,
-        pid: PIDValues = PIDValues(
-            kp=0.8,
-            ki=0.01,
-            kd=0.4,
-        ),
-    ):
+    def pid_turn(self, angle, pid: PIDValues = const.PID_TURN_VALUES):
         """
         Curva com controle PID.
         - Angulo relativo ao eixo do robô.
         - Angulo negativo: curva p / esquerda
         - Angulo positivo: curva p / direita
-        - Modos(mode):
-            - 1: usa o valor dado como ângulo ao redor do eixo do robô
-            - 2: usa o valor dado como ângulo no eixo das rodas
         """
         # self.ev3_print(self.pid_turn.__name__)
 
@@ -385,8 +314,51 @@ class Robot:
                 and abs(right_wheel_angle_distance) > const.MIN_DEGREES_CURVE_THRESHOLD
             ):
                 break
-        self.off_motors()
+        self.stop()
         # self.ev3_print(n, "| END:", self.motor_l.angle(), self.motor_r.angle())
+
+    def line_follower(
+        self,
+        sensor,
+        loop_condition_function,
+        speed=60,
+        pid: PIDValues = const.LINE_FOLLOWER_VALUES,
+        side: str = "R",
+        error_function=None,
+    ):
+        """
+        Segue uma linha com um sensor de cor.
+        """
+        if side == "R":
+            side = 1
+        elif side == "L":
+            side = -1
+        else:
+            raise ValueError("Apenas 'R' ou 'L'")
+
+        if error_function is None:
+            error_function = (
+                lambda: sensor.reflection() - const.SANDY_LINE_FOLLOW_TARGET_REFLECTION
+            )
+
+        error = 0
+        error_i = 0
+        prev_error = 0
+        d_error = 0
+
+        while loop_condition_function():
+            error = error_function()
+            error_i += error
+            d_error = error - prev_error
+            prev_error = error
+
+            pid_correction = pid.kp * error + pid.ki * error_i + pid.kd * d_error
+
+            # self.ev3_print(error, pid_correction, [speed, speed])
+            self.motor_l.dc(speed + pid_correction * side)
+            self.motor_r.dc(speed - pid_correction * side)
+
+        self.stop()
 
     def wait_button(self, button=Button.CENTER, beep=600):
         return wait_button_pressed(ev3=self.ev3, button=button, beep=beep)
@@ -411,17 +383,40 @@ class Robot:
             bold=bold,
             **kwargs,
         )
-    def ev3_draw(self, *args, x=0, y=0, background=False, line=0, clear=False, font="Lucida", size=16, bold=False, **kwargs):
-        ev3_draw(*args, ev3=self.ev3, x=x, y=y, background=background, line=line, clear=clear, font=font, size=size, bold=bold, **kwargs)
 
-    def walk_while_same_reflection(self, speed=200):
-        """Retorna o tempo passado andando até chegar na cor diferente"""
-        ...
+    def ev3_draw(
+        self,
+        *args,
+        x=0,
+        y=0,
+        background=False,
+        line=0,
+        clear=False,
+        font="Lucida",
+        size=16,
+        bold=False,
+        **kwargs,
+    ):
+        ev3_draw(
+            *args,
+            ev3=self.ev3,
+            x=x,
+            y=y,
+            background=background,
+            line=line,
+            clear=clear,
+            font=font,
+            size=size,
+            bold=bold,
+            **kwargs,
+        )
 
     def align(
         self,
-        pid: PIDValues = PIDValues(kp=1, ki=0.015, kd=1.5),
+        speed=40,
+        pid: PIDValues = const.ALIGN_VALUES,
         direction_sign=1,
+        hard_limit=0,
     ):
         initial_color_left = self.color_left.color()
         initial_reflection_left = self.color_left.rgb()[2]
@@ -465,7 +460,7 @@ class Robot:
 
                 left_speed = left_pid_speed * direction_sign
             else:
-                left_speed = 75
+                left_speed = speed
 
             if has_seen_right:
                 # PID motor direito
@@ -484,174 +479,65 @@ class Robot:
 
                 right_speed = right_pid_speed * direction_sign
             else:
-                right_speed = 75
+                right_speed = speed
 
             self.motor_l.dc(left_speed)
             self.motor_r.dc(right_speed)
 
-            self.ev3_print(left_error, left_error_i, right_error, right_error_i)
+            # self.ev3_print(left_error, left_error_i, right_error, right_error_i)
             if (
                 has_seen_left
                 and has_seen_right
                 and abs(left_error) <= 7
                 and abs(right_error) <= 7
             ):
-                break
-        self.off_motors()
+                return False, 0, "s"
 
+            motor_difference = self.motor_r.angle() - self.motor_l.angle()
+            if hard_limit != 0 and abs(motor_difference) >= hard_limit:
+                if motor_difference >= 0:
+                    return True, motor_difference, "RIGHT"
+                else:
+                    return True, motor_difference, "LEFT"
 
-#
-# Robô de quatro rodas omnidirecionais
-#
+        self.stop()
 
+    def line_grabber(self, side, time=3000, speed=30, multiplier=1):
+        color_reads = []
+        num_reads = 10
+        wrong_read_perc = 0.5
+        color_count_perc = 0.5
+        self.stopwatch.reset()
+        self.reset_wheels_angle()
 
-class OmniRobot:
+        sensor = self.color_right if side == "R" else self.color_left
 
-    # Classe que representa um robô genérico
+        while True:
+            color_reads.append(sensor.color())
+            if len(color_reads) == num_reads:
+                wrong_read_perc = color_reads.count(Color.WHITE) / num_reads
+                color_count_perc = 1 - wrong_read_perc
+                color_reads.clear()
 
-    def __init__(
-        self,
-        wheel_diameter=5.5,
-        wheel_length=10,
-        wheel_width=10,
-        wheel_1=None,
-        wheel_2=None,
-        wheel_3=None,
-        wheel_4=None,
-    ):
+                wrong_read_perc = color_count_perc if side == "R" else wrong_read_perc
+                color_count_perc = wrong_read_perc if side == "R" else color_count_perc
 
-        # Ev3
-        self.ev3 = EV3Brick()
-        self.watch = StopWatch()
+            self.motor_l.dc(speed * color_count_perc * multiplier)
+            self.motor_r.dc(speed * wrong_read_perc * multiplier)
 
-        # Rodas
-        self.wheel_diameter = wheel_diameter
-        self.wheel_length = wheel_length
-        self.wheel_width = wheel_width
-        self.wheel_1 = wheel_1
-        self.wheel_2 = wheel_2
-        self.wheel_3 = wheel_3
-        self.wheel_4 = wheel_4
+            motor_mean = (self.motor_l.angle() + self.motor_r.angle()) / 2
 
-    def real_angle_to_motor_degrees(self, angle):
+            if self.stopwatch.time() > time:
+                self.stop()
+                return self.motor_degrees_to_cm(motor_mean)
 
-        # Converte graus reais para graus correspondentes na roda
-        radius = (self.wheel_length**2 + self.wheel_length**2) ** (1 / 2)
-        return angle * radius / self.wheel_distance
-
-    def wheels_angle(self):
-
-        return (
-            self.wheel_1.angle()
-            + self.wheel_2.angle()
-            + self.wheel_3.angle()
-            + self.wheel_4.angle()
-        ) / 4
-
-    def abs_wheels_angle(self):
-
-        return (
-            abs(self.wheel_1.angle())
-            + abs(self.wheel_2.angle())
-            + abs(self.wheel_3.angle())
-            + abs(self.wheel_4.angle())
-        ) / 4
-
-    def set_wheels_angle(self, angle):
-
-        # Zera o ângulo das rodas
-        self.wheel_1.reset_angle(angle)
-        self.wheel_2.reset_angle(angle)
-        self.wheel_3.reset_angle(angle)
-        self.wheel_4.reset_angle(angle)
-
-    def vertical_run(self, duty):
-
-        self.wheel_1.dc(duty)
-        self.wheel_2.dc(duty)
-        self.wheel_3.dc(duty)
-        self.wheel_4.dc(duty)
-
-    def horizontal_run(self, duty, side):
-
-        if side == 1:
-            self.wheel_1.dc(duty)
-            self.wheel_2.dc(-duty)
-            self.wheel_3.dc(-duty)
-            self.wheel_4.dc(duty)
+    def one_wheel_turn(self, side, motor_degrees, speed=-40):
+        self.reset_wheels_angle()
+        if side == "R":
+            while abs(self.motor_r.angle()) <= motor_degrees:
+                self.motor_r.dc(speed)
         else:
-            self.wheel_1.dc(-duty)
-            self.wheel_2.dc(duty)
-            self.wheel_3.dc(duty)
-            self.wheel_4.dc(-duty)
-
-    def walk(self, duty, angle=0, direction="vertical", pid=False):
-
-        side = abs(duty) / duty
-
-        if angle != 0:
-
-            side *= abs(angle) / angle
-
-            self.set_wheels_angle(0)
-
-            if direction == "vertical":
-                while abs(angle) >= self.abs_wheels_angle():
-                    self.vertical_run(duty)
-
-            elif direction == "horizontal":
-                while abs(angle) >= self.abs_wheels_angle():
-                    self.horizontal_run(duty, side)
-
-        else:
-
-            if direction == "vertical":
-                self.vertical_run(duty)
-
-            elif direction == "horizontal":
-                self.horizontal_run(duty, side)
-
-    def turn(self, duty=100, angle=0, pid=False):
-
-        if angle > 0:
-            angle = self.real_angle_to_motor_degrees(angle)
-            while abs(angle) > self.abs_wheels_angle():
-                self.wheel_1.dc(duty)
-                self.wheel_2.dc(-duty)
-                self.wheel_3.dc(duty)
-                self.wheel_4.dc(-duty)
-        else:
-            self.wheel_1.dc(duty)
-            self.wheel_2.dc(-duty)
-            self.wheel_3.dc(duty)
-            self.wheel_4.dc(-duty)
-
-    def wait_button(self, button=[], beep = 0):
-        wait_button_pressed(ev3=self.ev3, button=button, beep=beep)
-
-    def ev3_print(
-        self,
-        *args,
-        clear=False,
-        font="Lucida",
-        size=16,
-        bold=False,
-        x=0,
-        y=0,
-        background=None,
-        end="\n",
-        **kwargs,
-    ):
-        ev3_print(
-            *args,
-            ev3=self.ev3,
-            clear=clear,
-            font=font,
-            size=size,
-            bold=bold,
-            x=x,
-            y=y,
-            background=background,
-            end=end,
-            **kwargs,
-        )
+            while abs(self.motor_l.angle()) <= motor_degrees:
+                self.motor_l.dc(speed)
+        self.reset_wheels_angle()
+        self.stop()

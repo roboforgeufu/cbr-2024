@@ -1,7 +1,7 @@
 #!/usr/bin/env pybricks-micropython
 from pybricks.hubs import EV3Brick  # type: ignore
 from pybricks.messaging import BluetoothMailboxClient, BluetoothMailboxServer, TextMailbox  # type: ignore
-from pybricks.tools import wait # type: ignore
+from pybricks.tools import wait  # type: ignore
 
 import socket
 
@@ -79,6 +79,8 @@ class Bluetooth:
         else:
             self.bluetooth = BluetoothMailboxClient()
 
+        self.mail_boxes = {"Main": TextMailbox("Main", self.bluetooth)}
+
     def start(self):
 
         # Inicia a conexão bluetooth (Servidor ou cliente)
@@ -89,17 +91,21 @@ class Bluetooth:
 
         else:
             # Inicia o cliente
-            self.bluetooth.connect(self.server_name)
+            while True:
+                print("Trying to connect to server...")
+                try:
+                    self.bluetooth.connect(self.server_name)
+                    break
+                except:
+                    print("Error")
+                    wait(1000)
             return "CLIENT START!"
 
     def message(
-        self, message=None, channel="Main", delay=0
+        self, message=None, channel="Main", delay=0, should_wait=True, force_send=False
     ):  # Envia ou recebe uma mensagem (no canal principal por padrão)
-
-        # Método de comunicação do Ev3 que envia ou recebe apenas strings
-        mbox = TextMailbox(channel, self.bluetooth)
-
-        if message != None:
+        mbox = self.mail_boxes[channel]
+        if message != None or force_send:
 
             # Se tiver alguma mensagem como argumento, envia a mensagem
             encoded_message = encoder(message)
@@ -110,7 +116,9 @@ class Bluetooth:
         else:
 
             # Se não tiver mensagem como argumento, retorna uma mensagem recebida e o assunto (canal)
-            mbox.wait()
+
+            if should_wait:
+                mbox.wait()
             recv_message = decoder(
                 mbox.read()
             )  # Decodifica string personalizado em mensagem
