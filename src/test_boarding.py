@@ -14,10 +14,10 @@ from domain.boarding import passenger_boarding, passenger_unboarding
 from domain.path_control import path_control
 from decision_trees.ht_nxt_color_v2_2 import ht_nxt_color_v2_p2_decision_tree
 from decision_trees.lego_ev3_color_1 import levo_ev3_color_1_decision_tree
-from decision_trees.lego_ev3_color_3 import lego_ev3_color_p3_decision_tree
-from decision_trees.lego_ev3_color_4 import lego_ev3_color_p4_decision_tree
+from decision_trees.sandy_lego_ev3_color_3 import lego_ev3_color_p3_decision_tree
+from decision_trees.sandy_lego_ev3_color_4 import lego_ev3_color_p4_decision_tree
 
-passenger_boarding(Robot(
+robot = Robot(
                 wheel_diameter=const.WHEEL_DIAMETER,
                 wheel_distance=const.WHEEL_DIST,
                 motor_r=Port.B,
@@ -31,4 +31,9 @@ passenger_boarding(Robot(
                     ColorSensor(Port.S4), lego_ev3_color_p4_decision_tree
                 ),
             )
-)
+
+# alinhar 
+if robot.color_left.color() == "BLUE" and robot.color_right.color == "BLUE":
+    robot.ev3_print(robot.color_left.color(), robot.color_right.color())
+    next_path = passenger_boarding(robot)
+

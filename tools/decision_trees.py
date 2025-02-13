@@ -128,22 +128,25 @@ def ask_sensor():
     return sensor, port, position
 
 
-def get_filenames_for_sensor(sensor, port, color_names):
+def get_filenames_for_sensor(robot_name, sensor, port, color_names):
     file_names = []
     for file in os.listdir(LOGS_PATH):
         for color_name in color_names:
-            if file.startswith(f"calib_{sensor}_{port}_{stringfy_color(color_name)}"):
+            if file.startswith(
+                f"calib_{robot_name}_{sensor}_{port}_{stringfy_color(color_name)}"
+            ):
                 file_names.append(file)
 
     return file_names
 
 
 def main():
+    brick_name = input("Brick name:")
     sensor, port, position = ask_sensor()
 
     color_names, feature_names = get_colors_and_features(sensor, position)
 
-    filenames = get_filenames_for_sensor(sensor, port, color_names)
+    filenames = get_filenames_for_sensor(brick_name, sensor, port, color_names)
 
     dataframe = get_all_files_into_dataframe(filenames)
     full_color_names = list(
@@ -163,8 +166,8 @@ def main():
         tree_model,
         feature_names,
         classes=sorted(color_names),
-        function_name=f"{sensor}_p{port}_decision_tree",
-        file=f"./src/decision_trees/{sensor}_{port}.py",
+        function_name=f"{brick_name}_{sensor}_p{port}_decision_tree",
+        file=f"./src/decision_trees/{brick_name}_{sensor}_{port}.py",
     )
 
 

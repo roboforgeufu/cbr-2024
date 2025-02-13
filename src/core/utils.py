@@ -1,11 +1,13 @@
 import os
 
-from pybricks.media.ev3dev import Font
-from pybricks.parameters import Button
+from pybricks.media.ev3dev import Font  # type: ignore
+from pybricks.parameters import Button, Color  # type: ignore
+from pybricks.tools import StopWatch, wait  # type: ignore
 
 
 class PIDValues:
-    """Variáveis de controle PID."""
+
+    """Classe de valores para controle PID."""
 
     def __init__(
         self,
@@ -18,6 +20,56 @@ class PIDValues:
         self.ki = ki
         self.kd = kd
         self.target = target
+
+    @staticmethod
+    def from_list(pid_list):
+        return PIDValues(kp = pid_list[0],
+                         ki = pid_list[1],
+                         kd = pid_list[0])
+
+class PIDControl:
+    """Classe para controle PID"""
+
+    def __init__(self, values: PIDValues):
+        self.values = values
+        self.reset()
+        self.stopwatch = StopWatch()
+
+    def set_values(self, error_function):
+        self._elapsed_time = 0
+        self._i_share = 0
+        self._prev_error = 0
+        self._error_function = error_function
+
+        self.stopwatch = StopWatch()
+
+    def reset(self):
+        self._elapsed_time = 0
+        self._i_share = 0
+        self._prev_error = 0
+
+    def compute(self, error_function):
+        error = error_function()
+        p_share = error * self.values.kp
+
+        self._i_share = self._i_share + (error * self.values.ki)
+
+        wait(1)
+        elapsed_time = self.stopwatch.time()
+
+        d_share = ((error - self._prev_error) * self.values.kd) / (
+
+            elapsed_time - self._elapsed_time
+        )
+
+        pid_correction = p_share + self._i_share + d_share
+
+        self._elapsed_time = elapsed_time
+        self._prev_error = error
+
+        # print(p_share, d_share, self._i_share)
+
+        return pid_correction
 
 
 def get_hostname() -> str:
@@ -53,11 +105,42 @@ def ev3_print(
 
         # ev3.screen.set_font(Font(font, size, bold))
 
-        if x != 0 or y != 0 or background != None:
-            ev3.screen.draw_text(x, y, str(*args), background_color=background)
-        else:
-            ev3.screen.print(*args, **kwargs, end=end)
+        ev3.screen.print(*args, **kwargs, end=end)
+
     print(*args, **kwargs)
+
+
+def ev3_draw(
+    *args,
+    ev3=None,
+    x=0,
+    y=0,
+    background=False,
+    line=0,
+    spacing=22,
+    clear=False,
+    font="Lucida",
+    size=16,
+    bold=False,
+):
+    if ev3 is not None:
+        if clear:
+            ev3.screen.clear()
+        if background:
+            background_color = Color.BLACK
+            text_color = Color.WHITE
+        else:
+            background_color = Color.WHITE
+            text_color = Color.BLACK
+
+        ev3.screen.draw_text(
+            x,
+            y + line * spacing,
+            str(*args),
+            text_color=text_color,
+            background_color=background_color,
+        )
+    print(*args)
 
 
 def wait_button_pressed(ev3, button: Button = Button.CENTER, beep=True):

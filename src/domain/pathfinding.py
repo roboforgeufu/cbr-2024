@@ -1,5 +1,5 @@
 from pybricks.parameters import Color
-
+import constants as const
 import heapq
 
 ROBOT_SIZE_HALF = 7.7
@@ -91,6 +91,15 @@ class Graph:
 
         return caminho, distancias[fim], direcoes_pesos
 
+    def find_best_path(self, inicio: int, destinations: list):
+        """Encontra o melhor caminho entre um vértice de início e uma lista de destinos, retornando o caminho, a distância e o conjunto de instruções pra percorrer."""
+        paths = []
+        for target in destinations:
+            path, distance, instructions = self.dijkstra(inicio, target)
+            paths.append((path, distance, instructions))
+        paths.sort(key=lambda x: x[1])
+        return paths[0]
+
     def recalcular_caminho_sem_obstaculos(self, inicio, fim):
         for vertice in self.obstaculos:
             self.unmark_obstacle(vertice)
@@ -102,60 +111,60 @@ class Graph:
 
 map_matrix = [
     [[0]],
-    [[1], ["V0", "O", 24], ["V2", "L", 30], ["V7", "S", 30]],
+    [[1], ["V0", "O", const.CELL_DISTANCE_TO_PARK], ["V2", "L", const.CELL_DISTANCE], ["V7", "S", const.CELL_DISTANCE]],
     [[2]],
-    [[3], ["V4", "L", 30], ["V9", "S", 30]],
+    [[3], ["V4", "L", const.CELL_DISTANCE], ["V9", "S", const.CELL_DISTANCE]],
     [[4]],
-    [[5], ["V6", "L", 18 - ROBOT_SIZE_HALF], ["V11", "S", 30]],
-    [[6], ["V5", "O", 18 - ROBOT_SIZE_HALF]],
-    [[7], ["V1", "N", 30], ["V8", "L", 30], ["V14", "S", 30]],
-    [[8], ["V7", "O", 30], ["V2", "N", 30], ["V9", "L", 30]],
-    [[9], ["V8", "O", 30], ["V3", "N", 30], ["V10", "L", 30], ["V16", "S", 30]],
-    [[10], ["V9", "O", 30], ["V4", "N", 30], ["V17", "S", 30], ["V11", "L", 30]],
+    [[5], ["V6", "L", const.CELL_DISTANCE_TO_BOARDING - ROBOT_SIZE_HALF], ["V11", "S", const.CELL_DISTANCE]],
+    [[6], ["V5", "O", const.CELL_DISTANCE_TO_BOARDING - ROBOT_SIZE_HALF]],
+    [[7], ["V1", "N", const.CELL_DISTANCE], ["V8", "L", const.CELL_DISTANCE], ["V14", "S", const.CELL_DISTANCE]],
+    [[8], ["V7", "O", const.CELL_DISTANCE], ["V2", "N", const.CELL_DISTANCE], ["V9", "L", const.CELL_DISTANCE]],
+    [[9], ["V8", "O", const.CELL_DISTANCE], ["V3", "N", const.CELL_DISTANCE], ["V10", "L", const.CELL_DISTANCE], ["V16", "S", const.CELL_DISTANCE]],
+    [[10], ["V9", "O", const.CELL_DISTANCE], ["V4", "N", const.CELL_DISTANCE], ["V17", "S", const.CELL_DISTANCE], ["V11", "L", const.CELL_DISTANCE]],
     [
         [11],
-        ["V10", "O", 30],
-        ["V12", "L", 18 - ROBOT_SIZE_HALF],
-        ["V5", "N", 30],
-        ["V18", "S", 30],
+        ["V10", "O", const.CELL_DISTANCE],
+        ["V12", "L", const.CELL_DISTANCE_TO_BOARDING - ROBOT_SIZE_HALF],
+        ["V5", "N", const.CELL_DISTANCE],
+        ["V18", "S", const.CELL_DISTANCE],
     ],
-    [[12], ["V11", "O", 18 - ROBOT_SIZE_HALF]],
+    [[12], ["V11", "O", const.CELL_DISTANCE_TO_BOARDING - ROBOT_SIZE_HALF]],
     [[13]],
-    [[14], ["V13", "O", 24], ["V15", "L", 30], ["V20", "S", 30], ["V7", "N", 30]],
+    [[14], ["V13", "O", const.CELL_DISTANCE_TO_PARK], ["V15", "L", const.CELL_DISTANCE], ["V20", "S", const.CELL_DISTANCE], ["V7", "N", const.CELL_DISTANCE]],
     [[15]],
-    [[16], ["V15", "O", 30], ["V9", "N", 30], ["V22", "S", 30]],
+    [[16], ["V15", "O", const.CELL_DISTANCE], ["V9", "N", const.CELL_DISTANCE], ["V22", "S", const.CELL_DISTANCE]],
     [[17]],
     [
         [18],
-        ["V11", "N", 30],
-        ["V19", "L", 18 - ROBOT_SIZE_HALF],
-        ["V24", "S", 30],
+        ["V11", "N", const.CELL_DISTANCE],
+        ["V19", "L", const.CELL_DISTANCE_TO_BOARDING - ROBOT_SIZE_HALF],
+        ["V24", "S", const.CELL_DISTANCE],
     ],
-    [[19], ["V18", "O", 18 - ROBOT_SIZE_HALF]],
-    [[20], ["V14", "N", 30], ["V21", "L", 30], ["V27", "S", 30]],
-    [[21], ["V28", "S", 30], ["V22", "L", 30], ["V20", "O", 30]],
-    [[22], ["V21", "O", 30], ["V23", "L", 30], ["V29", "S", 30], ["V16", "N", 30]],
-    [[23], ["V22", "O", 30], ["V17", "N", 30], ["V30", "S", 30], ["V24", "L", 30]],
+    [[19], ["V18", "O", const.CELL_DISTANCE_TO_BOARDING - ROBOT_SIZE_HALF]],
+    [[20], ["V14", "N", const.CELL_DISTANCE], ["V21", "L", const.CELL_DISTANCE], ["V27", "S", const.CELL_DISTANCE]],
+    [[21], ["V28", "S", const.CELL_DISTANCE], ["V22", "L", const.CELL_DISTANCE], ["V20", "O", const.CELL_DISTANCE]],
+    [[22], ["V21", "O", const.CELL_DISTANCE], ["V23", "L", const.CELL_DISTANCE], ["V29", "S", const.CELL_DISTANCE], ["V16", "N", const.CELL_DISTANCE]],
+    [[23], ["V22", "O", const.CELL_DISTANCE], ["V17", "N", const.CELL_DISTANCE], ["V30", "S", const.CELL_DISTANCE], ["V24", "L", const.CELL_DISTANCE]],
     [
         [24],
-        ["V23", "O", 30],
-        ["V25", "L", 18 - ROBOT_SIZE_HALF],
-        ["V31", "S", 30],
-        ["V18", "N", 30],
+        ["V23", "O", const.CELL_DISTANCE],
+        ["V25", "L", const.CELL_DISTANCE_TO_BOARDING - ROBOT_SIZE_HALF],
+        ["V31", "S", const.CELL_DISTANCE],
+        ["V18", "N", const.CELL_DISTANCE],
     ],
-    [[25], ["V24", "O", 18 - ROBOT_SIZE_HALF]],
+    [[25], ["V24", "O", const.CELL_DISTANCE_TO_BOARDING - ROBOT_SIZE_HALF]],
     [[26]],
-    [[27], ["V26", "O", 24], ["V20", "N", 30]],
+    [[27], ["V26", "O", const.CELL_DISTANCE_TO_PARK], ["V20", "N", const.CELL_DISTANCE]],
     [[28]],
-    [[29], ["V28", "O", 30], ["V22", "N", 30]],
+    [[29], ["V28", "O", const.CELL_DISTANCE], ["V22", "N", const.CELL_DISTANCE]],
     [[30]],
     [
         [31],
-        ["V30", "O", 30],
-        ["V32", "L", 18 - ROBOT_SIZE_HALF],
-        ["V24", "N", 30],
+        ["V30", "O", const.CELL_DISTANCE],
+        ["V32", "L", const.CELL_DISTANCE_TO_BOARDING - ROBOT_SIZE_HALF],
+        ["V24", "N", const.CELL_DISTANCE],
     ],
-    [[32], ["V31", "O", 18 - ROBOT_SIZE_HALF]],
+    [[32], ["V31", "O", const.CELL_DISTANCE_TO_BOARDING - ROBOT_SIZE_HALF]],
 ]
 
 
@@ -166,15 +175,15 @@ def get_target_for_passenger(child_adult: str, color):
     """
     passenger_lookup_table = {
         "CHILD": {
-            Color.GREEN: (0, 13, 26),
-            Color.BLUE: 4,
-            Color.BROWN: 30,
+            Color.GREEN: [0, 13, 26],
+            Color.BLUE: [4],
+            Color.BROWN: [30],
         },
         "ADULT": {
-            Color.GREEN: 17,
-            Color.BLUE: 28,
-            Color.BROWN: 2,
-            Color.RED: 15,
+            Color.GREEN: [17],
+            Color.BLUE: [28],
+            Color.BROWN: [2],
+            Color.RED: [15],
         },
     }
 
