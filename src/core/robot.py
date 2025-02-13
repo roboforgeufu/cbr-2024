@@ -62,7 +62,7 @@ class Robot:
         # Ev3
         self.ev3 = EV3Brick()
         self.stopwatch = StopWatch()
-        self.name = get_hostname() 
+        self.name = get_hostname()
 
         # Rodas
         self.wheel_diameter = wheel_diameter
@@ -102,7 +102,7 @@ class Robot:
         self.orientation = None
 
         # Fator de correção de curvas
-        self.turn_correction = 1    
+        self.turn_correction = 1
 
         # Printa a voltagem e corrente atual da bateria:
         self.ev3_print("Bat. V:", self.ev3.battery.voltage(), "mV")
@@ -159,7 +159,7 @@ class Robot:
         pid: PIDValues = const.PID_WALK_VALUES,
         obstacle_function=None,
         off_motors=True,
-        sensor_read = False
+        sensor_read=False,
     ):
         """
         Anda em linha reta com controle PID entre os motores.
@@ -219,8 +219,10 @@ class Robot:
         novos parâmetros (prev_elapsed_time, i_share, prev_error) devidamente
         inicializados a cada iteração.
         """
-        error_function = lambda: (self.motor_r.angle() - initial_right_angle) - (self.motor_l.angle() - initial_left_angle)
-        
+        error_function = lambda: (self.motor_r.angle() - initial_right_angle) - (
+            self.motor_l.angle() - initial_left_angle
+        )
+
         correction = pid_control.compute(error_function)
         self.motor_r.dc(speed - correction)
         self.motor_l.dc(speed + correction)
@@ -316,47 +318,47 @@ class Robot:
         # self.ev3_print(n, "| END:", self.motor_l.angle(), self.motor_r.angle())
 
     def line_follower(
-            self,
-            sensor,
-            loop_condition_function,
-            speed=60,
-            pid: PIDValues = const.LINE_FOLLOWER_VALUES,
-            side: str = "R",
-            error_function=None,
-        ):
-            """
-            Segue uma linha com um sensor de cor.
-            """
-            if side == "R":
-                side = 1
-            elif side == "L":
-                side = -1
-            else:
-                raise ValueError("Apenas 'R' ou 'L'")
+        self,
+        sensor,
+        loop_condition_function,
+        speed=60,
+        pid: PIDValues = const.LINE_FOLLOWER_VALUES,
+        side: str = "R",
+        error_function=None,
+    ):
+        """
+        Segue uma linha com um sensor de cor.
+        """
+        if side == "R":
+            side = 1
+        elif side == "L":
+            side = -1
+        else:
+            raise ValueError("Apenas 'R' ou 'L'")
 
-            if error_function is None:
-                error_function = (
-                    lambda: sensor.reflection() - const.SANDY_LINE_FOLLOW_TARGET_REFLECTION
-                )
+        if error_function is None:
+            error_function = (
+                lambda: sensor.reflection() - const.SANDY_LINE_FOLLOW_TARGET_REFLECTION
+            )
 
-            error = 0
-            error_i = 0
-            prev_error = 0
-            d_error = 0
+        error = 0
+        error_i = 0
+        prev_error = 0
+        d_error = 0
 
-            while loop_condition_function():
-                error = error_function()
-                error_i += error
-                d_error = error - prev_error
-                prev_error = error
+        while loop_condition_function():
+            error = error_function()
+            error_i += error
+            d_error = error - prev_error
+            prev_error = error
 
-                pid_correction = pid.kp * error + pid.ki * error_i + pid.kd * d_error
+            pid_correction = pid.kp * error + pid.ki * error_i + pid.kd * d_error
 
-                # self.ev3_print(error, pid_correction, [speed, speed])
-                self.motor_l.dc(speed + pid_correction * side)
-                self.motor_r.dc(speed - pid_correction * side)
+            # self.ev3_print(error, pid_correction, [speed, speed])
+            self.motor_l.dc(speed + pid_correction * side)
+            self.motor_r.dc(speed - pid_correction * side)
 
-            self.stop()
+        self.stop()
 
     def wait_button(self, button=Button.CENTER, beep=600):
         return wait_button_pressed(ev3=self.ev3, button=button, beep=beep)
@@ -414,7 +416,7 @@ class Robot:
         speed=40,
         pid: PIDValues = const.ALIGN_VALUES,
         direction_sign=1,
-        hard_limit = 0,
+        hard_limit=0,
     ):
         initial_color_left = self.color_left.color()
         initial_reflection_left = self.color_left.rgb()[2]
@@ -492,20 +494,20 @@ class Robot:
                 return False, 0, "s"
 
             motor_difference = self.motor_r.angle() - self.motor_l.angle()
-            if (hard_limit != 0 and abs(motor_difference) >= hard_limit):
+            if hard_limit != 0 and abs(motor_difference) >= hard_limit:
                 if motor_difference >= 0:
                     return True, motor_difference, "RIGHT"
                 else:
                     return True, motor_difference, "LEFT"
-                
+
         self.stop()
 
-    def line_grabber(self, side, time = 3000, speed=30, multiplier = 1):
+    def line_grabber(self, side, time=3000, speed=30, multiplier=1):
         color_reads = []
         num_reads = 10
         wrong_read_perc = 0.5
         color_count_perc = 0.5
-        self.stopwatch.reset() 
+        self.stopwatch.reset()
         self.reset_wheels_angle()
 
         sensor = self.color_right if side == "R" else self.color_left
@@ -528,8 +530,8 @@ class Robot:
             if self.stopwatch.time() > time:
                 self.stop()
                 return self.motor_degrees_to_cm(motor_mean)
-            
-    def one_wheel_turn(self, side, motor_degrees, speed = -40):
+
+    def one_wheel_turn(self, side, motor_degrees, speed=-40):
         self.reset_wheels_angle()
         if side == "R":
             while abs(self.motor_r.angle()) <= motor_degrees:
