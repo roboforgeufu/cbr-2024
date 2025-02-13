@@ -61,6 +61,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
         robot.ev3_print("Current position:", path[position_index])
         robot.ev3_print("STEP:", direction)
         robot.ev3_print("Needs align:", needs_align)
+
         turn_times = omni_turn_to_direction(robot, direction)
 
         if turn_times != 0:
@@ -78,12 +79,15 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
             robot.stop()
             robot.align(Direction.get_relative_direction(omni_direction, 4))
             needs_align = 0
+
+            robot.ev3.speaker.beep()
             robot.pid_walk(
-                const.ROBOT_SIZE_HALF,
-                speed=60,
+                const.LINE_TO_CELL_CENTER_DISTANCE,
+                speed=const.LILO_FORWARD_SPEED,
                 direction=omni_direction,
                 off_motors=False,
             )
+            robot.ev3.speaker.beep()
 
         if idx == len(directions) - 1:
             # nao anda a ultima distancia, pra nao entrar no estabelecimento
@@ -112,12 +116,19 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
             )
         )
 
+        # robot.stop()
+        # robot.ev3_print("Distance:", distance)
+        # robot.wait_button()
+
+        # robot.ev3.speaker.beep(100)
         has_seen_obstacle, walked_perc = robot.pid_walk(
             distance,
             off_motors=should_stop,
             obstacle_function=obstacle_function,
             direction=omni_direction,
+            speed=const.LILO_FORWARD_SPEED,
         )
+        # robot.ev3.speaker.beep(100)
         while has_seen_obstacle:
             robot.stop()
             robot.ev3_print("Obs.:", sensor_left.color(), sensor_right.color())
@@ -128,13 +139,15 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
             if (
                 position_index + 1 < len(path)
                 and path[position_index + 1] in possible_obstacles_vertices
-                and robot.bluetooth.message(should_wait=False) <= obstacle_distance
+                and (robot.bluetooth.message(should_wait=False) or 2550)
+                <= obstacle_distance
             ):
                 # Obstáculo à frente
                 robot.bluetooth.message("STOP")
                 robot.ev3_print("à frente:", walked_perc)
                 robot.pid_walk(
                     distance * walked_perc,
+                    speed=const.LILO_FORWARD_SPEED,
                     direction=Direction.get_relative_direction(omni_direction, 4),
                 )
                 return (False, position_index)
@@ -145,15 +158,13 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
                 # Os dois sensores leram parede; apenas continua
                 robot.ev3_print("BOTH SIDES")
                 robot.ev3.speaker.beep(100)
+                oposite_direction = Direction.get_relative_direction(omni_direction, 4)
                 if walked_perc >= 0.8:
-                    oposite_direction = Direction.get_relative_direction(
-                        omni_direction, 4
-                    )
                     robot.pid_walk(2, direction=oposite_direction)
                     has_seen_obstacle = False
                 else:
                     robot.ev3_print("Walked perc:", walked_perc)
-                    robot.wait_button()
+                    robot.pid_walk(cm=3, direction=oposite_direction)
             elif sensor_left.color() in wall_colors:
                 # Desvio à esquerda
                 robot.ev3_print("à esquerda:", walked_perc)
@@ -224,6 +235,7 @@ def omni_path_control(robot: OmniRobot, path: list, directions: list):
 
                 has_seen_obstacle, walked_perc = robot.pid_walk(
                     cm=distance * (1 - walked_perc),
+                    speed=40,
                     off_motors=should_stop,
                     obstacle_function=obstacle_function,
                     direction=omni_direction,

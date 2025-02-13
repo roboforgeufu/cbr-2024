@@ -138,7 +138,7 @@ def omni_passenger_unboarding(omni: OmniRobot):
         omni.pid_turn(180)
         omni.moving_direction_sign = 1
 
-    omni.align(pid=PIDValues(kp=1, ki=0.0015, kd=0.45))
+    omni.align()
     omni.stop()
 
     omni.pid_walk(1.5, 35)
@@ -157,18 +157,19 @@ def omni_passenger_unboarding(omni: OmniRobot):
             )
 
     omni.align(direction=Direction.BACK)
-    omni.pid_walk(25, 40)
-
-    omni.ev3.speaker.beep()
-
     omni.bluetooth.message("CLAW_LOW")
     omni.bluetooth.message()
+    omni.pid_walk(20, 40)
+
+    omni.ev3.speaker.beep()
 
     omni.bluetooth.message("CLAW_OPEN")
     omni.bluetooth.message()
 
-    omni.pid_walk(25, 40, direction=Direction.BACK)
+    omni.pid_walk(20, 40, direction=Direction.BACK)
     omni.stop()
+    omni.bluetooth.message("CLAW_HIGH")
+    omni.bluetooth.message()
 
 
 def omni_manouver_to_get_passenger(omni: OmniRobot):
@@ -177,12 +178,15 @@ def omni_manouver_to_get_passenger(omni: OmniRobot):
     else:
         omni.pid_turn(-90)
 
+    omni.align(Direction.BACK, speed=40)
+    omni.pid_walk(const.ROBOT_SIZE_HALF, speed=40, direction=Direction.FRONT)
+
 
 def omni_passenger_boarding(omni: OmniRobot):
-    omni.bluetooth.message("CLAW_MID")
+    omni.bluetooth.message("CLAW_OPEN")
     omni.bluetooth.message()
 
-    omni.bluetooth.message("CLAW_OPEN")
+    omni.bluetooth.message("CLAW_MID")
     omni.bluetooth.message()
 
     omni.align(direction=Direction.RIGHT, speed=50)
@@ -224,15 +228,6 @@ def omni_passenger_boarding(omni: OmniRobot):
     omni.stop()
     omni.bluetooth.message("STOP")
 
-    final_angle_left = omni.motor_front_left.angle()
-
-    walked_cm = omni.motor_degrees_to_cm(abs(final_angle_left - initial_angle_left))
-    walked_cells = walked_cm / 30
-    omni.ev3_print("walked:", walked_cm)
-    omni.ev3_print("wkd cells:", walked_cells)
-    vertice = boarding_vertices[int(math.floor(walked_cells))]
-    omni.ev3_print("vertice:", vertice)
-
     omni.pid_walk(cm=3, direction=Direction.FRONT)
     omni.stop()
     omni.pid_walk(cm=5, direction=Direction.LEFT)
@@ -250,24 +245,23 @@ def omni_passenger_boarding(omni: OmniRobot):
     omni.ev3_print("CLAW_HIGH")
 
     # Média de 3 leituras
-    omni.bluetooth.message("ULTRA_FRONT")
+    omni.bluetooth.message("ULTRA_CLAW")
     distances = []
     for _ in range(3):
         distances.append(omni.bluetooth.message())
     omni.bluetooth.message("STOP")
     distance_front = sum(distances) / len(distances)
 
-    omni.ev3_print("P. DIST.:", distance_front, distances)
-
     adult_or_child = (
-        "ADULT" if passenger_color == Color.RED or distance_front < 100 else "CHILD"
+        "ADULT" if passenger_color == Color.RED or distance_front < 5 else "CHILD"
     )
+    omni.ev3_print(adult_or_child, ":", distance_front, distances)
 
     omni.pid_walk(cm=8, direction=Direction.BACK)
     omni.pid_turn(-90)
 
     # Média de 3 leituras
-    omni.bluetooth.message("ULTRA_FRONT")
+    omni.bluetooth.message("ULTRA_CLAW")
     for _ in range(3):
         distances.append(omni.bluetooth.message())
     omni.bluetooth.message("STOP")

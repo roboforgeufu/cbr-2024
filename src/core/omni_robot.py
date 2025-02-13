@@ -9,7 +9,7 @@ from pybricks.parameters import Port, Button
 from core.utils import wait_button_pressed, ev3_print, ev3_draw, PIDValues, get_hostname
 from core.network import Bluetooth
 from core.decision_color_sensor import DecisionColorSensor
-from pybricks.ev3devices import Motor, UltrasonicSensor
+from pybricks.ev3devices import Motor, UltrasonicSensor, InfraredSensor
 from pybricks.tools import wait
 
 from core.utils import PIDControl
@@ -66,11 +66,11 @@ class OmniRobot:
         color_back_left: DecisionColorSensor = None,
         color_back_right: DecisionColorSensor = None,
         color_side: DecisionColorSensor = None,
-        ultra_claw: Port = None,
+        infra_claw: Port = None,
         ultra_back: Port = None,
         ultra_front: Port = None,
         server_name: str = None,
-        turn_correction=1.35,
+        turn_correction=const.LILO_TURN_CORRECTION,
         debug=True,
     ):
 
@@ -107,8 +107,8 @@ class OmniRobot:
             self.color_back_left = color_back_left
         if color_back_right is not None:
             self.color_back_right = color_back_right
-        if ultra_claw is not None:
-            self.ultra_claw = UltrasonicSensor(ultra_claw)
+        if infra_claw is not None:
+            self.infra_claw = InfraredSensor(infra_claw)
         if ultra_back is not None:
             self.ultra_back = UltrasonicSensor(ultra_back)
         if ultra_front is not None:
@@ -233,7 +233,7 @@ class OmniRobot:
     def pid_walk(
         self,
         cm,
-        speed=60,
+        speed=40,
         obstacle_function=None,
         off_motors=True,
         direction: Direction = Direction.FRONT,
@@ -357,16 +357,14 @@ class OmniRobot:
         i_share = [0, 0, 0, 0]
         prev_elapsed_time = self.watch.time()
         while True:
-            current_angle = [
-                self.motor_front_left.angle(),
-                self.motor_front_right.angle(),
-                self.motor_back_left.angle(),
-                self.motor_back_right.angle(),
+            errors = [
+                self.motor_front_left.angle() - target_angle[0],
+                self.motor_front_right.angle() - target_angle[1],
+                self.motor_back_left.angle() - target_angle[2],
+                self.motor_back_right.angle() - target_angle[3],
             ]
 
-            errors = [c - t for c, t in zip(current_angle, target_angle)]
-
-            for i in range(len(i_share)):
+            for i in range(4):
                 if errors[i] < 30:
                     i_share[i] += errors[i]
 
@@ -533,7 +531,7 @@ class OmniRobot:
     ):
         if open_angle is None:
             self.claw_open_angle = self.motor_claw_gripper.run_until_stalled(
-                speed=-300, duty_limit=40
+                speed=-300, duty_limit=35
             )
             self.ev3_print("Open angle:", self.claw_open_angle)
         else:
@@ -541,7 +539,7 @@ class OmniRobot:
 
         if closed_angle is None:
             self.claw_closed_angle = self.motor_claw_gripper.run_until_stalled(
-                speed=300, duty_limit=40
+                speed=300, duty_limit=45
             )
             self.ev3_print("Closed angle:", self.claw_closed_angle)
         else:
@@ -549,7 +547,7 @@ class OmniRobot:
 
         if high_angle is None:
             self.claw_high_angle = self.motor_claw_lift.run_until_stalled(
-                speed=-300, duty_limit=60
+                speed=-300, duty_limit=20
             )
             self.ev3_print("High_angle:", self.claw_high_angle)
         else:
@@ -557,13 +555,13 @@ class OmniRobot:
 
         if low_angle is None:
             self.claw_low_angle = self.motor_claw_lift.run_until_stalled(
-                speed=300, duty_limit=30
+                speed=300, duty_limit=15
             )
             self.ev3_print("Low angle:", self.claw_low_angle)
         else:
             self.claw_low_angle = low_angle
 
-        self.claw_mid_angle = self.claw_low_angle - 120
+        self.claw_mid_angle = self.claw_low_angle - const.STITCH_CLAW_MID_TO_LOW_DIFF
 
     def line_follower(
         self,
