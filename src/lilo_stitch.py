@@ -1,14 +1,14 @@
 #!/usr/bin/env pybricks-micropython
 
-from core.omni_robot import OmniRobot, Direction
-from core.utils import get_hostname, PIDValues
-from core.decision_color_sensor import DecisionColorSensor
-
-from pybricks.parameters import Port, Button, Color
 from pybricks.ev3devices import ColorSensor
 from pybricks.iodevices import Ev3devSensor
+from pybricks.parameters import Button, Color, Port
 from pybricks.tools import wait
+
 import constants as const
+from core.decision_color_sensor import DecisionColorSensor
+from core.omni_robot import Direction, OmniRobot
+from core.utils import PIDValues, get_hostname
 
 if const.MAP_COLOR_CALIBRATION == "OFICIAL":
     from decision_trees.oficial.lilo_lego_ev3_color_1 import (
@@ -39,7 +39,7 @@ elif const.MAP_COLOR_CALIBRATION == "HOME":
     from decision_trees.home.lilo_lego_ev3_color_4 import (
         lilo_lego_ev3_color_p4_decision_tree,
     )
-    from decision_trees.home.stitch_ht_nxt_color_v2_4 import (
+    from decision_trees.home.stitch_ht_nxt_color_v2_3 import (
         stitch_ht_nxt_color_v2_p4_decision_tree,
     )
 elif const.MAP_COLOR_CALIBRATION == "TEST":
@@ -59,25 +59,22 @@ elif const.MAP_COLOR_CALIBRATION == "TEST":
         stitch_ht_nxt_color_v2_p4_decision_tree,
     )
 
-from domain.pathfinding import Graph, map_matrix, get_target_for_passenger
-
-from domain.ohana import (
-    open_claw,
-    close_claw,
-    lower_claw,
-    raise_claw,
-    mid_claw,
-    transmit_signal,
-)
-
-from domain.omni_path_control import omni_path_control
 from domain.boarding import (
+    omni_manouver_to_get_passenger,
     omni_passenger_boarding,
     omni_passenger_unboarding,
-    omni_manouver_to_get_passenger,
 )
-from domain.omni_localization import localization_routine, forward_avoiding_places
-
+from domain.ohana import (
+    close_claw,
+    lower_claw,
+    mid_claw,
+    open_claw,
+    raise_claw,
+    transmit_signal,
+)
+from domain.omni_localization import forward_avoiding_places, localization_routine
+from domain.omni_path_control import omni_path_control
+from domain.pathfinding import Graph, get_target_for_passenger, map_matrix
 
 testing_targets = [0, 13, 26, 2, 15, 28, 4, 17, 30]
 
@@ -286,16 +283,16 @@ def main(hostname):
                 motor_back_left=Port.A,
                 motor_back_right=Port.D,
                 color_front_left=DecisionColorSensor(
-                    ColorSensor(Port.S3), lilo_lego_ev3_color_p3_decision_tree
-                ),
-                color_front_right=DecisionColorSensor(
-                    ColorSensor(Port.S2), lilo_lego_ev3_color_p2_decision_tree
-                ),
-                color_back_left=DecisionColorSensor(
                     ColorSensor(Port.S1), lilo_lego_ev3_color_p1_decision_tree
                 ),
-                color_back_right=DecisionColorSensor(
+                color_front_right=DecisionColorSensor(
                     ColorSensor(Port.S4), lilo_lego_ev3_color_p4_decision_tree
+                ),
+                color_back_left=DecisionColorSensor(
+                    ColorSensor(Port.S2), lilo_lego_ev3_color_p2_decision_tree
+                ),
+                color_back_right=DecisionColorSensor(
+                    ColorSensor(Port.S3), lilo_lego_ev3_color_p3_decision_tree
                 ),
                 server_name="lilo",
             )
@@ -304,11 +301,11 @@ def main(hostname):
         stitch_main(
             OmniRobot(
                 color_side=DecisionColorSensor(
-                    Ev3devSensor(Port.S4), stitch_ht_nxt_color_v2_p4_decision_tree
+                    Ev3devSensor(Port.S3), stitch_ht_nxt_color_v2_p4_decision_tree
                 ),
-                infra_claw=Port.S2,
-                ultra_back=Port.S1,
-                ultra_front=Port.S3,
+                infra_claw=Port.S1,
+                ultra_back=Port.S4,
+                ultra_front=Port.S2,
                 motor_claw_lift=Port.A,
                 motor_claw_gripper=Port.B,
                 server_name="lilo",

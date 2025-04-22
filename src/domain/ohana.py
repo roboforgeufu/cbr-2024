@@ -4,6 +4,7 @@ from core.omni_robot import OmniRobot
 
 
 def open_claw(robot: OmniRobot):
+    robot.motor_claw_gripper.dc(0)
     robot.motor_claw_gripper.run_target(300, target_angle=robot.claw_open_angle)
 
 

@@ -1,25 +1,25 @@
 from pybricks.parameters import Color
  # Arquivo gerado automaticamente
 def lilo_lego_ev3_color_p4_decision_tree(R, G, B):
-    if B <= 12.0:
-        if G <= 1.0:
-            return None
-        else:  # if G > 1.0
-            if R <= 24.0:
-                if G <= 9.5:
-                    if R <= 5.5:
-                        return Color.BLACK
-                    else:  # if R > 5.5
-                        return Color.BROWN
-                else:  # if G > 9.5
+    if B <= 25.5:
+        if G <= 27.5:
+            if R <= 31.5:
+                if G <= 19.0:
+                    if B <= 8.0:
+                        if R <= 8.0:
+                            return Color.BLACK
+                        else:  # if R > 8.0
+                            return Color.BROWN
+                    else:  # if B > 8.0
+                        if R <= 8.5:
+                            return Color.BLUE
+                        else:  # if R > 8.5
+                            return None
+                else:  # if G > 19.0
                     return Color.GREEN
-            else:  # if R > 24.0
+            else:  # if R > 31.5
                 return Color.RED
-    else:  # if B > 12.0
-        if B <= 49.0:
-            if G <= 28.0:
-                return Color.BLUE
-            else:  # if G > 28.0
-                return Color.YELLOW
-        else:  # if B > 49.0
-            return Color.WHITE
+        else:  # if G > 27.5
+            return Color.YELLOW
+    else:  # if B > 25.5
+        return Color.WHITE
